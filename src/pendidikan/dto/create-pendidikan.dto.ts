@@ -24,7 +24,7 @@ export const pendidikanDiklatSchema = z.object({
   tingkatan: z.string().min(1, { message: 'Tingkatan wajib diisi' }),
   jumlahJam: z.coerce.number().positive({ message: 'Jumlah Jam wajib diisi' }),
   noSertifikat: z.string().min(1, { message: 'No Sertifikat wajib diisi' }),
-  tglSertifikat: z.date({ message: 'Tanggal Sertifikat wajib diisi' }),
+  tglSertifikat: z.coerce.date({ message: 'Tanggal Sertifikat wajib diisi' }),
   tempat: z.string().min(1, { message: 'Tempat wajib diisi' }),
   tglMulai: z.coerce.date({ message: "Tanggal mulai wajib diisi." }),
   tglSelesai: z.coerce.date({ message: "Tanggal selesai wajib diisi." }),

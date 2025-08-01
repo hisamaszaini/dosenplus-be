@@ -114,7 +114,7 @@ export class PendidikanController {
     @Query() query: any,
     @Request() req,
   ) {
-    return this.pendidikanService.findAll(query, req.user.sub, req.user.role);
+    return this.pendidikanService.findAll(req.user.sub, req.user.role, query);
   }
 
   @Get('dosen/:dosenId')

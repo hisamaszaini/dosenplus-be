@@ -1,7 +1,8 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import * as fs from 'fs';
 import * as path from 'path';
+import { ZodSchema } from 'zod';
 
 @Injectable()
 export class DataAndFileService {
@@ -30,5 +31,24 @@ export class DataAndFileService {
     if (fs.existsSync(fullPath)) {
       await fs.promises.unlink(fullPath);
     }
+  }
+
+  validateAndInjectFilePath<T>(
+    schema: ZodSchema<T>,
+    rawData: any,
+    filePath: string
+  ): T {
+    const enriched = {
+      ...rawData,
+      filePath,
+    };
+
+    const parsed = schema.safeParse(enriched);
+
+    if (!parsed.success) {
+      throw new BadRequestException(parsed.error.format());
+    }
+
+    return parsed.data;
   }
 }

@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Patch, Post, UseGuards, Query } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { ProdiService } from './prodi.service';
@@ -20,8 +20,15 @@ export class ProdiController {
 
     @Get()
     @Roles(TypeUserRole.ADMIN, TypeUserRole.DOSEN, TypeUserRole.VALIDATOR)
-    findAll() {
-        return this.prodiService.findAll();
+    findAll(
+        @Query('page') page?: number,
+        @Query('limit') limit?: number,
+        @Query('search') search?: string,
+        @Query('fakultasId') fakultasId?: number,
+        @Query('sortBy') sortBy = 'createdAt',
+        @Query('sortOrder') sortOrder: 'asc' | 'desc' = 'desc'
+    ) {
+        return this.prodiService.findAll({ page, limit, search, fakultasId, sortBy, sortOrder });
     }
 
     @Get(':id')

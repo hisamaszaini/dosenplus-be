@@ -46,15 +46,71 @@ export class ProdiService {
     }
   }
 
-  async findAll() {
-    const data = await this.prisma.prodi.findMany({
-      include: { fakultas: true },
-    });
+  async findAll(params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    fakultasId?: number;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  }) {
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      fakultasId,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+    } = params;
 
-    return {
-      success: true,
-      data,
-    };
+    const fakultasIdNum = fakultasId !== undefined ? Number(fakultasId) : undefined;
+
+    const take = Number(limit) || 20;
+
+    const allowedSortFields = ['kode', 'nama', 'fakultasId', 'createdAt'];
+    const safeSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'createdAt';
+    const safeSortOrder: 'asc' | 'desc' = sortOrder === 'asc' ? 'asc' : 'desc';
+
+    const where: any = {};
+
+    if (search) {
+      where.OR = [
+        { nama: { contains: search, mode: 'insensitive' } },
+        { kode: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    if (fakultasIdNum !== undefined) {
+      where.fakultasId = fakultasIdNum;
+    }
+
+    try {
+      const [data, total] = await this.prisma.$transaction([
+        this.prisma.prodi.findMany({
+          where,
+          orderBy: { [safeSortBy]: safeSortOrder },
+          skip: (page - 1) * take,
+          take: take,
+          include: { fakultas: true },
+        }),
+        this.prisma.prodi.count({ where }),
+      ]);
+
+      return {
+        success: true,
+        message: 'Data program studi berhasil diambil',
+        data,
+        meta: {
+          page,
+          limit: take,
+          total,
+          totalPages: Math.ceil(total / take),
+        },
+      };
+    } catch (error) {
+      console.error('ProdiService.findAll error:', error);
+      throw new BadRequestException('Gagal mengambil data program studi');
+    }
   }
 
   async findOne(id: number) {

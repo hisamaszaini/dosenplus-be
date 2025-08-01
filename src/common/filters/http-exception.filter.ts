@@ -4,6 +4,7 @@ import {
   ArgumentsHost,
   HttpException,
   HttpStatus,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Response } from 'express';
 
@@ -23,7 +24,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     } else if (exceptionResponse && typeof exceptionResponse === 'object') {
       if ('message' in exceptionResponse) {
         const messageContent = exceptionResponse['message'];
-        
+
         if (typeof messageContent === 'string') {
           // Single string message
           message = messageContent;

@@ -31,6 +31,12 @@ enum TypeUserRole {
   VALIDATOR
 }
 
+enum StatusValidasi {
+  PENDING
+  ACCEPT
+  REJECT
+}
+
 model User {
   id                   Int        @id @default(autoincrement())
   email                String     @unique
@@ -162,10 +168,12 @@ model Pendidikan {
   dosen   Dosen @relation(fields: [dosenId], references: [id])
 
   kategori KategoriPendidikan
-  kegiatan String?
   nilaiPak Int
 
   filePath  String
+
+  statusValidasi StatusValidasi @default(PENDING)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -265,6 +273,7 @@ model PelaksanaanPendidikan {
 
   dosen    Dosen    @relation(fields: [dosenId], references: [id])
   semester Semester @relation(fields: [semesterId], references: [id])
+  statusValidasi StatusValidasi @default(PENDING)
 
   perkuliahan          Perkuliahan?
   bimbinganSeminar     BimbinganSeminar?

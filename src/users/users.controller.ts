@@ -18,7 +18,7 @@ import {
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { TypeUserRole } from '@prisma/client';
+import { TypeUserRole, UserStatus } from '@prisma/client';
 import { UsersService } from './users.service';
 import { ChangePasswordDto, CreateFlexibleUserDto, UpdateFlexibleUserDto } from './dto/user.dto';
 import { ZodValidationPipe } from 'src/common/pipes/zod-validation.pipe';
@@ -54,8 +54,16 @@ export class UsersController {
   @Get()
   @Roles(TypeUserRole.ADMIN)
   @UseGuards(RolesGuard)
-  findAll(@Request() req, @Query() query: any) {
-    return this.usersService.findAll(query, req.user);
+  findAll(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('search') search?: string,
+    @Query('role') role?: TypeUserRole,
+    @Query('status') status?: UserStatus,
+    @Query('sortBy') sortBy = 'createdAt',
+    @Query('sortOrder') sortOrder: 'asc' | 'desc' = 'desc'
+  ) {
+    return this.usersService.findAll({ page, limit, search, role, status, sortBy, sortOrder });
   }
 
   @Patch(':id')

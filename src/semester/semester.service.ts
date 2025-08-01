@@ -66,52 +66,82 @@ export class SemesterService {
     }
   }
 
-  async findAll(query: { page?: number; limit?: number; search?: string }) {
-    const page = query.page ?? 1;
-    const limit = query.limit ?? 10;
-    const search = query.search?.trim();
-    const searchConditions: Prisma.SemesterWhereInput[] = [];
+  async findAll(params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    tahunMulai?: number;
+    tahunSelesai?: number;
+    tipe?: NamaSemester;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  }) {
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      tahunMulai,
+      tahunSelesai,
+      tipe,
+      sortBy = 'kode',
+      sortOrder = 'desc',
+    } = params;
+
+    const where: Prisma.SemesterWhereInput = {};
 
     if (search) {
-      searchConditions.push({
-        nama: { contains: search, mode: Prisma.QueryMode.insensitive },
-      });
+      where.OR = [{ nama: { contains: search, mode: 'insensitive' } }];
 
-      if (['GENAP', 'GANJIL'].includes(search.toUpperCase())) {
-        searchConditions.push({ tipe: search.toUpperCase() as 'GENAP' | 'GANJIL' });
-      }
-
-      const year = parseInt(search);
-      if (!isNaN(year)) {
-        searchConditions.push({ tahunMulai: year });
-        searchConditions.push({ tahunSelesai: year });
+      const searchAsNumber = parseInt(search, 10);
+      if (!isNaN(searchAsNumber)) {
+        where.OR.push({ kode: searchAsNumber });
       }
     }
 
-    const where: Prisma.SemesterWhereInput = searchConditions.length
-      ? { OR: searchConditions }
-      : {};
+    if (tipe) {
+      where.tipe = tipe;
+    }
 
-    const [data, total] = await this.prisma.$transaction([
-      this.prisma.semester.findMany({
-        where,
-        skip: (page - 1) * limit,
-        take: limit,
-        orderBy: { tahunMulai: 'desc' },
-      }),
-      this.prisma.semester.count({ where }),
-    ]);
+    if (tahunMulai) {
+      where.tahunMulai = { gte: Number(tahunMulai) };
+    }
 
-    return {
-      success: true,
-      meta: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-      data,
-    };
+    if (tahunSelesai) {
+      where.tahunSelesai = { lte: Number(tahunSelesai) };
+    }
+
+    const take = Number(limit);
+
+    const allowedSortFields = ['kode', 'nama', 'tipe', 'tahunMulai', 'tahunSelesai', 'createdAt'];
+    const safeSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'createdAt';
+    const safeSortOrder = sortOrder === 'asc' ? 'asc' : 'desc';
+
+    try {
+      const [data, total] = await this.prisma.$transaction([
+        this.prisma.semester.findMany({
+          where,
+          orderBy: { [safeSortBy]: safeSortOrder },
+          skip: (page - 1) * take,
+          take: take,
+        }),
+        this.prisma.semester.count({ where }),
+      ]);
+
+      return {
+        success: true,
+        message: 'Data semester berhasil diambil',
+        data,
+        meta: {
+          page: Number(page),
+          limit: take,
+          total,
+          totalPages: Math.ceil(total / take),
+        },
+      };
+    } catch (error) {
+      console.error('SemesterService.findAll error:', error);
+      throw new BadRequestException('Gagal mengambil data semester');
+    }
   }
 
   async findOne(id: number) {

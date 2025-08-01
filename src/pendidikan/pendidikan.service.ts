@@ -21,7 +21,7 @@ export class PendidikanService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly fileUtil: DataAndFileService,
-  ) {}
+  ) { }
 
   private getNilaiPak(data: CreatePendidikanDto | UpdatePendidikanDto): number {
     if (data.kategori === KategoriPendidikan.DIKLAT) return 3;
@@ -35,15 +35,13 @@ export class PendidikanService {
   }
 
   async create(dosenId: number, rawData: any, file: Express.Multer.File) {
-    const schema = fullPendidikanSchema;
-    const parsed = schema.safeParse(rawData);
+    const savedFileName = this.fileUtil.generateFileName(file.originalname);
 
-    if (!parsed.success) {
-      throw new BadRequestException(parsed.error.format());
-    }
-
-    const data = parsed.data;
-    const kategori = data.kategori;
+    const parsedData = this.fileUtil.validateAndInjectFilePath(
+      fullPendidikanSchema,
+      { ...rawData, dosenId },
+      savedFileName
+    );
 
     const dosen = await this.prisma.dosen.findUnique({
       where: { id: dosenId },
@@ -53,48 +51,46 @@ export class PendidikanService {
       throw new BadRequestException('Dosen tidak ditemukan');
     }
 
-    const savedFileName = this.fileUtil.generateFileName(file.originalname);
-
     try {
       await this.fileUtil.writeFile(file, savedFileName);
 
-      const nilaiPak = await this.getNilaiPak(data);
+      const nilaiPak = await this.getNilaiPak(parsedData);
 
       const pendidikan = await this.prisma.pendidikan.create({
         data: {
           dosenId,
-          kategori,
+          kategori: parsedData.kategori,
           filePath: savedFileName,
           nilaiPak,
         },
       });
 
-      if (kategori === 'FORMAL') {
+      if (parsedData.kategori === 'FORMAL') {
         await this.prisma.pendidikanFormal.create({
           data: {
             pendidikanId: pendidikan.id,
-            jenjang: data.jenjang,
-            prodi: data.prodi,
-            fakultas: data.fakultas,
-            perguruanTinggi: data.perguruanTinggi,
-            lulusTahun: data.lulusTahun,
+            jenjang: parsedData.jenjang,
+            prodi: parsedData.prodi,
+            fakultas: parsedData.fakultas,
+            perguruanTinggi: parsedData.perguruanTinggi,
+            lulusTahun: parsedData.lulusTahun,
           },
         });
-      } else if (kategori === 'DIKLAT') {
+      } else if (parsedData.kategori === 'DIKLAT') {
         await this.prisma.pendidikanDiklat.create({
           data: {
             pendidikanId: pendidikan.id,
-            jenisDiklat: data.jenisDiklat,
-            namaDiklat: data.namaDiklat,
-            penyelenggara: data.penyelenggara,
-            peran: data.peran,
-            tingkatan: data.tingkatan,
-            jumlahJam: data.jumlahJam,
-            noSertifikat: data.noSertifikat,
-            tglSertifikat: data.tglSertifikat,
-            tempat: data.tempat,
-            tglMulai: data.tglMulai,
-            tglSelesai: data.tglSelesai,
+            jenisDiklat: parsedData.jenisDiklat,
+            namaDiklat: parsedData.namaDiklat,
+            penyelenggara: parsedData.penyelenggara,
+            peran: parsedData.peran,
+            tingkatan: parsedData.tingkatan,
+            jumlahJam: parsedData.jumlahJam,
+            noSertifikat: parsedData.noSertifikat,
+            tglSertifikat: parsedData.tglSertifikat,
+            tempat: parsedData.tempat,
+            tglMulai: parsedData.tglMulai,
+            tglSelesai: parsedData.tglSelesai,
           },
         });
       }
@@ -251,12 +247,31 @@ export class PendidikanService {
     if (query.kategori) where.kategori = query.kategori;
     if (query.jenjang) where.Formal = { jenjang: query.jenjang };
 
+    const allowedSortFields = ['createdAt', 'updatedAt', 'nilaiPak', 'kegiatan'];
+    const sortBy = allowedSortFields.includes(query.sortBy) ? query.sortBy : 'createdAt';
+    const sortOrder = query.sortOrder === 'asc' ? 'asc' : 'desc';
+
+    if (query.search) {
+      const search = query.search.toLowerCase();
+
+      where.OR = [
+        { kegiatan: { contains: search, mode: 'insensitive' } },
+        { Formal: { prodi: { contains: search, mode: 'insensitive' } } },
+        { Formal: { perguruanTinggi: { contains: search, mode: 'insensitive' } } },
+        { Diklat: { namaDiklat: { contains: search, mode: 'insensitive' } } },
+        { Diklat: { penyelenggara: { contains: search, mode: 'insensitive' } } },
+        { dosen: { nama: { contains: search, mode: 'insensitive' } } },
+      ];
+    }
+
     const [data, total] = await this.prisma.$transaction([
       this.prisma.pendidikan.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: {
+          [sortBy]: sortOrder,
+        },
         include: {
           Formal: true,
           Diklat: true,

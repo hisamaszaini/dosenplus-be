@@ -18,6 +18,12 @@ export const USER_ROLES = {
 // export type TypeUserRoleDeclared = typeof USER_ROLES[keyof typeof USER_ROLES];
 export type TypeUserRoleDeclared = keyof typeof USER_ROLES;
 
+export const optionalStringToNull = z
+  .string()
+  .optional()
+  .transform(val => val?.trim() === '' ? null : val)
+  .nullable();
+
 export const LoginSchema = z.object({
   email: z.string().email({ message: 'Format email tidak valid' }),
   password: z.string().min(1, { message: 'Password tidak boleh kosong' }),
@@ -25,24 +31,24 @@ export const LoginSchema = z.object({
 
 export const CreateDosenBiodataSchema = z.object({
   nama: z.string().min(3),
-  nip: z.string().optional(),
-  nuptk: z.string().optional(),
+  nip: z.string().optional().nullable().transform((val) => (val?.trim() === '' ? null : val)),
+  nuptk: z.string().optional().nullable().transform((val) => (val?.trim() === '' ? null : val)),
   jenis_kelamin: z.enum(['Laki-laki', 'Perempuan']),
-  no_hp: z.string().optional(),
-  prodiId: z.number().int(),
-  fakultasId: z.number().int(),
+  no_hp: z.string().optional().nullable().transform((val) => (val?.trim() === '' ? null : val)),
+  prodiId: z.preprocess((val) => Number(val), z.number().int()),
+  fakultasId: z.preprocess((val) => Number(val), z.number().int()),
   jabatan: z.enum(['Asisten Ahli', 'Lektor', 'Lektor Kepala', 'Guru Besar']),
 });
 
 export const CreateValidatorBiodataSchema = z.object({
   nama: z.string().min(3),
-  nip: z.string().optional(),
+  nip: z.string().optional().nullable().transform((val) => (val?.trim() === '' ? null : val)),
   jenis_kelamin: z.enum(['Laki-laki', 'Perempuan']),
-  no_hp: z.string().optional(),
+  no_hp: z.string().optional().nullable().transform((val) => (val?.trim() === '' ? null : val)),
 });
 
 export const CreateDataKepegawaianSchema = z.object({
-  npwp: z.string().optional(),
+  npwp: z.string().optional().nullable().transform((val) => (val?.trim() === '' ? null : val)),
   nama_bank: z.string().optional(),
   no_rek: z.string().optional(),
   bpjs_kesehatan: z.string().optional(),
@@ -69,8 +75,8 @@ export const CreateUserSchema = z
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Password dan konfirmasi password tidak cocok',
     path: ['confirmPassword'],
-  })
-  .transform(({ confirmPassword, ...rest }) => rest);
+  });
+  // .transform(({ confirmPassword, ...rest }) => rest);
 
 export const CreateFlexibleUserSchema = z.object({
   dataUser: CreateUserSchema,
@@ -94,7 +100,7 @@ export const UserRoleSchema = z.object({
 
 export const DataKepegawaianSchema = z.object({
   id: z.number().optional(),
-  npwp: z.string().nullable(),
+  npwp: z.string().optional().nullable().transform((val) => (val?.trim() === '' ? null : val)),
   nama_bank: z.string().nullable(),
   no_rek: z.string().nullable(),
   bpjs_kesehatan: z.string().nullable(),
@@ -122,8 +128,7 @@ export const BaseUpdateUserSchema = z
   }, {
     message: 'Password dan konfirmasi password tidak cocok',
     path: ['confirmPassword'],
-  })
-  .transform(({ confirmPassword, ...rest }) => rest);
+  });
 
 export const UpdateAdminProfileSchema = z.object({
   dataUser: BaseUpdateUserSchema,

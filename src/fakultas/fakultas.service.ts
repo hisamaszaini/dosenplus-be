@@ -4,7 +4,7 @@ import { CreateFakultasDto, UpdateFakultasDto } from './dto/fakultas.dto';
 
 @Injectable()
 export class FakultasService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async create(createFakultasDto: CreateFakultasDto) {
     const { kode, nama } = createFakultasDto;
@@ -42,10 +42,34 @@ export class FakultasService {
     }
   }
 
-  async findAll() {
+  async findAll(params: {
+    search?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  }) {
+    const {
+      search,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+    } = params;
+
+    const allowedSortFields = ['kode', 'nama', 'createdAt'];
+    const safeSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'createdAt';
+    const safeSortOrder: 'asc' | 'desc' = sortOrder === 'asc' ? 'asc' : 'desc';
+
     try {
       const data = await this.prisma.fakultas.findMany({
-        orderBy: { createdAt: 'desc' },
+        where: search
+          ? {
+            OR: [
+              { nama: { contains: search, mode: 'insensitive' } },
+              { kode: { contains: search, mode: 'insensitive' } },
+            ],
+          }
+          : undefined,
+        orderBy: {
+          [safeSortBy]: safeSortOrder,
+        },
       });
 
       return {
@@ -54,6 +78,7 @@ export class FakultasService {
         data,
       };
     } catch (error) {
+      console.error('FakultasService.findAll error:', error);
       throw new BadRequestException('Gagal mengambil data fakultas');
     }
   }
@@ -80,6 +105,9 @@ export class FakultasService {
   }
 
   async update(id: number, updateFakultasDto: UpdateFakultasDto) {
+
+    console.log(`[UPDATE Fakultas]: ${updateFakultasDto}`);
+
     const { kode, nama } = updateFakultasDto;
 
     const existingFakultas = await this.prisma.fakultas.findUnique({ where: { id } });
@@ -88,7 +116,7 @@ export class FakultasService {
     }
 
     const errors: Record<string, string> = {};
-    
+
     const checkPromises: Promise<{ field: string; exists: boolean }>[] = [];
 
     if (kode && kode !== existingFakultas.kode) {
@@ -111,7 +139,7 @@ export class FakultasService {
 
     if (checkPromises.length > 0) {
       const results = await Promise.all(checkPromises);
-      
+
       results.forEach(result => {
         if (result.exists) {
           if (result.field === 'kode') {
@@ -175,7 +203,7 @@ export class FakultasService {
       where: { fakultasId }
     });
     return prodiCount > 0;
-    
+
     return false;
   }
 

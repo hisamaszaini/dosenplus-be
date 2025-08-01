@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from 'prisma/prisma.service';
-import { PrismaClient, TypeUserRole } from '@prisma/client';
+import { Prisma, PrismaClient, TypeUserRole, UserRole, UserStatus } from '@prisma/client';
 import { HashAndEncryptService } from 'src/utils/hashAndEncrypt';
 
 import { BaseUpdateUserSchema, ChangePasswordDto, ChangePasswordSchema, CreateFlexibleUserSchema, UpdateDosenProfileSchema, UpdateFlexibleUserDto, UpdateFlexibleUserSchema, UpdateValidatorProfileSchema, type CreateFlexibleUserDto } from './dto/user.dto';
@@ -36,6 +36,58 @@ export class UsersService {
         const prodi = await this.prisma.prodi.findUnique({ where: { id: prodiId, fakultasId } });
         if (!prodi) throw new BadRequestException('Program Studi tidak ditemukan atau tidak sesuai dengan fakultas.');
     }
+
+    private async validateUniqueBiodata(userId: number, dto: UpdateFlexibleUserDto) {
+        const errors: Record<string, string> = {};
+
+        if (dto.dosenBiodata) {
+            const { nip, nuptk, no_hp } = dto.dosenBiodata;
+
+            if (nip) {
+                const existing = await this.prisma.dosen.findFirst({
+                    where: { nip, NOT: { id: userId } },
+                });
+                if (existing) errors['dosenBiodata.nip'] = 'NIP sudah digunakan oleh dosen lain.';
+            }
+
+            if (nuptk) {
+                const existing = await this.prisma.dosen.findFirst({
+                    where: { nuptk, NOT: { id: userId } },
+                });
+                if (existing) errors['dosenBiodata.nuptk'] = 'NUPTK sudah digunakan oleh dosen lain.';
+            }
+
+            if (no_hp) {
+                const existing = await this.prisma.dosen.findFirst({
+                    where: { no_hp, NOT: { id: userId } },
+                });
+                if (existing) errors['dosenBiodata.no_hp'] = 'No. HP sudah digunakan oleh dosen lain.';
+            }
+        }
+
+        if (dto.validatorBiodata) {
+            const { nip, no_hp } = dto.validatorBiodata;
+
+            if (nip) {
+                const existing = await this.prisma.validator.findFirst({
+                    where: { nip, NOT: { id: userId } },
+                });
+                if (existing) errors['validatorBiodata.nip'] = 'NIP sudah digunakan oleh validator lain.';
+            }
+
+            if (no_hp) {
+                const existing = await this.prisma.validator.findFirst({
+                    where: { no_hp, NOT: { id: userId } },
+                });
+                if (existing) errors['validatorBiodata.no_hp'] = 'No. HP sudah digunakan oleh validator lain.';
+            }
+        }
+
+        if (Object.keys(errors).length > 0) {
+            throw new BadRequestException({ success: false, message: errors, data: null });
+        }
+    }
+
 
     private async getRoleId(tx: PrismaService | TransactionClient, roleName: TypeUserRole): Promise<number> {
         const role = await tx.role.findUnique({ where: { name: roleName } });
@@ -162,7 +214,12 @@ export class UsersService {
             throw new BadRequestException({ success: false, message: errors, data: null });
         }
 
+
         const validated = result.data;
+
+        console.log(validated);
+
+        await this.validateUniqueBiodata(userId, validated);
 
         const user = await this.prisma.user.findUnique({
             where: { id: userId },
@@ -175,95 +232,128 @@ export class UsersService {
 
         if (!user) throw new NotFoundException('User tidak ditemukan.');
 
-        const existingRoles = user.userRoles.map(r => r.role.name);
-        const requestedRoles = validated.dataUser.roles ?? [];
+        try {
+            const existingRoles = user.userRoles.map(r => r.role.name);
+            const requestedRoles = validated.dataUser.roles ?? [];
 
-        const newRoles = requestedRoles.filter(r => !existingRoles.includes(r));
-        const removedRoles = existingRoles.filter(r => !requestedRoles.includes(r));
+            const newRoles = requestedRoles.filter(r => !existingRoles.includes(r));
+            const removedRoles = existingRoles.filter(r => !requestedRoles.includes(r));
 
-        if (validated.dosenBiodata) {
-            await this.validateFakultasProdi(
-                validated.dosenBiodata.fakultasId,
-                validated.dosenBiodata.prodiId
-            );
-        }
-
-        return this.prisma.$transaction(async (tx) => {
-            await tx.user.update({
-                where: { id: userId },
-                data: {
-                    email: validated.dataUser.email,
-                    username: validated.dataUser.username,
-                    name: validated.dataUser.name,
-                    status: validated.dataUser.status,
-                    ...(validated.dataUser.password
-                        ? { password: await this.hashEncryptUtil.hashPassword(validated.dataUser.password) }
-                        : {}),
-                },
-            });
-
-            for (const roleName of newRoles) {
-                const roleId = await this.getRoleId(tx, roleName);
-                await tx.userRole.create({ data: { userId: user.id, roleId } });
+            if (validated.dosenBiodata) {
+                await this.validateFakultasProdi(
+                    validated.dosenBiodata.fakultasId,
+                    validated.dosenBiodata.prodiId
+                );
             }
 
-            for (const roleName of removedRoles) {
-                const role = await tx.role.findUnique({ where: { name: roleName } });
-                if (!role) continue;
-                await tx.userRole.deleteMany({
-                    where: { userId, roleId: role.id },
+            return this.prisma.$transaction(async (tx) => {
+                await tx.user.update({
+                    where: { id: userId },
+                    data: {
+                        email: validated.dataUser.email,
+                        username: validated.dataUser.username,
+                        name: validated.dataUser.name,
+                        status: validated.dataUser.status,
+                        ...(validated.dataUser.password
+                            ? { password: await this.hashEncryptUtil.hashPassword(validated.dataUser.password) }
+                            : {}),
+                    },
                 });
-            }
 
-            if (requestedRoles.includes('DOSEN') && validated.dosenBiodata) {
-                if (user.dosen) {
-                    await tx.dosen.update({
-                        where: { id: userId },
-                        data: validated.dosenBiodata,
-                    });
-                } else if (validated.dosenBiodata) {
-                    await tx.dosen.create({
-                        data: { ...validated.dosenBiodata, id: userId },
+                for (const roleName of newRoles) {
+                    const roleId = await this.getRoleId(tx, roleName);
+                    await tx.userRole.create({ data: { userId: user.id, roleId } });
+                }
+
+                for (const roleName of removedRoles) {
+                    const role = await tx.role.findUnique({ where: { name: roleName } });
+                    if (!role) continue;
+                    await tx.userRole.deleteMany({
+                        where: { userId, roleId: role.id },
                     });
                 }
 
-                if (validated.dataKepegawaian) {
-                    const existing = await tx.dataKepegawaian.findUnique({ where: { id: userId } });
-                    if (existing) {
-                        await tx.dataKepegawaian.update({
+                if (requestedRoles.includes('DOSEN') && validated.dosenBiodata) {
+                    if (user.dosen) {
+                        await tx.dosen.update({
                             where: { id: userId },
-                            data: validated.dataKepegawaian,
+                            data: validated.dosenBiodata,
                         });
-                    } else {
-                        await tx.dataKepegawaian.create({
-                            data: { ...validated.dataKepegawaian, id: userId },
+                    } else if (validated.dosenBiodata) {
+                        await tx.dosen.create({
+                            data: { ...validated.dosenBiodata, id: userId },
+                        });
+                    }
+
+                    if (validated.dataKepegawaian) {
+                        const existing = await tx.dataKepegawaian.findUnique({ where: { id: userId } });
+                        if (existing) {
+                            await tx.dataKepegawaian.update({
+                                where: { id: userId },
+                                data: validated.dataKepegawaian,
+                            });
+                        } else {
+                            await tx.dataKepegawaian.create({
+                                data: { ...validated.dataKepegawaian, id: userId },
+                            });
+                        }
+                    }
+                }
+
+                if (requestedRoles.includes('VALIDATOR') && validated.validatorBiodata) {
+                    if (user.validator) {
+                        await tx.validator.update({
+                            where: { id: userId },
+                            data: validated.validatorBiodata,
+                        });
+                    } else if (validated.validatorBiodata) {
+                        await tx.validator.create({
+                            data: { ...validated.validatorBiodata, id: userId },
                         });
                     }
                 }
+
+                const { password, hashedRefreshToken, ...userData } = user;
+
+                return {
+                    success: true,
+                    message: 'User berhasil diperbarui',
+                    data: userData,
+                };
+            });
+        } catch (error) {
+            if (
+                error instanceof Prisma.PrismaClientKnownRequestError &&
+                error.code === 'P2002'
+            ) {
+                const message = this.translateP2002Error(error.meta?.target as string[] | undefined);
+                throw new BadRequestException({ success: false, message, data: null });
             }
-
-            if (requestedRoles.includes('VALIDATOR') && validated.validatorBiodata) {
-                if (user.validator) {
-                    await tx.validator.update({
-                        where: { id: userId },
-                        data: validated.validatorBiodata,
-                    });
-                } else if (validated.validatorBiodata) {
-                    await tx.validator.create({
-                        data: { ...validated.validatorBiodata, id: userId },
-                    });
-                }
-            }
-
-            const { password, hashedRefreshToken, ...userData } = user;
-
-            return {
-                success: true,
-                message: 'User berhasil diperbarui',
-                data: userData,
-            };
-        });
+            throw error;
+        }
     }
+
+    private translateP2002Error(targets: string[] | undefined): Record<string, string> {
+        const errors: Record<string, string> = {};
+        const defaultMessage = (field: string) => `${field} sudah digunakan.`;
+        const FIELD_TO_PATH_MAP: Record<string, string[]> = {
+            nip: ['dosenBiodata.nip', 'validatorBiodata.nip'],
+            no_hp: ['dosenBiodata.no_hp', 'validatorBiodata.no_hp'],
+            nuptk: ['dosenBiodata.nuptk'],
+            email: ['email'],
+            username: ['username'],
+        };
+
+        targets?.forEach((field) => {
+            const paths = FIELD_TO_PATH_MAP[field] ?? [field];
+            paths.forEach((path) => {
+                errors[path] = defaultMessage(field);
+            });
+        });
+
+        return errors;
+    }
+
 
     async updateSelfProfile(userId: number, dto: any) {
         const user = await this.prisma.user.findUnique({
@@ -425,71 +515,147 @@ export class UsersService {
         };
     }
 
-    async findAll(query: any, currentUser: any) {
-        const { page = 1, limit = 20, search = '', status, role, sortBy = 'name', sortOrder = 'asc', } = query;
-        const take = Number(limit);
-        const skip = (Number(page) - 1) * take;
+    async findAll(params: {
+        page?: number;
+        limit?: number;
+        search?: string;
+        role?: TypeUserRole;
+        status?: UserStatus;
+        sortBy?: string;
+        sortOrder?: 'asc' | 'desc';
+    }) {
+        const {
+            page = 1,
+            limit = 10,
+            search,
+            role,
+            status,
+            sortBy = 'createdAt',
+            sortOrder = 'desc',
+        } = params;
 
-        const where: any = {
-            AND: [],
-        };
+        const take = Number(limit) || 20;
+
+        const allowedSortFields = ['nama', 'email', 'status', 'createdAt'];
+        const safeSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'createdAt';
+        const safeSortOrder: 'asc' | 'desc' = sortOrder === 'asc' ? 'asc' : 'desc';
+
+        const where: any = {};
 
         if (search) {
-            where.AND.push({
-                OR: [
-                    { name: { contains: search, mode: 'insensitive' } },
-                    { email: { contains: search, mode: 'insensitive' } },
-                    { username: { contains: search, mode: 'insensitive' } },
-                ],
-            });
+            where.OR = [
+                { nama: { contains: search, mode: 'insensitive' } },
+                { email: { contains: search, mode: 'insensitive' } },
+            ];
         }
 
-        if (status) {
-            where.AND.push({ status });
-        }
-
-        if (role) {
-            where.AND.push({
-                userRoles: {
-                    some: { role: { name: role } },
+        if (role !== undefined) {
+            where.userRoles = {
+                some: {
+                    role: {
+                        name: role,
+                    },
                 },
-            });
+            };
         }
 
-        if (!currentUser.roles.includes('ADMIN')) {
-            throw new ForbiddenException('Anda tidak memiliki izin untuk mengakses data ini');
+        if (status !== undefined) {
+            where.status = status;
         }
 
-        const [users, total] = await this.prisma.$transaction([
-            this.prisma.user.findMany({
-                where,
-                skip,
-                take,
-                orderBy: {
-                    [sortBy]: sortOrder,
-                },
-                include: {
-                    userRoles: { include: { role: true } },
-                    dosen: true,
-                    validator: true,
-                },
-            }),
-            this.prisma.user.count({ where }),
-        ]);
+        try {
+            const [data, total] = await this.prisma.$transaction([
+                this.prisma.user.findMany({
+                    where,
+                    orderBy: { [safeSortBy]: safeSortOrder },
+                    skip: (page - 1) * take,
+                    take: take,
+                }),
+                this.prisma.user.count({ where }),
+            ]);
 
-        const data = users.map(({ password, hashedRefreshToken, ...user }) => user);
-
-        return {
-            success: true,
-            meta: {
-                page: Number(page),
-                limit: take,
-                total,
-                totalPages: Math.ceil(total / take),
-            },
-            data,
-        };
+            return {
+                success: true,
+                message: 'Data user berhasil diambil',
+                data,
+                meta: {
+                    page,
+                    limit: take,
+                    total,
+                    totalPages: Math.ceil(total / take),
+                },
+            };
+        } catch (error) {
+            console.error('UsersService.findAll error:', error);
+            throw new BadRequestException('Gagal mengambil data user');
+        }
     }
+
+    // async findAll(query: any, currentUser: any) {
+    //     const { page = 1, limit = 20, search = '', status, role, sortBy = 'name', sortOrder = 'asc', } = query;
+    //     const take = Number(limit);
+    //     const skip = (Number(page) - 1) * take;
+
+    //     const where: any = {
+    //         AND: [],
+    //     };
+
+    //     if (search) {
+    //         where.AND.push({
+    //             OR: [
+    //                 { name: { contains: search, mode: 'insensitive' } },
+    //                 { email: { contains: search, mode: 'insensitive' } },
+    //                 { username: { contains: search, mode: 'insensitive' } },
+    //             ],
+    //         });
+    //     }
+
+    //     if (status) {
+    //         where.AND.push({ status });
+    //     }
+
+    //     if (role) {
+    //         where.AND.push({
+    //             userRoles: {
+    //                 some: { role: { name: role } },
+    //             },
+    //         });
+    //     }
+
+    //     if (!currentUser.roles.includes('ADMIN')) {
+    //         throw new ForbiddenException('Anda tidak memiliki izin untuk mengakses data ini');
+    //     }
+
+    //     const [users, total] = await this.prisma.$transaction([
+    //         this.prisma.user.findMany({
+    //             where,
+    //             skip,
+    //             take,
+    //             orderBy: {
+    //                 [sortBy]: sortOrder,
+    //             },
+    //             include: {
+    //                 userRoles: { include: { role: true } },
+    //                 dosen: true,
+    //                 validator: true,
+    //             },
+    //         }),
+    //         this.prisma.user.count({ where }),
+    //     ]);
+
+    //     const data = users.map(({ password, hashedRefreshToken, ...user }) => user);
+
+    //     return {
+    //         success: true,
+    //         meta: {
+    //             page: Number(page),
+    //             limit: take,
+    //             total,
+    //             totalPages: Math.ceil(total / take),
+    //         },
+    //         data,
+    //     };
+    // }
 
     async findAllDosen(query: any) {
         const {

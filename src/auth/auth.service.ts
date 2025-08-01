@@ -19,22 +19,32 @@ export class AuthService {
     ) { }
 
     // Validasi Login
-    async validateUser(email: string, pass: string) {
-        const user = await this.prisma.user.findUnique({
-            where: { email },
+    async validateUser(identifier: string, pass: string): Promise<any> {
+        const user = await this.prisma.user.findFirst({
+            where: {
+                OR: [
+                    { email: identifier },
+                    { username: identifier },
+                ],
+            },
             include: { userRoles: { include: { role: true } } },
         });
 
         if (!user) {
-            throw new UnauthorizedException('Kredensial tidak valid.');
+            throw new UnauthorizedException('Email/Username atau password salah.');
+        }
+
+        if (user.status === 'INACTIVE') {
+            throw new ForbiddenException('Akun Anda tidak aktif. Silakan hubungi administrator.');
         }
 
         const passwordMatches = await bcrypt.compare(pass, user.password);
         if (!passwordMatches) {
-            throw new UnauthorizedException('Kredensial tidak valid.');
+            throw new UnauthorizedException('Email/Username atau password salah.');
         }
 
-        return user;
+        const { password, ...result } = user;
+        return result;
     }
 
     // Login
@@ -52,10 +62,11 @@ export class AuthService {
         const [accessToken, refreshToken] = await this.getTokens(payload);
         await this.updateRefreshTokenHash(user.id, refreshToken);
 
-        return { 
+        return {
             success: true,
             message: 'Login berhasil!',
-            accessToken, refreshToken };
+            accessToken, refreshToken
+        };
     }
 
     // Logout

@@ -1,5 +1,5 @@
 // src/fakultas/fakultas.controller.ts
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseIntPipe, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseIntPipe, HttpCode, HttpStatus, Query } from '@nestjs/common';
 import { FakultasService } from './fakultas.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
@@ -10,7 +10,7 @@ import { CreateFakultasDto, UpdateFakultasDto } from './dto/fakultas.dto';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('fakultas')
 export class FakultasController {
-  constructor(private readonly fakultasService: FakultasService) {}
+  constructor(private readonly fakultasService: FakultasService) { }
 
   @Post()
   @Roles(TypeUserRole.ADMIN)
@@ -20,8 +20,12 @@ export class FakultasController {
 
   @Get()
   @Roles(TypeUserRole.ADMIN, TypeUserRole.DOSEN, TypeUserRole.VALIDATOR)
-  findAll() {
-    return this.fakultasService.findAll();
+  findAll(
+    @Query('search') search?: string,
+    @Query('sortBy') sortBy = 'createdAt',
+    @Query('sortOrder') sortOrder: 'asc' | 'desc' = 'desc',
+  ) {
+    return this.fakultasService.findAll({ search, sortBy, sortOrder });
   }
 
   @Get(':id')
