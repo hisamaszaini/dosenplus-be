@@ -10,9 +10,9 @@
 **Content-Type:** `multipart/form-data`  
 **Body:**  
 - `file` (opsional): JPG, JPEG, PNG  
-- `createUserDto`: JSON stringified object  
+- `data`: JSON stringified object  
 
-#### 📤 Contoh createUserDto
+#### 📤 Contoh data
 ```json
 {
   "dataUser": {
@@ -67,9 +67,9 @@
 **Authorization:** Bearer token  
 **Content-Type:** `multipart/form-data`  
 - `file` (opsional)  
-- `updateUserDto`: JSON stringified object  
+- `data`: JSON stringified object  
 
-#### 📤 Contoh updateUserDto
+#### 📤 Contoh data
 ```json
 {
   "dataUser": {

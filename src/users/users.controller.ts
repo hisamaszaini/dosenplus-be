@@ -87,20 +87,22 @@ export class UsersController {
       })
     )
     file: Express.Multer.File,
-    @Body('createUserDto') createUserRaw: string,
+
+    @Body('data') dataRaw: string,
   ) {
-    let createUserDto: CreateFlexibleUserDto;
+    let data: CreateFlexibleUserDto;
 
     try {
-      if (!createUserRaw || typeof createUserRaw !== 'string') {
-        throw new BadRequestException('createUserDto harus berupa string JSON.');
+      if (!dataRaw || typeof dataRaw !== 'string') {
+        throw new BadRequestException('data harus berupa string JSON.');
       }
-      createUserDto = JSON.parse(createUserRaw);
+
+      data = JSON.parse(dataRaw);
     } catch (err) {
-      throw new BadRequestException('createUserDto tidak valid. Harus berupa JSON string yang benar.');
+      throw new BadRequestException('data tidak valid. Harus berupa JSON string yang benar.');
     }
 
-    return this.usersService.create(createUserDto, file);
+    return this.usersService.create(data, file);
   }
 
   @Put('dosen/update-data')
@@ -143,6 +145,7 @@ export class UsersController {
   @UseInterceptors(FileInterceptor('file'))
   async updateFlexibleUser(
     @Param('id', ParseIntPipe) userId: number,
+
     @UploadedFile(
       new ParseFilePipe({
         fileIsRequired: false,
@@ -153,20 +156,22 @@ export class UsersController {
       })
     )
     file: Express.Multer.File,
-    @Body('updateUserDto') updateUserRaw: string,
+
+    @Body('data') dataRaw: string,
   ) {
-    let updateUserDto: UpdateFlexibleUserDto;
+    let data: UpdateFlexibleUserDto;
+
     try {
-      if (!updateUserRaw || typeof updateUserRaw !== 'string') {
-        throw new BadRequestException('updateUserDto harus berupa string JSON.');
+      if (!dataRaw || typeof dataRaw !== 'string') {
+        throw new BadRequestException('data harus berupa string JSON.');
       }
 
-      updateUserDto = JSON.parse(updateUserRaw);
+      data = JSON.parse(dataRaw);
     } catch (error) {
-      throw new BadRequestException('updateUserDto tidak valid. Harus berupa JSON string yang benar.');
+      throw new BadRequestException('data tidak valid. Harus berupa JSON string yang benar.');
     }
 
-    return this.usersService.updateFlexibleUser(userId, updateUserDto, file);
+    return this.usersService.updateFlexibleUser(userId, data, file);
   }
 
   @Get('dosen')
