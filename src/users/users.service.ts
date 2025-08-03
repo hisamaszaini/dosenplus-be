@@ -361,7 +361,16 @@ export class UsersService {
                     await this.fileUtil.writeFile(file, savedFileName);
                 }
 
-                const { password, hashedRefreshToken, ...userData } = user;
+                const updatedUser = await tx.user.findUnique({
+                    where: { id: userId },
+                    include: {
+                        userRoles: { include: { role: true } },
+                        dosen: true,
+                        validator: true,
+                    },
+                });
+
+                const userData = updatedUser;
 
                 return {
                     success: true,
@@ -535,6 +544,7 @@ export class UsersService {
         if (!file) return;
 
         const savedFileName = this.fileUtil.generateFileName(file.originalname);
+        console.log(savedFileName);
 
         const existingUser = await this.prisma.user.findUnique({
             where: { id: userId },
@@ -756,24 +766,35 @@ export class UsersService {
     //     };
     // }
 
-    async findAllDosen(query: any) {
+    async findAllDosen(params: {
+        page?: number;
+        limit?: number;
+        search?: string;
+        jabatan?: string;
+        fakultasId?: number;
+        prodiId?: number;
+        sortBy?: string;
+        sortOrder?: 'asc' | 'desc';
+    }) {
         const {
             page = 1,
             limit = 20,
-            search = '',
+            search,
+            jabatan,
             fakultasId,
             prodiId,
-            jabatan,
             sortBy = 'nama',
             sortOrder = 'asc',
-        } = query;
+        } = params;
 
-        const take = Number(limit);
-        const skip = (Number(page) - 1) * take;
+        const take = Number(limit) || 20;
+        const skip = (page - 1) * take;
 
-        const where: any = {
-            AND: [],
-        };
+        const allowedSortFields = ['nama', 'nip', 'nuptk', 'jabatan', 'createdAt'];
+        const safeSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'nama';
+        const safeSortOrder: 'asc' | 'desc' = sortOrder === 'desc' ? 'desc' : 'asc';
+
+        const where: any = { AND: [] };
 
         if (search) {
             where.AND.push({
@@ -785,6 +806,10 @@ export class UsersService {
             });
         }
 
+        if (jabatan) {
+            where.AND.push({ jabatan });
+        }
+
         if (fakultasId) {
             where.AND.push({ fakultasId: Number(fakultasId) });
         }
@@ -793,20 +818,14 @@ export class UsersService {
             where.AND.push({ prodiId: Number(prodiId) });
         }
 
-        if (jabatan) {
-            where.AND.push({ jabatan });
-        }
-
         if (where.AND.length === 0) delete where.AND;
 
-        const [dosenList, total] = await this.prisma.$transaction([
+        const [data, total] = await this.prisma.$transaction([
             this.prisma.dosen.findMany({
                 where,
                 skip,
                 take,
-                orderBy: {
-                    [sortBy]: sortOrder,
-                },
+                orderBy: { [safeSortBy]: safeSortOrder },
                 include: {
                     prodi: true,
                     fakultas: true,
@@ -815,64 +834,67 @@ export class UsersService {
             this.prisma.dosen.count({ where }),
         ]);
 
-        const data = dosenList.map(d => ({
+        const result = data.map((d) => ({
             id: d.id,
             nama: d.nama,
             nip: d.nip ?? '-',
             nuptk: d.nuptk ?? '-',
-            jabatan: d.jabatan,
+            jabatan: d.jabatan ?? '-',
             prodi: d.prodi?.nama ?? '-',
             fakultas: d.fakultas?.nama ?? '-',
         }));
 
         return {
             success: true,
+            message: 'Data dosen berhasil diambil',
+            data: result,
             meta: {
-                page: Number(page),
+                page,
                 limit: take,
                 total,
                 totalPages: Math.ceil(total / take),
             },
-            data,
         };
     }
 
-    async findAllValidator(query: any) {
+    async findAllValidator(params: {
+        page?: number;
+        limit?: number;
+        search?: string;
+        sortBy?: string;
+        sortOrder?: 'asc' | 'desc';
+    }) {
         const {
             page = 1,
             limit = 20,
             search = '',
             sortBy = 'nama',
             sortOrder = 'asc',
-        } = query;
+        } = params;
 
-        const take = Number(limit);
+        const take = Math.min(Number(limit) || 20, 100);
         const skip = (Number(page) - 1) * take;
 
-        const where: any = {
-            AND: [],
-        };
+        const allowedSortFields = ['nama', 'nip', 'no_hp', 'createdAt'];
+        const safeSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'nama';
+        const safeSortOrder: 'asc' | 'desc' = sortOrder === 'desc' ? 'desc' : 'asc';
+
+        const where: any = {};
 
         if (search) {
-            where.AND.push({
-                OR: [
-                    { nama: { contains: search, mode: 'insensitive' } },
-                    { nip: { contains: search, mode: 'insensitive' } },
-                    { no_hp: { contains: search, mode: 'insensitive' } },
-                ],
-            });
+            where.OR = [
+                { nama: { contains: search, mode: 'insensitive' } },
+                { nip: { contains: search, mode: 'insensitive' } },
+                { no_hp: { contains: search, mode: 'insensitive' } },
+            ];
         }
-
-        if (where.AND.length === 0) delete where.AND;
 
         const [validators, total] = await this.prisma.$transaction([
             this.prisma.validator.findMany({
                 where,
                 skip,
                 take,
-                orderBy: {
-                    [sortBy]: sortOrder,
-                },
+                orderBy: { [safeSortBy]: safeSortOrder },
             }),
             this.prisma.validator.count({ where }),
         ]);
@@ -1034,17 +1056,12 @@ export class UsersService {
                         nuptk: pending.nuptk,
                         jenis_kelamin: pending.jenis_kelamin,
                         no_hp: pending.no_hp,
-                        prodiId: pending.prodiId,
-                        fakultasId: pending.fakultasId,
                         jabatan: pending.jabatan,
-                        fotoPath: pending.fotoPath,
+                        prodi: { connect: { id: pending.prodiId } },
+                        fakultas: { connect: { id: pending.fakultasId } },
                     };
 
-                    if (exists) {
-                        await tx.dosen.update({ where: { id: pending.dosenId }, data });
-                    } else {
-                        await tx.dosen.create({ data: { id: pending.dosenId, ...data } });
-                    }
+                    await tx.dosen.update({ where: { id: pending.dosenId }, data });
 
                     await tx.pendingBiodataDosen.delete({ where: { id } });
                 }

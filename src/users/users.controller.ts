@@ -79,6 +79,7 @@ export class UsersController {
   async create(
     @UploadedFile(
       new ParseFilePipe({
+        fileIsRequired: false,
         validators: [
           new MaxFileSizeValidator({ maxSize: 2 * 1024 * 1024 }), // 2MB
           new FileTypeValidator({ fileType: /(image\/jpeg|image\/jpg|image\/png)/ }),
@@ -144,6 +145,7 @@ export class UsersController {
     @Param('id', ParseIntPipe) userId: number,
     @UploadedFile(
       new ParseFilePipe({
+        fileIsRequired: false,
         validators: [
           new MaxFileSizeValidator({ maxSize: 2 * 1024 * 1024 }), // Maks 2MB
           new FileTypeValidator({ fileType: /(image\/jpeg|image\/jpg|image\/png)/ }),
@@ -167,6 +169,35 @@ export class UsersController {
     return this.usersService.updateFlexibleUser(userId, updateUserDto, file);
   }
 
+  @Get('dosen')
+  @Roles(TypeUserRole.ADMIN)
+  @UseGuards(RolesGuard)
+  findAllDosen(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('search') search?: string,
+    @Query('jabatan') jabatan?: string,
+    @Query('fakultasId') fakultasId?: number,
+    @Query('prodiId') prodiId?: number,
+    @Query('sortBy') sortBy = 'nama',
+    @Query('sortOrder') sortOrder: 'asc' | 'desc' = 'asc',
+  ) {
+    return this.usersService.findAllDosen({ page, limit, search, jabatan, fakultasId, prodiId, sortBy, sortOrder, });
+  }
+
+  @Get('validator')
+  @Roles(TypeUserRole.ADMIN)
+  @UseGuards(RolesGuard)
+  findAllValidator(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('search') search?: string,
+    @Query('sortBy') sortBy = 'nama',
+    @Query('sortOrder') sortOrder: 'asc' | 'desc' = 'asc',
+  ) {
+    return this.usersService.findAllValidator({ page, limit, search, sortBy, sortOrder });
+  }
+
   @Get(':id')
   @Roles(TypeUserRole.ADMIN, TypeUserRole.VALIDATOR)
   @UseGuards(RolesGuard)
@@ -174,20 +205,6 @@ export class UsersController {
     @Param('id', ParseIntPipe) userId: number,
   ) {
     return this.usersService.findById(userId);
-  }
-
-  @Get('dosen')
-  @Roles(TypeUserRole.ADMIN)
-  @UseGuards(RolesGuard)
-  findAllDosen(@Query() query: any) {
-    return this.usersService.findAllDosen(query);
-  }
-
-  @Get('validator')
-  @Roles(TypeUserRole.ADMIN)
-  @UseGuards(RolesGuard)
-  findAllValidator(@Query() query: any) {
-    return this.usersService.findAllValidator(query);
   }
 
   @Delete(':id')
