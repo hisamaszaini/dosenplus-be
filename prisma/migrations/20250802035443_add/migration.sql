@@ -5,6 +5,9 @@ CREATE TYPE "UserStatus" AS ENUM ('ACTIVE', 'INACTIVE');
 CREATE TYPE "TypeUserRole" AS ENUM ('ADMIN', 'DOSEN', 'VALIDATOR');
 
 -- CreateEnum
+CREATE TYPE "StatusValidasi" AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
+
+-- CreateEnum
 CREATE TYPE "Jenjang" AS ENUM ('S1', 'S2', 'S3');
 
 -- CreateEnum
@@ -66,7 +69,7 @@ CREATE TABLE "User" (
 -- CreateTable
 CREATE TABLE "Role" (
     "id" SERIAL NOT NULL,
-    "name" TEXT NOT NULL,
+    "name" "TypeUserRole" NOT NULL,
 
     CONSTRAINT "Role_pkey" PRIMARY KEY ("id")
 );
@@ -87,6 +90,7 @@ CREATE TABLE "Validator" (
     "nip" TEXT,
     "jenis_kelamin" TEXT NOT NULL,
     "no_hp" TEXT,
+    "fotoPath" TEXT,
 
     CONSTRAINT "Validator_pkey" PRIMARY KEY ("id")
 );
@@ -125,6 +129,7 @@ CREATE TABLE "Dosen" (
     "prodiId" INTEGER NOT NULL,
     "fakultasId" INTEGER NOT NULL,
     "jabatan" TEXT,
+    "fotoPath" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updateAt" TIMESTAMP(3) NOT NULL,
 
@@ -145,13 +150,37 @@ CREATE TABLE "DataKepegawaian" (
 );
 
 -- CreateTable
+CREATE TABLE "PendingDosenUpdate" (
+    "id" SERIAL NOT NULL,
+    "dosenId" INTEGER NOT NULL,
+    "data" JSONB NOT NULL,
+    "status" "StatusValidasi" NOT NULL DEFAULT 'PENDING',
+    "catatan" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "PendingDosenUpdate_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "PendingKepegawaianUpdate" (
+    "id" SERIAL NOT NULL,
+    "dosenId" INTEGER NOT NULL,
+    "data" JSONB NOT NULL,
+    "status" "StatusValidasi" NOT NULL DEFAULT 'PENDING',
+    "catatan" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "PendingKepegawaianUpdate_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "Pendidikan" (
     "id" SERIAL NOT NULL,
     "dosenId" INTEGER NOT NULL,
     "kategori" "KategoriPendidikan" NOT NULL,
-    "kegiatan" TEXT,
     "nilaiPak" INTEGER NOT NULL,
     "filePath" TEXT NOT NULL,
+    "statusValidasi" "StatusValidasi" NOT NULL DEFAULT 'PENDING',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -213,6 +242,7 @@ CREATE TABLE "PelaksanaanPendidikan" (
     "kategori" "KategoriKegiatan" NOT NULL,
     "nilaiPak" DOUBLE PRECISION NOT NULL DEFAULT 0,
     "filePath" TEXT NOT NULL,
+    "statusValidasi" "StatusValidasi" NOT NULL DEFAULT 'PENDING',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updateAt" TIMESTAMP(3) NOT NULL,
 
@@ -525,6 +555,12 @@ ALTER TABLE "Dosen" ADD CONSTRAINT "Dosen_fakultasId_fkey" FOREIGN KEY ("fakulta
 
 -- AddForeignKey
 ALTER TABLE "DataKepegawaian" ADD CONSTRAINT "DataKepegawaian_id_fkey" FOREIGN KEY ("id") REFERENCES "Dosen"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PendingDosenUpdate" ADD CONSTRAINT "PendingDosenUpdate_dosenId_fkey" FOREIGN KEY ("dosenId") REFERENCES "Dosen"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PendingKepegawaianUpdate" ADD CONSTRAINT "PendingKepegawaianUpdate_dosenId_fkey" FOREIGN KEY ("dosenId") REFERENCES "Dosen"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Pendidikan" ADD CONSTRAINT "Pendidikan_dosenId_fkey" FOREIGN KEY ("dosenId") REFERENCES "Dosen"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

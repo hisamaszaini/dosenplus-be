@@ -3,16 +3,24 @@ import {
   Body,
   Controller,
   Delete,
+  FileTypeValidator,
   Get,
   HttpCode,
   HttpStatus,
+  MaxFileSizeValidator,
   Param,
+  ParseEnumPipe,
+  ParseFilePipe,
   ParseIntPipe,
   Patch,
   Post,
+  Put,
   Query,
+  Req,
   Request,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
   UsePipes,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -20,8 +28,9 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { TypeUserRole, UserStatus } from '@prisma/client';
 import { UsersService } from './users.service';
-import { ChangePasswordDto, CreateFlexibleUserDto, UpdateFlexibleUserDto } from './dto/user.dto';
+import { ChangePasswordDto, CreateFlexibleUserDto, CreatePendingUpdateDto, UpdateFlexibleUserDto, UpdatePendingStatusDto } from './dto/user.dto';
 import { ZodValidationPipe } from 'src/common/pipes/zod-validation.pipe';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -44,11 +53,72 @@ export class UsersController {
     return this.usersService.changePassword(req.user.sub, dto);
   }
 
+  @Patch('profile/foto')
+  @UseInterceptors(FileInterceptor('file'))
+  async dosenUpdatePhoto(
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 2 * 1024 * 1024 }),
+          new FileTypeValidator({ fileType: /(image\/jpeg|image\/jpg|image\/png)/ }),
+        ],
+      })
+    )
+    file: Express.Multer.File,
+    @Request() req,
+  ) {
+    const userId = req.user.sub;
+    return this.usersService.updatePhoto(userId, file);
+  }
+
   @Post()
   @Roles(TypeUserRole.ADMIN)
+  @HttpCode(HttpStatus.CREATED)
   @UseGuards(RolesGuard)
-  async create(@Body() createUserDto: CreateFlexibleUserDto) {
-    return this.usersService.create(createUserDto);
+  @UseInterceptors(FileInterceptor('file'))
+  async create(
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 2 * 1024 * 1024 }), // 2MB
+          new FileTypeValidator({ fileType: /(image\/jpeg|image\/jpg|image\/png)/ }),
+        ],
+      })
+    )
+    file: Express.Multer.File,
+    @Body('createUserDto') createUserRaw: string,
+  ) {
+    let createUserDto: CreateFlexibleUserDto;
+
+    try {
+      if (!createUserRaw || typeof createUserRaw !== 'string') {
+        throw new BadRequestException('createUserDto harus berupa string JSON.');
+      }
+      createUserDto = JSON.parse(createUserRaw);
+    } catch (err) {
+      throw new BadRequestException('createUserDto tidak valid. Harus berupa JSON string yang benar.');
+    }
+
+    return this.usersService.create(createUserDto, file);
+  }
+
+  @Put('dosen/update-data')
+  @Roles(TypeUserRole.DOSEN)
+  updatePendingData(@Req() req: any, @Body() dto: CreatePendingUpdateDto) {
+    const dosenId = req.user.sub;
+    return this.usersService.submitPendingUpdate(dosenId, dto);
+  }
+
+  @Patch('dosen/pending/:type/:id')
+  @Roles(TypeUserRole.ADMIN, TypeUserRole.VALIDATOR)
+  handlePendingValidation(
+    @Request() req,
+    @Param('type', new ParseEnumPipe(['biodata', 'kepegawaian'])) type: 'biodata' | 'kepegawaian',
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdatePendingStatusDto
+  ) {
+    const reviewerId = req.user.sub;
+    return this.usersService.updatePendingStatus(type, id, reviewerId, dto);
   }
 
   @Get()
@@ -69,10 +139,32 @@ export class UsersController {
   @Patch(':id')
   @Roles(TypeUserRole.ADMIN)
   @UseGuards(RolesGuard)
+  @UseInterceptors(FileInterceptor('file'))
   async updateFlexibleUser(
     @Param('id', ParseIntPipe) userId: number,
-    @Body() updateUserDto: UpdateFlexibleUserDto) {
-    return this.usersService.updateFlexibleUser(userId, updateUserDto);
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 2 * 1024 * 1024 }), // Maks 2MB
+          new FileTypeValidator({ fileType: /(image\/jpeg|image\/jpg|image\/png)/ }),
+        ],
+      })
+    )
+    file: Express.Multer.File,
+    @Body('updateUserDto') updateUserRaw: string,
+  ) {
+    let updateUserDto: UpdateFlexibleUserDto;
+    try {
+      if (!updateUserRaw || typeof updateUserRaw !== 'string') {
+        throw new BadRequestException('updateUserDto harus berupa string JSON.');
+      }
+
+      updateUserDto = JSON.parse(updateUserRaw);
+    } catch (error) {
+      throw new BadRequestException('updateUserDto tidak valid. Harus berupa JSON string yang benar.');
+    }
+
+    return this.usersService.updateFlexibleUser(userId, updateUserDto, file);
   }
 
   @Get(':id')

@@ -33,30 +33,34 @@ enum TypeUserRole {
 
 enum StatusValidasi {
   PENDING
-  ACCEPT
-  REJECT
+  APPROVED
+  REJECTED
 }
 
 model User {
-  id                   Int        @id @default(autoincrement())
-  email                String     @unique
-  username             String     @unique
-  name                 String
-  password             String
-  status               UserStatus @default(ACTIVE)
-  hashedRefreshToken   String?
-  passwordResetToken   String?
-  passwordResetExpires DateTime?
-  createdAt            DateTime   @default(now())
-  updatedAt            DateTime   @updatedAt
-  dosen                Dosen?
-  validator            Validator?
-  userRoles            UserRole[]
+  id                     Int                      @id @default(autoincrement())
+  email                  String                   @unique
+  username               String                   @unique
+  name                   String
+  password               String
+  status                 UserStatus               @default(ACTIVE)
+  fotoPath               String?
+  hashedRefreshToken     String?
+  passwordResetToken     String?
+  passwordResetExpires   DateTime?
+  createdAt              DateTime                 @default(now())
+  updatedAt              DateTime                 @updatedAt
+  dosen                  Dosen?
+  validator              Validator?
+  userRoles              UserRole[]
+  PendingBiodataDosen    PendingBiodataDosen[]
+  PendingDataKepegawaian PendingDataKepegawaian[]
+  ActivityLog            ActivityLog[]
 }
 
 model Role {
-  id        Int        @id @default(autoincrement())
-  name      TypeUserRole     @unique
+  id        Int          @id @default(autoincrement())
+  name      TypeUserRole @unique
   userRoles UserRole[]
 }
 
@@ -94,6 +98,7 @@ model Fakultas {
   ProdukBahanLainnya        ProdukBahanLainnya[]
   JabatanStruktural         JabatanStruktural[]
   PengembanganDiri          PengembanganDiri[]
+  PendingBiodataDosen       PendingBiodataDosen[]
 }
 
 model Prodi {
@@ -117,6 +122,7 @@ model Prodi {
   JabatanStruktural         JabatanStruktural[]
   BimbingDosen              BimbingDosen[]
   PengembanganDiri          PengembanganDiri[]
+  PendingBiodataDosen       PendingBiodataDosen[]
 }
 
 model Dosen {
@@ -133,11 +139,14 @@ model Dosen {
   fakultas        Fakultas         @relation(fields: [fakultasId], references: [id])
   jabatan         String?
   dataKepegawaian DataKepegawaian?
-  createdAt       DateTime         @default(now())
-  updateAt        DateTime         @updatedAt
-  pendidikan      Pendidikan[]
 
-  PelaksanaanPendidikan PelaksanaanPendidikan[]
+  createdAt DateTime @default(now())
+  updateAt  DateTime @updatedAt
+
+  pendidikan             Pendidikan[]
+  PelaksanaanPendidikan  PelaksanaanPendidikan[]
+  PendingDataKepegawaian PendingDataKepegawaian?
+  PendingBiodataDosen    PendingBiodataDosen?
 }
 
 model DataKepegawaian {
@@ -149,6 +158,51 @@ model DataKepegawaian {
   bpjs_tkerja    String?
   no_kk          String?
   dosen          Dosen   @relation(fields: [id], references: [id], onDelete: Cascade)
+}
+
+model PendingBiodataDosen {
+  id            Int      @id @default(autoincrement())
+  dosenId       Int      @unique
+  nama          String
+  nip           String?
+  nuptk         String?
+  jenis_kelamin String
+  no_hp         String?
+  prodiId       Int
+  prodi         Prodi    @relation(fields: [prodiId], references: [id])
+  fakultasId    Int
+  fakultas      Fakultas @relation(fields: [fakultasId], references: [id])
+  jabatan       String?
+  fotoPath      String?
+
+  status     StatusValidasi @default(PENDING)
+  reviewerId Int?
+  reviewer   User?          @relation(fields: [reviewerId], references: [id])
+  catatan    String?
+
+  dosen     Dosen    @relation(fields: [dosenId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PendingDataKepegawaian {
+  id             Int     @id @default(autoincrement())
+  dosenId        Int     @unique
+  dosen          Dosen   @relation(fields: [dosenId], references: [id], onDelete: Cascade)
+  npwp           String?
+  nama_bank      String?
+  no_rek         String?
+  bpjs_kesehatan String?
+  bpjs_tkerja    String?
+  no_kk          String?
+
+  status     StatusValidasi @default(PENDING)
+  reviewerId Int?
+  reviewer   User?          @relation(fields: [reviewerId], references: [id])
+  catatan    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum Jenjang {
@@ -170,9 +224,10 @@ model Pendidikan {
   kategori KategoriPendidikan
   nilaiPak Int
 
-  filePath  String
+  filePath String
 
   statusValidasi StatusValidasi @default(PENDING)
+  catatan        String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -273,7 +328,9 @@ model PelaksanaanPendidikan {
 
   dosen    Dosen    @relation(fields: [dosenId], references: [id])
   semester Semester @relation(fields: [semesterId], references: [id])
+
   statusValidasi StatusValidasi @default(PENDING)
+  catatan        String?
 
   perkuliahan          Perkuliahan?
   bimbinganSeminar     BimbinganSeminar?
@@ -510,4 +567,14 @@ model PengembanganDiri {
   pelaksanaan PelaksanaanPendidikan @relation(fields: [pelaksanaanId], references: [id])
   prodi       Prodi                 @relation(fields: [prodiId], references: [id])
   fakultas    Fakultas              @relation(fields: [fakultasId], references: [id])
+}
+
+model ActivityLog {
+  id         Int        @id @default(autoincrement())
+  userId     Int
+  user       User       @relation(fields: [userId], references: [id])
+  targetType String
+  targetId   Int
+  action     String
+  createdAt  DateTime   @default(now())
 }

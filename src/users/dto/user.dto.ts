@@ -1,4 +1,4 @@
-import { Dosen, TypeUserRole, UserStatus, Validator } from '@prisma/client';
+import { Dosen, StatusValidasi, TypeUserRole, UserStatus, Validator } from '@prisma/client';
 import { z } from 'zod';
 
 export const USER_STATUSES = {
@@ -38,13 +38,7 @@ export const CreateDosenBiodataSchema = z.object({
   prodiId: z.preprocess((val) => Number(val), z.number().int()),
   fakultasId: z.preprocess((val) => Number(val), z.number().int()),
   jabatan: z.enum(['Asisten Ahli', 'Lektor', 'Lektor Kepala', 'Guru Besar']),
-});
-
-export const CreateValidatorBiodataSchema = z.object({
-  nama: z.string().min(3),
-  nip: z.string().optional().nullable().transform((val) => (val?.trim() === '' ? null : val)),
-  jenis_kelamin: z.enum(['Laki-laki', 'Perempuan']),
-  no_hp: z.string().optional().nullable().transform((val) => (val?.trim() === '' ? null : val)),
+  fotoPath: z.string().optional(),
 });
 
 export const CreateDataKepegawaianSchema = z.object({
@@ -54,6 +48,14 @@ export const CreateDataKepegawaianSchema = z.object({
   bpjs_kesehatan: z.string().optional(),
   bpjs_tkerja: z.string().optional(),
   no_kk: z.string().optional(),
+});
+
+export const CreateValidatorBiodataSchema = z.object({
+  nama: z.string().min(3),
+  nip: z.string().optional().nullable().transform((val) => (val?.trim() === '' ? null : val)),
+  jenis_kelamin: z.enum(['Laki-laki', 'Perempuan']),
+  no_hp: z.string().optional().nullable().transform((val) => (val?.trim() === '' ? null : val)),
+  fotoPath: z.string().optional(),
 });
 
 export const UserStatusEnum = Object.values(USER_STATUSES) as [string, ...string[]];
@@ -76,18 +78,39 @@ export const CreateUserSchema = z
     message: 'Password dan konfirmasi password tidak cocok',
     path: ['confirmPassword'],
   });
-  // .transform(({ confirmPassword, ...rest }) => rest);
+// .transform(({ confirmPassword, ...rest }) => rest);
 
 export const CreateFlexibleUserSchema = z.object({
   dataUser: CreateUserSchema,
   dosenBiodata: CreateDosenBiodataSchema.optional(),
   validatorBiodata: CreateValidatorBiodataSchema.optional(),
   dataKepegawaian: CreateDataKepegawaianSchema.optional(),
+}).superRefine((data, ctx) => {
+  const roles = data.dataUser.roles || [];
+
+  if (roles.includes('DOSEN')) {
+    if (!data.dosenBiodata) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['dosenBiodata'],
+        message: 'Data dosen wajib diisi karena role DOSEN dipilih',
+      });
+    }
+  }
+
+  if (roles.includes('VALIDATOR')) {
+    if (!data.validatorBiodata) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['validatorBiodata'],
+        message: 'Data validator wajib diisi karena role VALIDATOR dipilih',
+      });
+    }
+  }
 });
 
 export const RoleDataSchema = z.object({
   id: z.number(),
-  // name: z.nativeEnum(TypeUserRole),
   name: z.enum(UserRoleEnum),
 });
 
@@ -147,28 +170,54 @@ export const UpdateValidatorProfileSchema = z.object({
 
 export const UpdateFlexibleUserSchema = z.object({
   dataUser: BaseUpdateUserSchema,
-}).and(z.object({
-  dosenBiodata: CreateDosenBiodataSchema,
-  dataKepegawaian: CreateDataKepegawaianSchema.optional(),
-}).partial())
+})
+  .and(z.object({
+    dosenBiodata: CreateDosenBiodataSchema,
+    dataKepegawaian: CreateDataKepegawaianSchema.optional(),
+  }).partial())
   .and(z.object({
     validatorBiodata: CreateValidatorBiodataSchema,
   }).partial())
-  .refine(data => !(data.dataUser.roles?.includes('DOSEN') && !data.dosenBiodata), {
-    message: 'Biodata DOSEN wajib diisi karena role DOSEN dipilih.',
-    path: ['dosenBiodata']
-  })
-  .refine(data => !(data.dataUser.roles?.includes('VALIDATOR') && !data.validatorBiodata), {
-    message: 'Biodata VALIDATOR wajib diisi karena role VALIDATOR dipilih.',
-    path: ['validatorBiodata']
-  })
-  .refine(data => !(data.dosenBiodata && !data.dataUser.roles?.includes('DOSEN')), {
-    message: 'Role DOSEN tidak dipilih, tetapi biodata DOSEN dikirim.',
-    path: ['dosenBiodata']
-  })
-  .refine(data => !(data.validatorBiodata && !data.dataUser.roles?.includes('VALIDATOR')), {
-    message: 'Role VALIDATOR tidak dipilih, tetapi biodata VALIDATOR dikirim.',
-    path: ['validatorBiodata']
+  .superRefine((data, ctx) => {
+    const roles = data.dataUser.roles || [];
+
+    if (roles.includes('DOSEN') && !data.dosenBiodata) {
+      ctx.addIssue({
+        path: ['dosenBiodata'],
+        message: 'Biodata DOSEN wajib diisi karena role DOSEN dipilih.',
+      });
+    }
+
+    if (!roles.includes('DOSEN') && data.dosenBiodata) {
+      const isEmpty = Object.values(data.dosenBiodata).every(
+        (val) => val === '' || val === null || val === undefined || val === 0
+      );
+      if (!isEmpty) {
+        ctx.addIssue({
+          path: ['dosenBiodata'],
+          message: 'Role DOSEN tidak dipilih, tetapi biodata DOSEN dikirim.',
+        });
+      }
+    }
+
+    if (roles.includes('VALIDATOR') && !data.validatorBiodata) {
+      ctx.addIssue({
+        path: ['validatorBiodata'],
+        message: 'Biodata VALIDATOR wajib diisi karena role VALIDATOR dipilih.',
+      });
+    }
+
+    if (!roles.includes('VALIDATOR') && data.validatorBiodata) {
+      const isEmpty = Object.values(data.validatorBiodata).every(
+        (val) => val === '' || val === null || val === undefined
+      );
+      if (!isEmpty) {
+        ctx.addIssue({
+          path: ['validatorBiodata'],
+          message: 'Role VALIDATOR tidak dipilih, tetapi biodata VALIDATOR dikirim.',
+        });
+      }
+    }
   });
 
 export const ChangePasswordSchema = z
@@ -228,3 +277,28 @@ export type UpdateDataKepegawaianDto = z.infer<typeof DataKepegawaianSchema>;
 export type UpdateFlexibleUserDto = z.infer<typeof UpdateFlexibleUserSchema>;
 export type RoleData = z.infer<typeof RoleDataSchema>;
 export type UserRole = z.infer<typeof UserRoleSchema>;
+
+export const CreatePendingBiodataDosenSchema = CreateDosenBiodataSchema.extend({
+  status: z.nativeEnum(StatusValidasi).default(StatusValidasi.PENDING),
+  catatan: z.string().optional().nullable().transform((val) => (val?.trim() || null))
+});
+
+export const CreatePendingDataKepegawaianSchema = CreateDataKepegawaianSchema.extend({
+  status: z.nativeEnum(StatusValidasi).default(StatusValidasi.PENDING),
+  catatan: z.string().optional().nullable().transform((val) => (val?.trim() || null))
+});
+
+export const CreatePendingUpdateSchema = z.object({
+  biodata: CreatePendingBiodataDosenSchema.optional(),
+  kepegawaian: CreatePendingDataKepegawaianSchema.optional(),
+}).refine((data) => data.biodata || data.kepegawaian, {
+  message: 'Setidaknya salah satu dari biodata atau kepegawaian harus diisi.',
+});
+
+export const UpdatePendingStatusSchema = z.object({
+  status: z.nativeEnum(StatusValidasi),
+  catatan: z.string().optional().nullable().transform((val) => val?.trim() || null),
+});
+
+export type CreatePendingUpdateDto = z.infer<typeof CreatePendingUpdateSchema>;
+export type UpdatePendingStatusDto = z.infer<typeof UpdatePendingStatusSchema>;

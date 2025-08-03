@@ -2,23 +2,30 @@ import {
     BadRequestException,
     ForbiddenException,
     Injectable,
+    InternalServerErrorException,
     NotFoundException,
     UnauthorizedException,
 } from '@nestjs/common';
+import * as path from 'path';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from 'prisma/prisma.service';
 import { Prisma, PrismaClient, TypeUserRole, UserRole, UserStatus } from '@prisma/client';
 import { HashAndEncryptService } from 'src/utils/hashAndEncrypt';
 
-import { BaseUpdateUserSchema, ChangePasswordDto, ChangePasswordSchema, CreateFlexibleUserSchema, UpdateDosenProfileSchema, UpdateFlexibleUserDto, UpdateFlexibleUserSchema, UpdateValidatorProfileSchema, type CreateFlexibleUserDto } from './dto/user.dto';
-import z from 'zod';
+import { BaseUpdateUserSchema, ChangePasswordDto, ChangePasswordSchema, CreateFlexibleUserSchema, CreatePendingBiodataDosenSchema, CreatePendingDataKepegawaianSchema, CreatePendingUpdateDto, CreatePendingUpdateSchema, UpdateDosenProfileSchema, UpdateFlexibleUserDto, UpdateFlexibleUserSchema, UpdatePendingStatusDto, UpdatePendingStatusSchema, UpdateValidatorProfileSchema, type CreateFlexibleUserDto } from './dto/user.dto';
+import z, { success, ZodError } from 'zod';
+import { DataAndFileService } from 'src/utils/dataAndFile';
+import { LogActivityService } from 'src/utils/logActivity';
 
 const SALT_ROUNDS = 10;
 type TransactionClient = Omit<PrismaClient, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>;
 
 @Injectable()
 export class UsersService {
-    constructor(private prisma: PrismaService, private hashEncryptUtil: HashAndEncryptService) { }
+    private readonly UPLOAD_PATH = path.resolve(process.cwd(), 'uploads/profil');
+
+    constructor(private prisma: PrismaService, private hashEncryptUtil: HashAndEncryptService, private readonly fileUtil: DataAndFileService, private logActivityUtil: LogActivityService
+    ) { }
 
     private async validateUniqueUser(email: string, username: string) {
         const existingUser = await this.prisma.user.findFirst({ where: { OR: [{ email }, { username }] } });
@@ -142,7 +149,7 @@ export class UsersService {
         }
     }
 
-    async create(dto: CreateFlexibleUserDto) {
+    async create(dto: CreateFlexibleUserDto, file?: Express.Multer.File) {
         const validationResult = CreateFlexibleUserSchema.safeParse(dto);
 
         if (!validationResult.success) {
@@ -159,6 +166,18 @@ export class UsersService {
         }
 
         const validatedData = validationResult.data;
+
+        const filePath = file?.path || file?.filename;
+        const savedFileName = file ? this.fileUtil.generateFileName(file.originalname) : undefined;
+
+        if (file && savedFileName) {
+            if (validatedData.dosenBiodata) {
+                validatedData.dosenBiodata.fotoPath = savedFileName;
+            }
+            if (validatedData.validatorBiodata) {
+                validatedData.validatorBiodata.fotoPath = savedFileName;
+            }
+        }
 
         await this.validateUniqueUser(validatedData.dataUser.email, validatedData.dataUser.username);
 
@@ -192,19 +211,33 @@ export class UsersService {
             await this.validateFakultasProdi(validatedData.dosenBiodata.fakultasId, validatedData.dosenBiodata.prodiId);
         }
 
-        return this.prisma.$transaction(async (tx) => {
-            const user = await this.createUserWithRoles(tx, validatedData.dataUser, roles);
-            await this.handleProfileCreationByRole(tx, user.id, validatedData);
-            const { password, hashedRefreshToken, ...userData } = user;
+        try {
+            if (file && savedFileName) {
+                await this.fileUtil.writeFile(file, savedFileName);
+            }
+
+            const result = await this.prisma.$transaction(async (tx) => {
+                const user = await this.createUserWithRoles(tx, validatedData.dataUser, roles);
+                await this.handleProfileCreationByRole(tx, user.id, validatedData);
+                const { password, hashedRefreshToken, ...userData } = user;
+                return userData;
+            });
+
             return {
                 success: true,
                 message: 'User berhasil ditambahkan',
-                userData,
+                userData: result,
             };
-        });
+
+        } catch (error) {
+            if (file && savedFileName) {
+                await this.fileUtil.deleteFile(savedFileName);
+            }
+            throw new InternalServerErrorException('Gagal menyimpan user');
+        }
     }
 
-    async updateFlexibleUser(userId: number, dto: UpdateFlexibleUserDto) {
+    async updateFlexibleUser(userId: number, dto: UpdateFlexibleUserDto, file?: Express.Multer.File) {
         const result = UpdateFlexibleUserSchema.safeParse(dto);
         if (!result.success) {
             const errors: Record<string, string> = {};
@@ -214,10 +247,21 @@ export class UsersService {
             throw new BadRequestException({ success: false, message: errors, data: null });
         }
 
-
         const validated = result.data;
 
         console.log(validated);
+
+        let savedFileName: string | undefined;
+        if (file) {
+            savedFileName = this.fileUtil.generateFileName(file.originalname);
+
+            if (validated.dosenBiodata) {
+                validated.dosenBiodata.fotoPath = savedFileName;
+            }
+            if (validated.validatorBiodata) {
+                validated.validatorBiodata.fotoPath = savedFileName;
+            }
+        }
 
         await this.validateUniqueBiodata(userId, validated);
 
@@ -313,6 +357,10 @@ export class UsersService {
                     }
                 }
 
+                if (file && savedFileName) {
+                    await this.fileUtil.writeFile(file, savedFileName);
+                }
+
                 const { password, hashedRefreshToken, ...userData } = user;
 
                 return {
@@ -322,6 +370,11 @@ export class UsersService {
                 };
             });
         } catch (error) {
+
+            if (file && savedFileName) {
+                await this.fileUtil.deleteFile(savedFileName);
+            }
+
             if (
                 error instanceof Prisma.PrismaClientKnownRequestError &&
                 error.code === 'P2002'
@@ -353,7 +406,6 @@ export class UsersService {
 
         return errors;
     }
-
 
     async updateSelfProfile(userId: number, dto: any) {
         const user = await this.prisma.user.findUnique({
@@ -479,6 +531,38 @@ export class UsersService {
         throw new ForbiddenException('Anda tidak memiliki hak untuk memperbarui profil.');
     }
 
+    async updatePhoto(userId: number, file?: Express.Multer.File) {
+        if (!file) return;
+
+        const savedFileName = this.fileUtil.generateFileName(file.originalname);
+
+        const existingUser = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: { fotoPath: true },
+        });
+
+        try {
+            await this.fileUtil.writeFile(file, savedFileName);
+
+            await this.prisma.user.update({
+                where: { id: userId },
+                data: { fotoPath: savedFileName },
+            });
+
+            if (existingUser?.fotoPath) {
+                await this.fileUtil.deleteFile(existingUser.fotoPath);
+            }
+
+            return {
+                success: true,
+                message: 'Foto profil berhasil diperbarui',
+            };
+        } catch (error) {
+            await this.fileUtil.deleteFile(savedFileName);
+            throw new Error(`Gagal mengganti foto: ${error.message}`);
+        }
+    }
+
     async changePassword(userId: number, dto: ChangePasswordDto) {
         const result = ChangePasswordSchema.safeParse(dto);
         if (!result.success) {
@@ -519,8 +603,8 @@ export class UsersService {
         page?: number;
         limit?: number;
         search?: string;
-        role?: TypeUserRole;
-        status?: UserStatus;
+        role?: TypeUserRole | '';
+        status?: UserStatus | '';
         sortBy?: string;
         sortOrder?: 'asc' | 'desc';
     }) {
@@ -534,33 +618,36 @@ export class UsersService {
             sortOrder = 'desc',
         } = params;
 
-        const take = Number(limit) || 20;
+        const take = Number(limit) || 10;
 
         const allowedSortFields = ['nama', 'email', 'status', 'createdAt'];
         const safeSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'createdAt';
         const safeSortOrder: 'asc' | 'desc' = sortOrder === 'asc' ? 'asc' : 'desc';
 
-        const where: any = {};
+        const where: any = {
+            AND: [],
+        };
 
         if (search) {
-            where.OR = [
-                { nama: { contains: search, mode: 'insensitive' } },
-                { email: { contains: search, mode: 'insensitive' } },
-            ];
+            where.AND.push({
+                OR: [
+                    { name: { contains: search, mode: 'insensitive' } },
+                    { email: { contains: search, mode: 'insensitive' } },
+                    { username: { contains: search, mode: 'insensitive' } },
+                ],
+            });
         }
 
-        if (role !== undefined) {
-            where.userRoles = {
-                some: {
-                    role: {
-                        name: role,
-                    },
+        if (status) {
+            where.AND.push({ status });
+        }
+
+        if (role) {
+            where.AND.push({
+                userRoles: {
+                    some: { role: { name: role } },
                 },
-            };
-        }
-
-        if (status !== undefined) {
-            where.status = status;
+            });
         }
 
         try {
@@ -568,6 +655,18 @@ export class UsersService {
                 this.prisma.user.findMany({
                     where,
                     orderBy: { [safeSortBy]: safeSortOrder },
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        status: true,
+                        createdAt: true,
+                        userRoles: {
+                            select: {
+                                role: { select: { name: true } },
+                            },
+                        }
+                    },
                     skip: (page - 1) * take,
                     take: take,
                 }),
@@ -835,6 +934,173 @@ export class UsersService {
             success: true,
             message: 'User berhasil dihapus.',
         };
+    }
+
+    async submitPendingUpdate(dosenId: number, dto: CreatePendingUpdateDto) {
+        const parsed = CreatePendingUpdateSchema.safeParse(dto);
+        if (!parsed.success) {
+            throw new BadRequestException({
+                success: false,
+                message: this.formatZodErrors(parsed.error),
+                data: null,
+            });
+        }
+
+        const { biodata, kepegawaian } = parsed.data;
+
+        return this.prisma.$transaction(async (tx) => {
+            if (biodata) {
+                const savedBiodata = await tx.pendingBiodataDosen.upsert({
+                    where: { dosenId },
+                    update: {
+                        ...biodata,
+                        status: 'PENDING',
+                    },
+                    create: {
+                        ...biodata,
+                        dosenId,
+                        status: 'PENDING',
+                    },
+                });
+
+                await this.logActivityUtil.createLog(dosenId, 'BIODATA', savedBiodata.id, 'CREATE')
+            }
+
+            if (kepegawaian) {
+                const savedDataKepegawaian = await tx.pendingDataKepegawaian.upsert({
+                    where: { dosenId },
+                    update: {
+                        ...kepegawaian,
+                        status: 'PENDING',
+                    },
+                    create: {
+                        ...kepegawaian,
+                        dosenId,
+                        status: 'PENDING',
+                    },
+                });
+
+                await this.logActivityUtil.createLog(dosenId, 'DATA KEPEGAWAIAN', savedDataKepegawaian.id, 'CREATE')
+            }
+
+            return {
+                success: true,
+                message: 'Permintaan update telah dikirim dan menunggu peninjauan.',
+            };
+        });
+    }
+
+    async updatePendingStatus(type: 'biodata' | 'kepegawaian', id: number, reviewerId: number, dto: UpdatePendingStatusDto
+    ) {
+        const parsed = UpdatePendingStatusSchema.safeParse(dto);
+        if (!parsed.success) {
+            throw new BadRequestException({
+                success: false,
+                message: this.formatZodErrors(parsed.error),
+                data: null,
+            });
+        }
+
+        const { status, catatan } = parsed.data;
+
+        return this.prisma.$transaction(async (tx) => {
+            if (type === 'biodata') {
+                const pending = await tx.pendingBiodataDosen.findUnique({
+                    where: { id },
+                });
+                if (!pending) throw new NotFoundException('Data pending biodata tidak ditemukan');
+
+                if (pending.status !== 'PENDING') {
+                    throw new BadRequestException('Data ini sudah pernah divalidasi');
+                }
+
+                await tx.pendingBiodataDosen.update({
+                    where: { id },
+                    data: { status, reviewerId, catatan },
+                });
+
+                await this.logActivityUtil.createLog(
+                    reviewerId,
+                    'BIODATA',
+                    id,
+                    status
+                );
+
+                if (status === 'APPROVED') {
+                    const exists = await tx.dosen.findUnique({ where: { id: pending.dosenId } });
+                    const data = {
+                        nama: pending.nama,
+                        nip: pending.nip,
+                        nuptk: pending.nuptk,
+                        jenis_kelamin: pending.jenis_kelamin,
+                        no_hp: pending.no_hp,
+                        prodiId: pending.prodiId,
+                        fakultasId: pending.fakultasId,
+                        jabatan: pending.jabatan,
+                        fotoPath: pending.fotoPath,
+                    };
+
+                    if (exists) {
+                        await tx.dosen.update({ where: { id: pending.dosenId }, data });
+                    } else {
+                        await tx.dosen.create({ data: { id: pending.dosenId, ...data } });
+                    }
+
+                    await tx.pendingBiodataDosen.delete({ where: { id } });
+                }
+
+                return { success: true, message: `Validasi biodata ${status.toLowerCase()}` };
+            }
+
+            if (type === 'kepegawaian') {
+                const pending = await tx.pendingDataKepegawaian.findUnique({ where: { id } });
+                if (!pending) throw new NotFoundException('Data pending kepegawaian tidak ditemukan');
+
+                await tx.pendingDataKepegawaian.update({
+                    where: { id },
+                    data: { status, reviewerId, catatan },
+                });
+
+                await this.logActivityUtil.createLog(
+                    reviewerId,
+                    'DATA KEPEGAWAIAN',
+                    id,
+                    status
+                );
+
+                if (status === 'APPROVED') {
+                    const exists = await tx.dataKepegawaian.findUnique({ where: { id: pending.dosenId } });
+                    const data = {
+                        npwp: pending.npwp,
+                        nama_bank: pending.nama_bank,
+                        no_rek: pending.no_rek,
+                        bpjs_kesehatan: pending.bpjs_kesehatan,
+                        bpjs_tkerja: pending.bpjs_tkerja,
+                        no_kk: pending.no_kk,
+                    };
+
+                    if (exists) {
+                        await tx.dataKepegawaian.update({ where: { id: pending.dosenId }, data });
+                    } else {
+                        await tx.dataKepegawaian.create({ data: { id: pending.dosenId, ...data } });
+                    }
+
+                    await tx.pendingDataKepegawaian.delete({ where: { id } });
+                }
+
+                return { success: true, message: `Validasi data kepegawaian ${status.toLowerCase()}` };
+            }
+
+            throw new BadRequestException('Tipe data tidak valid');
+        });
+    }
+
+    private formatZodErrors(error: ZodError) {
+        const result: Record<string, string> = {};
+        for (const issue of error.issues) {
+            result[issue.path.join('.')] = issue.message;
+        }
+        return result;
     }
 
 }
