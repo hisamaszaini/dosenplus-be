@@ -1,35 +1,19 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
-import { CreateFakultasDto, UpdateFakultasDto } from './dto/fakultas.dto';
+import { CreateFakultasDto, createFakultasSchema, UpdateFakultasDto, updateFakultasSchema } from './dto/fakultas.dto';
+import { parseAndThrow } from 'src/common/utils/zod-helper';
+import { handleCreateError, handleUpdateError } from 'src/common/utils/prisma-error-handler';
 
 @Injectable()
 export class FakultasService {
   constructor(private prisma: PrismaService) { }
 
-  async create(createFakultasDto: CreateFakultasDto) {
-    const { kode, nama } = createFakultasDto;
-
-    const [existingKode, existingNama] = await Promise.all([
-      this.prisma.fakultas.findUnique({ where: { kode } }),
-      this.prisma.fakultas.findFirst({ where: { nama } })
-    ]);
-
-    const errors: Record<string, string> = {};
-
-    if (existingKode) {
-      errors.kode = 'Kode fakultas sudah digunakan';
-    }
-    if (existingNama) {
-      errors.nama = 'Nama fakultas sudah digunakan';
-    }
-
-    if (Object.keys(errors).length > 0) {
-      throw new BadRequestException({ message: errors });
-    }
+  async create(rawData: CreateFakultasDto) {
+    const data = parseAndThrow(createFakultasSchema, rawData);
 
     try {
       const created = await this.prisma.fakultas.create({
-        data: createFakultasDto,
+        data: data,
       });
 
       return {
@@ -38,7 +22,27 @@ export class FakultasService {
         data: created,
       };
     } catch (error) {
-      throw new BadRequestException('Gagal membuat fakultas');
+      handleCreateError(error, 'fakultas');
+    }
+  }
+
+  async update(id: number, rawData: UpdateFakultasDto) {
+
+    const data = parseAndThrow(updateFakultasSchema, rawData);
+
+    try {
+      const updated = await this.prisma.fakultas.update({
+        where: { id },
+        data: data,
+      });
+
+      return {
+        success: true,
+        message: 'Fakultas berhasil diperbarui',
+        data: updated,
+      };
+    } catch (error) {
+      handleUpdateError(error, 'fakultas');
     }
   }
 
@@ -101,73 +105,6 @@ export class FakultasService {
         throw error;
       }
       throw new BadRequestException('Gagal mengambil data fakultas');
-    }
-  }
-
-  async update(id: number, updateFakultasDto: UpdateFakultasDto) {
-
-    console.log(`[UPDATE Fakultas]: ${updateFakultasDto}`);
-
-    const { kode, nama } = updateFakultasDto;
-
-    const existingFakultas = await this.prisma.fakultas.findUnique({ where: { id } });
-    if (!existingFakultas) {
-      throw new NotFoundException('Fakultas tidak ditemukan');
-    }
-
-    const errors: Record<string, string> = {};
-
-    const checkPromises: Promise<{ field: string; exists: boolean }>[] = [];
-
-    if (kode && kode !== existingFakultas.kode) {
-      checkPromises.push(
-        this.prisma.fakultas.findUnique({ where: { kode } })
-          .then(result => ({ field: 'kode', exists: !!result }))
-      );
-    }
-
-    if (nama && nama !== existingFakultas.nama) {
-      checkPromises.push(
-        this.prisma.fakultas.findFirst({
-          where: {
-            nama,
-            NOT: { id },
-          },
-        }).then(result => ({ field: 'nama', exists: !!result }))
-      );
-    }
-
-    if (checkPromises.length > 0) {
-      const results = await Promise.all(checkPromises);
-
-      results.forEach(result => {
-        if (result.exists) {
-          if (result.field === 'kode') {
-            errors.kode = 'Kode fakultas sudah digunakan oleh data lain';
-          } else if (result.field === 'nama') {
-            errors.nama = 'Nama fakultas sudah digunakan oleh data lain';
-          }
-        }
-      });
-    }
-
-    if (Object.keys(errors).length > 0) {
-      throw new BadRequestException({ message: errors });
-    }
-
-    try {
-      const updated = await this.prisma.fakultas.update({
-        where: { id },
-        data: updateFakultasDto,
-      });
-
-      return {
-        success: true,
-        message: 'Fakultas berhasil diperbarui',
-        data: updated,
-      };
-    } catch (error) {
-      throw new BadRequestException('Gagal memperbarui fakultas');
     }
   }
 

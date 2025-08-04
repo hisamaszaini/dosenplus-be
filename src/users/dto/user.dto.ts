@@ -38,7 +38,6 @@ export const CreateDosenBiodataSchema = z.object({
   prodiId: z.preprocess((val) => Number(val), z.number().int()),
   fakultasId: z.preprocess((val) => Number(val), z.number().int()),
   jabatan: z.enum(['Asisten Ahli', 'Lektor', 'Lektor Kepala', 'Guru Besar']),
-  fotoPath: z.string().optional(),
 });
 
 export const CreateDataKepegawaianSchema = z.object({
@@ -55,7 +54,6 @@ export const CreateValidatorBiodataSchema = z.object({
   nip: z.string().optional().nullable().transform((val) => (val?.trim() === '' ? null : val)),
   jenis_kelamin: z.enum(['Laki-laki', 'Perempuan']),
   no_hp: z.string().optional().nullable().transform((val) => (val?.trim() === '' ? null : val)),
-  fotoPath: z.string().optional(),
 });
 
 export const UserStatusEnum = Object.values(USER_STATUSES) as [string, ...string[]];
@@ -72,7 +70,8 @@ export const CreateUserSchema = z
     confirmPassword: z.string().min(8),
     // roles: z.array(z.nativeEnum(TypeUserRole)).optional(),
     // roles: z.array(z.enum(UserRoleEnum)).optional(),
-    roles: z.array(z.nativeEnum(USER_ROLES)).optional()
+    roles: z.array(z.nativeEnum(USER_ROLES)).optional(),
+    fotoPath: z.string().optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Password dan konfirmasi password tidak cocok',
@@ -141,7 +140,8 @@ export const BaseUpdateUserSchema = z
     status: z.nativeEnum(UserStatus),
     password: z.string().min(8).optional().or(z.literal('')),
     confirmPassword: z.string().min(8).optional().or(z.literal('')),
-    roles: z.array(z.nativeEnum(USER_ROLES)).optional()
+    roles: z.array(z.nativeEnum(USER_ROLES)).optional(),
+    fotoPath: z.string().optional(),
   })
   .refine((data) => {
     if (data.password || data.confirmPassword) {
@@ -253,6 +253,7 @@ export type User = {
   name: string;
   email: string;
   username: string;
+  fotoPath?: string;
   status: UserStatus;
   userRoles: UserRole[];
   dosen?: Dosen | null;

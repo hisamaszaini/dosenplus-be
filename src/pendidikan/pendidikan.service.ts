@@ -5,14 +5,12 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import * as fs from 'fs';
-import * as path from 'path';
-import { v4 as uuidv4 } from 'uuid';
 import { PrismaService } from 'prisma/prisma.service';
 import { KategoriPendidikan, StatusValidasi, TypeUserRole } from '@prisma/client';
 import { CreatePendidikanDto, fullPendidikanSchema } from './dto/create-pendidikan.dto';
 import { fullUpdatePendidikanSchema, UpdatePendidikanDto } from './dto/update-pendidikan.dto';
 import { DataAndFileService } from 'src/utils/dataAndFile';
+import { handlePrismaError } from 'src/common/utils/prisma-error-handler';
 
 @Injectable()
 export class PendidikanService {
@@ -50,11 +48,9 @@ export class PendidikanService {
       relativePath
     );
 
-    const dosen = await this.prisma.dosen.findUnique({
-      where: { id: dosenId },
-    });
-
+    const dosen = await this.prisma.dosen.findUnique({ where: { id: dosenId } });
     if (!dosen) {
+      await this.fileUtil.deleteFile(relativePath);
       throw new BadRequestException('Dosen tidak ditemukan');
     }
 
@@ -106,8 +102,12 @@ export class PendidikanService {
         data: pendidikan,
       };
     } catch (error) {
-      console.error('Error saat menyimpan pendidikan:', error);
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('ERROR SAAT SIMPAN PENDIDIKAN:', error);
+      }
+
       await this.fileUtil.deleteFile(relativePath);
+      handlePrismaError(error);
       throw new InternalServerErrorException('Gagal menyimpan pendidikan');
     }
   }
@@ -119,14 +119,13 @@ export class PendidikanService {
     file?: Express.Multer.File,
     role?: TypeUserRole,
   ) {
-    const parsed = fullUpdatePendidikanSchema.safeParse({
-      ...rawData,
-      id,
-      dosenId,
-    });
-
+    const parsed = fullUpdatePendidikanSchema.safeParse({ ...rawData, id, dosenId });
     if (!parsed.success) {
-      throw new BadRequestException(parsed.error.format());
+      throw new BadRequestException({
+        success: false,
+        message: parsed.error.format(),
+        data: null,
+      });
     }
 
     const data = parsed.data;
@@ -151,98 +150,111 @@ export class PendidikanService {
       });
     }
 
-    const nilaiPak = this.getNilaiPak(data);
+    const nilaiPak = await this.getNilaiPak(data);
 
-    return this.prisma.$transaction(async (tx) => {
-      const baseUpdate: any = {
-        filePath,
-        nilaiPak,
-      };
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        const baseUpdate: any = { filePath, nilaiPak };
 
-      if (data.kategori === 'FORMAL') {
-        const { jenjang, prodi, fakultas, perguruanTinggi, lulusTahun } = data;
+        if (data.kategori === 'FORMAL') {
+          const { jenjang, prodi, fakultas, perguruanTinggi, lulusTahun } = data;
 
-        await tx.pendidikan.update({
-          where: { id },
-          data: {
-            ...baseUpdate,
-            Formal: {
-              upsert: {
-                update: {
-                  ...(jenjang && { jenjang }),
-                  ...(prodi && { prodi }),
-                  ...(fakultas && { fakultas }),
-                  ...(perguruanTinggi && { perguruanTinggi }),
-                  ...(lulusTahun && { lulusTahun }),
-                },
-                create: {
-                  jenjang: jenjang!,
-                  prodi: prodi!,
-                  fakultas: fakultas!,
-                  perguruanTinggi: perguruanTinggi!,
-                  lulusTahun: lulusTahun!,
-                },
-              },
-            },
-            ...(existing.Diklat && { Diklat: { delete: true } }),
-          },
-        });
-      } else {
-        const {
-          jenisDiklat,
-          namaDiklat,
-          penyelenggara,
-          peran,
-          tingkatan,
-          jumlahJam,
-          noSertifikat,
-          tglSertifikat,
-          tempat,
-          tglMulai,
-          tglSelesai,
-        } = data;
-
-        await tx.pendidikan.update({
-          where: { id },
-          data: {
-            ...baseUpdate,
-            Diklat: {
-              upsert: {
-                update: {
-                  ...(jenisDiklat && { jenisDiklat }),
-                  ...(namaDiklat && { namaDiklat }),
-                  ...(penyelenggara && { penyelenggara }),
-                  ...(peran && { peran }),
-                  ...(tingkatan && { tingkatan }),
-                  ...(jumlahJam && { jumlahJam }),
-                  ...(noSertifikat && { noSertifikat }),
-                  ...(tglSertifikat && { tglSertifikat }),
-                  ...(tempat && { tempat }),
-                  ...(tglMulai && { tglMulai }),
-                  ...(tglSelesai && { tglSelesai }),
-                },
-                create: {
-                  jenisDiklat: jenisDiklat!,
-                  namaDiklat: namaDiklat!,
-                  penyelenggara: penyelenggara!,
-                  peran: peran!,
-                  tingkatan: tingkatan!,
-                  jumlahJam: jumlahJam!,
-                  noSertifikat: noSertifikat!,
-                  tglSertifikat: tglSertifikat!,
-                  tempat: tempat!,
-                  tglMulai: tglMulai!,
-                  tglSelesai: tglSelesai!,
+          await tx.pendidikan.update({
+            where: { id },
+            data: {
+              ...baseUpdate,
+              Formal: {
+                upsert: {
+                  update: {
+                    ...(jenjang && { jenjang }),
+                    ...(prodi && { prodi }),
+                    ...(fakultas && { fakultas }),
+                    ...(perguruanTinggi && { perguruanTinggi }),
+                    ...(lulusTahun && { lulusTahun }),
+                  },
+                  create: {
+                    jenjang: jenjang!,
+                    prodi: prodi!,
+                    fakultas: fakultas!,
+                    perguruanTinggi: perguruanTinggi!,
+                    lulusTahun: lulusTahun!,
+                  },
                 },
               },
+              ...(existing.Diklat && { Diklat: { delete: true } }),
             },
-            ...(existing.Formal && { Formal: { delete: true } }),
-          },
-        });
+          });
+        } else if (data.kategori === 'DIKLAT') {
+          const {
+            jenisDiklat,
+            namaDiklat,
+            penyelenggara,
+            peran,
+            tingkatan,
+            jumlahJam,
+            noSertifikat,
+            tglSertifikat,
+            tempat,
+            tglMulai,
+            tglSelesai,
+          } = data;
+
+          await tx.pendidikan.update({
+            where: { id },
+            data: {
+              ...baseUpdate,
+              Diklat: {
+                upsert: {
+                  update: {
+                    ...(jenisDiklat && { jenisDiklat }),
+                    ...(namaDiklat && { namaDiklat }),
+                    ...(penyelenggara && { penyelenggara }),
+                    ...(peran && { peran }),
+                    ...(tingkatan && { tingkatan }),
+                    ...(jumlahJam && { jumlahJam }),
+                    ...(noSertifikat && { noSertifikat }),
+                    ...(tglSertifikat && { tglSertifikat }),
+                    ...(tempat && { tempat }),
+                    ...(tglMulai && { tglMulai }),
+                    ...(tglSelesai && { tglSelesai }),
+                  },
+                  create: {
+                    jenisDiklat: jenisDiklat!,
+                    namaDiklat: namaDiklat!,
+                    penyelenggara: penyelenggara!,
+                    peran: peran!,
+                    tingkatan: tingkatan!,
+                    jumlahJam: jumlahJam!,
+                    noSertifikat: noSertifikat!,
+                    tglSertifikat: tglSertifikat!,
+                    tempat: tempat!,
+                    tglMulai: tglMulai!,
+                    tglSelesai: tglSelesai!,
+                  },
+                },
+              },
+              ...(existing.Formal && { Formal: { delete: true } }),
+            },
+          });
+        }
+
+        return {
+          success: true,
+          message: 'Pendidikan berhasil diperbarui',
+        };
+      });
+    } catch (error) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('ERROR SAAT UPDATE PENDIDIKAN:', error);
       }
 
-      return { success: true, message: 'Pendidikan berhasil diperbarui' };
-    });
+      if (file && filePath) {
+        await this.fileUtil.deleteFile(filePath);
+      }
+
+      handlePrismaError(error);
+      throw new InternalServerErrorException('Gagal memperbarui pendidikan');
+    }
   }
 
   async findAll(
@@ -265,8 +277,10 @@ export class PendidikanService {
 
     const where: any = {};
 
+    const roles: string[] = Array.isArray(role) ? role : [role];
+
     // Role-based filtering
-    if (role !== TypeUserRole.ADMIN && role !== TypeUserRole.VALIDATOR) {
+    if (!roles.includes(TypeUserRole.ADMIN) && !roles.includes(TypeUserRole.VALIDATOR)) {
       where.dosenId = userId;
     } else if (query.dosenId) {
       where.dosenId = Number(query.dosenId);
@@ -295,7 +309,7 @@ export class PendidikanService {
     }
 
     // Sorting
-    const allowedSortFields = ['createdAt', 'updatedAt', 'nilaiPak', 'kategori', 'jenjang'];
+    const allowedSortFields = ['createdAt', 'updatedAt', 'nilaiPak', 'kategori', 'StatusValidasi', 'jenjang'];
     const sortBy = query.sortBy && allowedSortFields.includes(query.sortBy)
       ? query.sortBy
       : 'createdAt';

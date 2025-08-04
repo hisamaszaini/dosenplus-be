@@ -213,7 +213,7 @@ export class PendidikanController {
     @Query() query: any,
     @Request() req,
   ) {
-    return this.pendidikanService.findAll(query, req.user.sub, req.user.role);
+    return this.pendidikanService.findAll(query, req.user.sub, req.user.roles);
   }
 
   @Get('dosen/:dosenId')
@@ -236,7 +236,7 @@ export class PendidikanController {
     @Param('id', ParseIntPipe) id: number,
     @Request() req,
   ) {
-    const item = await this.pendidikanService.findOne(id, req.user.sub, req.user.role);
+    const item = await this.pendidikanService.findOne(id, req.user.sub, req.user.roles);
     return item;
   }
 
@@ -247,8 +247,8 @@ export class PendidikanController {
     @Param('id', ParseIntPipe) id: number
   ) {
     const userId = req.user.sub;
-    const role = req.user.role;
-    return this.pendidikanService.delete(id, userId, role);
+    const roles = req.user.roles;
+    return this.pendidikanService.delete(id, userId, roles);
   }
 
   // @Get(':id/file')

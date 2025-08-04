@@ -16,6 +16,8 @@ import { BaseUpdateUserSchema, ChangePasswordDto, ChangePasswordSchema, CreateFl
 import z, { success, ZodError } from 'zod';
 import { DataAndFileService } from 'src/utils/dataAndFile';
 import { LogActivityService } from 'src/utils/logActivity';
+import { handlePrismaError } from 'src/common/utils/prisma-error-handler';
+import { parseAndThrow } from 'src/common/utils/zod-helper';
 
 const SALT_ROUNDS = 10;
 type TransactionClient = Omit<PrismaClient, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>;
@@ -150,69 +152,61 @@ export class UsersService {
     }
 
     async create(dto: CreateFlexibleUserDto, file?: Express.Multer.File) {
-        const validationResult = CreateFlexibleUserSchema.safeParse(dto);
-
-        if (!validationResult.success) {
-            const zodErrors: Record<string, string> = {};
-            for (const issue of validationResult.error.issues) {
-                const path = issue.path.join('.');
-                zodErrors[path] = issue.message;
-            }
-            throw new BadRequestException({
-                success: false,
-                message: zodErrors,
-                data: null,
-            });
-        }
-
-        const validatedData = validationResult.data;
+        const validatedData = parseAndThrow(CreateFlexibleUserSchema, dto);
         const roles = validatedData.dataUser.roles || [];
 
         let relativePath: string | undefined;
 
         if (file) {
-            const savedFileName = this.fileUtil.generateFileName(file.originalname);
-            relativePath = path.join(this.UPLOAD_PATH, savedFileName).replace(/\\/g, '/');
+            relativePath = await this.fileUtil.handleUpload({
+                file,
+                uploadSubfolder: this.UPLOAD_PATH,
+            });
 
-            if (validatedData.dosenBiodata) {
-                validatedData.dosenBiodata.fotoPath = relativePath;
-            }
-            if (validatedData.validatorBiodata) {
-                validatedData.validatorBiodata.fotoPath = relativePath;
-            }
-
-            await this.fileUtil.writeFile(file, savedFileName, this.UPLOAD_PATH);
+            validatedData.dataUser.fotoPath = relativePath;
         }
 
-        await this.validateUniqueUser(validatedData.dataUser.email, validatedData.dataUser.username);
+        await this.validateUniqueUser(
+            validatedData.dataUser.email,
+            validatedData.dataUser.username,
+        );
 
         const roleValidationErrors: string[] = [];
 
         if (roles.includes('DOSEN') && !validatedData.dosenBiodata) {
-            roleValidationErrors.push('Role DOSEN ditentukan, tetapi biodata DOSEN tidak diberikan.');
+            roleValidationErrors.push(
+                'Role DOSEN ditentukan, tetapi biodata DOSEN tidak diberikan.',
+            );
         }
         if (roles.includes('VALIDATOR') && !validatedData.validatorBiodata) {
-            roleValidationErrors.push('Role VALIDATOR ditentukan, tetapi biodata VALIDATOR tidak diberikan.');
+            roleValidationErrors.push(
+                'Role VALIDATOR ditentukan, tetapi biodata VALIDATOR tidak diberikan.',
+            );
         }
         if (!roles.includes('DOSEN') && validatedData.dosenBiodata) {
-            roleValidationErrors.push('Role DOSEN tidak ditentukan, tetapi biodata DOSEN diberikan.');
+            roleValidationErrors.push(
+                'Role DOSEN tidak ditentukan, tetapi biodata DOSEN diberikan.',
+            );
         }
         if (!roles.includes('VALIDATOR') && validatedData.validatorBiodata) {
-            roleValidationErrors.push('Role VALIDATOR tidak ditentukan, tetapi biodata VALIDATOR diberikan.');
+            roleValidationErrors.push(
+                'Role VALIDATOR tidak ditentukan, tetapi biodata VALIDATOR diberikan.',
+            );
         }
 
         if (roleValidationErrors.length > 0) {
             throw new BadRequestException({
                 success: false,
-                message: {
-                    roles: roleValidationErrors.join(', '),
-                },
+                message: { roles: roleValidationErrors.join(', ') },
                 data: null,
             });
         }
 
         if (validatedData.dosenBiodata) {
-            await this.validateFakultasProdi(validatedData.dosenBiodata.fakultasId, validatedData.dosenBiodata.prodiId);
+            await this.validateFakultasProdi(
+                validatedData.dosenBiodata.fakultasId,
+                validatedData.dosenBiodata.prodiId,
+            );
         }
 
         try {
@@ -228,44 +222,22 @@ export class UsersService {
                 message: 'User berhasil ditambahkan',
                 userData: result,
             };
-
         } catch (error) {
+            if (process.env.NODE_ENV !== 'production') {
+                console.error('CREATE USER FAILED:', error);
+            }
+
             if (file && relativePath) {
                 await this.fileUtil.deleteFile(relativePath);
             }
+
+            handlePrismaError(error);
             throw new InternalServerErrorException('Gagal menyimpan user');
         }
     }
 
     async updateFlexibleUser(userId: number, dto: UpdateFlexibleUserDto, file?: Express.Multer.File) {
-        const result = UpdateFlexibleUserSchema.safeParse(dto);
-        if (!result.success) {
-            const errors: Record<string, string> = {};
-            for (const issue of result.error.issues) {
-                errors[issue.path.join('.')] = issue.message;
-            }
-            throw new BadRequestException({ success: false, message: errors, data: null });
-        }
-
-        const validated = result.data;
-
-        console.log(validated);
-
-        let relativePath: string | undefined;
-
-        if (file) {
-            const savedFileName = this.fileUtil.generateFileName(file.originalname);
-            relativePath = path.join(this.UPLOAD_PATH, savedFileName).replace(/\\/g, '/');
-
-            if (validated.dosenBiodata) {
-                validated.dosenBiodata.fotoPath = relativePath;
-            }
-            if (validated.validatorBiodata) {
-                validated.validatorBiodata.fotoPath = relativePath;
-            }
-        }
-
-        await this.validateUniqueBiodata(userId, validated);
+        const validated = parseAndThrow(UpdateFlexibleUserSchema, dto);
 
         const user = await this.prisma.user.findUnique({
             where: { id: userId },
@@ -278,21 +250,31 @@ export class UsersService {
 
         if (!user) throw new NotFoundException('User tidak ditemukan.');
 
+        let relativePath: string | undefined;
+
         try {
+            const roles = validated.dataUser.roles ?? [];
             const existingRoles = user.userRoles.map(r => r.role.name);
-            const requestedRoles = validated.dataUser.roles ?? [];
+            const newRoles = roles.filter(r => !existingRoles.includes(r));
+            const removedRoles = existingRoles.filter(r => !roles.includes(r));
 
-            const newRoles = requestedRoles.filter(r => !existingRoles.includes(r));
-            const removedRoles = existingRoles.filter(r => !requestedRoles.includes(r));
-
-            if (validated.dosenBiodata) {
-                await this.validateFakultasProdi(
-                    validated.dosenBiodata.fakultasId,
-                    validated.dosenBiodata.prodiId
-                );
+            // Upload file & hapus yang lama (jika ada)
+            if (file) {
+                relativePath = await this.fileUtil.handleUploadAndUpdate({
+                    file,
+                    oldFilePath: user.fotoPath ?? undefined,
+                    uploadSubfolder: this.UPLOAD_PATH,
+                });
+                validated.dataUser.fotoPath = relativePath;
             }
 
-            return this.prisma.$transaction(async (tx) => {
+            await this.validateUniqueBiodata(userId, validated);
+
+            if (validated.dosenBiodata) {
+                await this.validateFakultasProdi(validated.dosenBiodata.fakultasId, validated.dosenBiodata.prodiId);
+            }
+
+            const updated = await this.prisma.$transaction(async (tx) => {
                 await tx.user.update({
                     where: { id: userId },
                     data: {
@@ -303,34 +285,36 @@ export class UsersService {
                         ...(validated.dataUser.password
                             ? { password: await this.hashEncryptUtil.hashPassword(validated.dataUser.password) }
                             : {}),
+                        ...(validated.dataUser.fotoPath ? { fotoPath: validated.dataUser.fotoPath } : {}),
                     },
                 });
 
-                for (const roleName of newRoles) {
-                    const roleId = await this.getRoleId(tx, roleName);
-                    await tx.userRole.create({ data: { userId: user.id, roleId } });
+                for (const role of newRoles) {
+                    const roleId = await this.getRoleId(tx, role);
+                    await tx.userRole.create({ data: { userId, roleId } });
                 }
 
-                for (const roleName of removedRoles) {
-                    const role = await tx.role.findUnique({ where: { name: roleName } });
-                    if (!role) continue;
-                    await tx.userRole.deleteMany({
-                        where: { userId, roleId: role.id },
-                    });
+                for (const role of removedRoles) {
+                    const roleData = await tx.role.findUnique({ where: { name: role } });
+                    if (roleData) {
+                        await tx.userRole.deleteMany({ where: { userId, roleId: roleData.id } });
+                    }
                 }
 
-                if (requestedRoles.includes('DOSEN') && validated.dosenBiodata) {
+                // Dosen
+                if (roles.includes('DOSEN') && validated.dosenBiodata) {
                     if (user.dosen) {
                         await tx.dosen.update({
                             where: { id: userId },
                             data: validated.dosenBiodata,
                         });
-                    } else if (validated.dosenBiodata) {
+                    } else {
                         await tx.dosen.create({
                             data: { ...validated.dosenBiodata, id: userId },
                         });
                     }
 
+                    // Data Kepegawaian
                     if (validated.dataKepegawaian) {
                         const existing = await tx.dataKepegawaian.findUnique({ where: { id: userId } });
                         if (existing) {
@@ -346,21 +330,18 @@ export class UsersService {
                     }
                 }
 
-                if (requestedRoles.includes('VALIDATOR') && validated.validatorBiodata) {
+                // Validator
+                if (roles.includes('VALIDATOR') && validated.validatorBiodata) {
                     if (user.validator) {
                         await tx.validator.update({
                             where: { id: userId },
                             data: validated.validatorBiodata,
                         });
-                    } else if (validated.validatorBiodata) {
+                    } else {
                         await tx.validator.create({
                             data: { ...validated.validatorBiodata, id: userId },
                         });
                     }
-                }
-
-                if (file && relativePath) {
-                    await this.fileUtil.writeFile(file, path.basename(relativePath), this.UPLOAD_PATH);
                 }
 
                 const updatedUser = await tx.user.findUnique({
@@ -372,28 +353,25 @@ export class UsersService {
                     },
                 });
 
-                const userData = updatedUser;
-
-                return {
-                    success: true,
-                    message: 'User berhasil diperbarui',
-                    data: userData,
-                };
+                return updatedUser;
             });
+
+            return {
+                success: true,
+                message: 'User berhasil diperbarui',
+                data: updated,
+            };
         } catch (error) {
+            if (process.env.NODE_ENV !== 'production') {
+                console.error('UPDATE USER FAILED:', error);
+            }
 
             if (file && relativePath) {
                 await this.fileUtil.deleteFile(relativePath);
             }
 
-            if (
-                error instanceof Prisma.PrismaClientKnownRequestError &&
-                error.code === 'P2002'
-            ) {
-                const message = this.translateP2002Error(error.meta?.target as string[] | undefined);
-                throw new BadRequestException({ success: false, message, data: null });
-            }
-            throw error;
+            handlePrismaError(error);
+            throw new InternalServerErrorException('Gagal memperbarui user');
         }
     }
 
@@ -545,47 +523,44 @@ export class UsersService {
     async updatePhoto(userId: number, file?: Express.Multer.File) {
         if (!file) return;
 
-        const savedFileName = this.fileUtil.generateFileName(file.originalname);
-        const relativePath = path.join(this.UPLOAD_PATH, savedFileName).replace(/\\/g, '/');
-
         const existingUser = await this.prisma.user.findUnique({
             where: { id: userId },
             select: { fotoPath: true },
         });
 
+        if (!existingUser) {
+            throw new NotFoundException('User tidak ditemukan.');
+        }
+
         try {
-            await this.fileUtil.writeFile(file, savedFileName, this.UPLOAD_PATH);
+            const relativePath = await this.fileUtil.handleUploadAndUpdate({
+                file,
+                oldFilePath: existingUser.fotoPath ?? undefined,
+                uploadSubfolder: this.UPLOAD_PATH,
+            });
 
             await this.prisma.user.update({
                 where: { id: userId },
                 data: { fotoPath: relativePath },
             });
 
-            if (existingUser?.fotoPath) {
-                await this.fileUtil.deleteFile(existingUser.fotoPath);
-            }
-
             return {
                 success: true,
                 message: 'Foto profil berhasil diperbarui',
+                data: { fotoPath: relativePath },
             };
         } catch (error) {
-            await this.fileUtil.deleteFile(relativePath);
-            throw new Error(`Gagal mengganti foto: ${error.message}`);
+            if (process.env.NODE_ENV !== 'production') {
+                console.error('UPDATE PHOTO FAILED:', error);
+            }
+
+            handlePrismaError(error);
+            throw new InternalServerErrorException('Gagal mengganti foto profil');
         }
     }
 
     async changePassword(userId: number, dto: ChangePasswordDto) {
-        const result = ChangePasswordSchema.safeParse(dto);
-        if (!result.success) {
-            const errors: Record<string, string> = {};
-            for (const issue of result.error.issues) {
-                errors[issue.path.join('.')] = issue.message;
-            }
-            throw new BadRequestException({ success: false, message: errors, data: null });
-        }
-
-        const { oldPassword, newPassword } = result.data;
+        const { oldPassword, newPassword } = parseAndThrow(ChangePasswordSchema, dto);
 
         const user = await this.prisma.user.findUnique({ where: { id: userId } });
         if (!user) throw new NotFoundException('User tidak ditemukan.');
@@ -600,15 +575,25 @@ export class UsersService {
         }
 
         const hashed = await this.hashEncryptUtil.hashPassword(newPassword);
-        await this.prisma.user.update({
-            where: { id: userId },
-            data: { password: hashed },
-        });
 
-        return {
-            success: true,
-            message: 'Password berhasil diperbarui',
-        };
+        try {
+            await this.prisma.user.update({
+                where: { id: userId },
+                data: { password: hashed },
+            });
+
+            return {
+                success: true,
+                message: 'Password berhasil diperbarui',
+            };
+        } catch (error) {
+            if (process.env.NODE_ENV !== 'production') {
+                console.error('CHANGE PASSWORD FAILED:', error);
+            }
+
+            handlePrismaError(error);
+            throw new InternalServerErrorException('Gagal memperbarui password');
+        }
     }
 
     async findAll(params: {

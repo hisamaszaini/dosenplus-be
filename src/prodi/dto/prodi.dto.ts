@@ -1,9 +1,13 @@
 import z from "zod";
 
 export const createProdiSchema = z.object({
-  kode: z.string().min(2),
-  nama: z.string().min(2),
-  fakultasId: z.number().int().positive(),
+  kode: z.string().trim().min(2, { message: 'Kode minimal 2 karakter' }),
+  nama: z.string().trim().min(2, { message: 'Nama minimal 2 karakter' }),
+  fakultasId: z
+    .number()
+    .refine(val => typeof val === 'number', { message: 'Fakultas wajib dipilih' })
+    .int({ message: 'ID fakultas harus bilangan bulat' })
+    .positive({ message: 'ID fakultas harus positif' }),
 });
 
 export const prodiResponseSchema = createProdiSchema.extend({
