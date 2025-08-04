@@ -581,5 +581,4 @@ DELETE http://127.0.0.1:3000/pendidikan/1
 ---
 
 ### ❗️Catatan
-- Hanya data dengan `statusValidasi: PENDING` yang bisa dihapus.
 - Jika bukan pemilik data dan bukan admin, akan mendapatkan error `403 Forbidden`.
