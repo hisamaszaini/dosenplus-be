@@ -208,12 +208,12 @@ export class PendidikanController {
   }
 
   @Get()
-  @Roles(TypeUserRole.DOSEN, TypeUserRole.ADMIN)
-  findAll(
+  @Roles(TypeUserRole.DOSEN, TypeUserRole.ADMIN, TypeUserRole.VALIDATOR)
+  async findAll(
     @Query() query: any,
     @Request() req,
   ) {
-    return this.pendidikanService.findAll(req.user.sub, req.user.role, query);
+    return this.pendidikanService.findAll(query, req.user.sub, req.user.role);
   }
 
   @Get('dosen/:dosenId')
@@ -223,11 +223,10 @@ export class PendidikanController {
     @Query() query: any,
     @Request() req,
   ) {
-    console.log(req.user.sub);
     return this.pendidikanService.findAll(
-      dosenId,
+      { ...query, dosenId },
+      req.user.sub,
       req.user.roles,
-      query,
     );
   }
 

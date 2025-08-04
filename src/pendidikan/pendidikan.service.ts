@@ -245,34 +245,66 @@ export class PendidikanService {
     });
   }
 
-  async findAll(userId: number, role: TypeUserRole, query: any) {
+  async findAll(
+    query: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      kategori?: string;
+      jenjang?: string;
+      dosenId?: number;
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+    },
+    userId: number,
+    role: TypeUserRole,
+  ) {
     const page = Number(query.page) || 1;
     const limit = Number(query.limit) || 10;
     const skip = (page - 1) * limit;
 
     const where: any = {};
-    if (role !== TypeUserRole.ADMIN) {
+
+    // Role-based filtering
+    if (role !== TypeUserRole.ADMIN && role !== TypeUserRole.VALIDATOR) {
       where.dosenId = userId;
+    } else if (query.dosenId) {
+      where.dosenId = Number(query.dosenId);
     }
 
-    if (query.kategori) where.kategori = query.kategori;
-    if (query.jenjang) where.Formal = { jenjang: query.jenjang };
+    // Filter kategori
+    if (query.kategori) {
+      where.kategori = query.kategori;
+    }
 
-    const allowedSortFields = ['createdAt', 'updatedAt', 'nilaiPak', 'kegiatan'];
-    const sortBy = allowedSortFields.includes(query.sortBy) ? query.sortBy : 'createdAt';
-    const sortOrder = query.sortOrder === 'asc' ? 'asc' : 'desc';
+    // Filter jenjang khusus FORMAL
+    if (query.jenjang) {
+      where.Formal = { jenjang: query.jenjang };
+    }
 
+    // Search
     if (query.search) {
       const search = query.search.toLowerCase();
-
       where.OR = [
-        { kegiatan: { contains: search, mode: 'insensitive' } },
-        { Formal: { prodi: { contains: search, mode: 'insensitive' } } },
-        { Formal: { perguruanTinggi: { contains: search, mode: 'insensitive' } } },
         { Diklat: { namaDiklat: { contains: search, mode: 'insensitive' } } },
         { Diklat: { penyelenggara: { contains: search, mode: 'insensitive' } } },
+        { Formal: { prodi: { contains: search, mode: 'insensitive' } } },
+        { Formal: { perguruanTinggi: { contains: search, mode: 'insensitive' } } },
         { dosen: { nama: { contains: search, mode: 'insensitive' } } },
       ];
+    }
+
+    // Sorting
+    const allowedSortFields = ['createdAt', 'updatedAt', 'nilaiPak', 'kategori', 'jenjang'];
+    const sortBy = query.sortBy && allowedSortFields.includes(query.sortBy)
+      ? query.sortBy
+      : 'createdAt';
+    const sortOrder = query.sortOrder === 'asc' ? 'asc' : 'desc';
+
+    let orderBy: any = { [sortBy]: sortOrder };
+
+    if (sortBy === 'jenjang') {
+      orderBy = { Formal: { jenjang: sortOrder } };
     }
 
     const [data, total] = await this.prisma.$transaction([
@@ -280,13 +312,13 @@ export class PendidikanService {
         where,
         skip,
         take: limit,
-        orderBy: {
-          [sortBy]: sortOrder,
-        },
+        orderBy,
         include: {
           Formal: true,
           Diklat: true,
-          dosen: { select: { id: true, nama: true } },
+          dosen: {
+            select: { id: true, nama: true },
+          },
         },
       }),
       this.prisma.pendidikan.count({ where }),

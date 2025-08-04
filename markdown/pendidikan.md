@@ -427,3 +427,159 @@ GET http://127.0.0.1:3000/pendidikan/4
 - Data `dosen` hanya menampilkan ID dan nama untuk efisiensi.
 
 ```
+
+## 📚 Get All Data Pendidikan
+
+**Method:** `GET`  
+**URL:**
+```
+http://127.0.0.1:3000/pendidikan
+```
+
+**Authorization:** Bearer `<token>`  
+**Role:** Admin, Validator, Dosen
+
+---
+
+### 🔸 Query Parameters
+
+| Parameter    | Tipe   | Deskripsi                                           |
+|--------------|--------|-----------------------------------------------------|
+| `page`       | number | Halaman yang ingin diambil (default: `1`)           |
+| `limit`      | number | Jumlah item per halaman (default: `10`)             |
+| `search`     | string | Pencarian berdasarkan `namaDiklat` / `jenisDiklat` |
+| `sortBy`     | string | Sorting berdasarkan `kategori`, `createdAt`, dll.   |
+| `sortOrder`  | string | `asc` atau `desc` (default: `desc`)                 |
+
+---
+
+### 📌 Contoh Request
+```
+GET http://127.0.0.1:3000/pendidikan?page=1&limit=10&search=&sortBy=&sortOrder=desc
+```
+
+---
+
+### ✅ Contoh Response
+```json
+{
+  "success": true,
+  "meta": {
+    "total": 4,
+    "page": 1,
+    "limit": 10,
+    "totalPages": 1
+  },
+  "data": [
+    {
+      "id": 4,
+      "dosenId": 5,
+      "kategori": "DIKLAT",
+      "nilaiPak": 3,
+      "filePath": "pendidikan/05379445-0d59-4349-ae39-7b46a01c9a40.pdf",
+      "statusValidasi": "APPROVED",
+      "reviewerId": 5,
+      "catatan": "Data sudah sesuai",
+      "createdAt": "2025-08-04T03:41:15.838Z",
+      "updatedAt": "2025-08-04T03:51:58.366Z",
+      "Formal": null,
+      "Diklat": {
+        "id": 2,
+        "pendidikanId": 4,
+        "jenisDiklat": "Teknis",
+        "namaDiklat": "Pelatihan Mikrotik",
+        "penyelenggara": "Pemerintah Kabupaten Ponorogo",
+        "peran": "Peserta",
+        "tingkatan": "Regional",
+        "jumlahJam": 18,
+        "noSertifikat": "DIK-2025-00123",
+        "tglSertifikat": "2025-07-01T00:00:00.000Z",
+        "tempat": "Ponorogo",
+        "tglMulai": "2025-06-25T00:00:00.000Z",
+        "tglSelesai": "2025-06-30T00:00:00.000Z"
+      },
+      "dosen": {
+        "id": 5,
+        "nama": "Dosen Baru"
+      }
+    },
+    {
+      "id": 3,
+      "kategori": "DIKLAT",
+      "statusValidasi": "REJECTED",
+      "catatan": "File bukti salah",
+      ...
+    },
+    {
+      "id": 2,
+      "kategori": "FORMAL",
+      "statusValidasi": "PENDING",
+      "Formal": {
+        "jenjang": "S2",
+        "prodi": "Teknik Informatika",
+        ...
+      }
+    },
+    {
+      "id": 1,
+      "kategori": "FORMAL",
+      "statusValidasi": "PENDING",
+      "Formal": {
+        "jenjang": "S3",
+        "prodi": "Ilmu Komputer",
+        ...
+      }
+    }
+  ]
+}
+```
+
+---
+
+### ℹ️ Catatan
+- Field `Formal` hanya muncul jika `kategori` adalah `FORMAL`, dan `Diklat` hanya muncul jika `kategori` adalah `DIKLAT`.
+- Sorting default adalah berdasarkan `createdAt desc`.
+- Bisa digunakan untuk listing oleh admin dan validator, atau dosen untuk melihat riwayat miliknya.
+
+
+## ❌ Delete Data Pendidikan
+
+**Method:** `DELETE`  
+**URL:**
+```
+http://127.0.0.1:3000/pendidikan/:id
+```
+
+**Authorization:** Bearer `<token>`  
+**Role:** Dosen (untuk data miliknya), Admin (untuk semua data)
+
+---
+
+### 📌 Parameter URL
+
+| Parameter | Tipe   | Deskripsi              |
+|-----------|--------|------------------------|
+| `:id`     | number | ID data pendidikan     |
+
+---
+
+### 🧾 Contoh Request
+```
+DELETE http://127.0.0.1:3000/pendidikan/1
+```
+
+---
+
+### ✅ Contoh Response (Berhasil)
+```json
+{
+  "success": true,
+  "message": "Data berhasil dihapus"
+}
+```
+
+---
+
+### ❗️Catatan
+- Hanya data dengan `statusValidasi: PENDING` yang bisa dihapus.
+- Jika bukan pemilik data dan bukan admin, akan mendapatkan error `403 Forbidden`.
