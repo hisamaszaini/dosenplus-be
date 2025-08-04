@@ -274,8 +274,8 @@ enum NamaSemester {
 
 model Semester {
   id           Int          @id @default(autoincrement())
-  kode         Int
-  nama         String
+  kode         Int          @unique
+  nama         String       @unique
   tipe         NamaSemester
   tahunMulai   Int
   tahunSelesai Int

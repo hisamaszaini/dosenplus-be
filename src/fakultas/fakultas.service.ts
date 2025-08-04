@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { PrismaService } from 'prisma/prisma.service';
 import { CreateFakultasDto, createFakultasSchema, UpdateFakultasDto, updateFakultasSchema } from './dto/fakultas.dto';
 import { parseAndThrow } from 'src/common/utils/zod-helper';
-import { handleCreateError, handleUpdateError } from 'src/common/utils/prisma-error-handler';
+import { handleCreateError, handleDeleteError, handleFindError, handleUpdateError } from 'src/common/utils/prisma-error-handler';
 
 @Injectable()
 export class FakultasService {
@@ -89,11 +89,7 @@ export class FakultasService {
 
   async findOne(id: number) {
     try {
-      const data = await this.prisma.fakultas.findUnique({ where: { id } });
-
-      if (!data) {
-        throw new NotFoundException('Fakultas tidak ditemukan');
-      }
+      const data = await this.prisma.fakultas.findUniqueOrThrow({ where: { id } });
 
       return {
         success: true,
@@ -101,19 +97,11 @@ export class FakultasService {
         data,
       };
     } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw error;
-      }
-      throw new BadRequestException('Gagal mengambil data fakultas');
+      handleFindError(error, 'fakultas');
     }
   }
 
   async remove(id: number) {
-    const existing = await this.prisma.fakultas.findUnique({ where: { id } });
-    if (!existing) {
-      throw new NotFoundException('Fakultas tidak ditemukan');
-    }
-
     try {
       const isUsed = await this.checkFakultasUsage(id);
       if (isUsed) {
@@ -128,10 +116,7 @@ export class FakultasService {
         data: deleted,
       };
     } catch (error) {
-      if (error instanceof BadRequestException) {
-        throw error;
-      }
-      throw new BadRequestException('Gagal menghapus fakultas');
+      handleDeleteError(error, 'fakultas');
     }
   }
 

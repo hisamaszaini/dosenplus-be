@@ -5,7 +5,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
-import { CreateSemesterDto, UpdateSemesterDto } from './dto/semester.dto';
+import { CreateSemesterDto, createSemesterSchema, UpdateSemesterDto, updateSemesterSchema } from './dto/semester.dto';
+import { handleCreateError, handleFindError, handleUpdateError } from 'src/common/utils/prisma-error-handler';
+import { parseAndThrow } from 'src/common/utils/zod-helper';
 
 type ValidSemesterField = 'kode' | 'nama' | 'tipe' | 'tahunMulai' | 'tahunSelesai';
 type StringOrInt = string | number;
@@ -41,14 +43,9 @@ export class SemesterService {
     return errors;
   }
 
-  async create(createSemesterDto: CreateSemesterDto) {
-    const { tipe, tahunMulai, tahunSelesai, status } = createSemesterDto;
+  async create(rawData: CreateSemesterDto) {
+    const { tipe, tahunMulai, tahunSelesai, status } = parseAndThrow(createSemesterSchema, rawData);
     const { kode, nama } = this.generateKodeDanNama(tipe, tahunMulai, tahunSelesai);
-
-    const errors = await this.validateUniqueSemester(kode, nama);
-    if (Object.keys(errors).length > 0) {
-      throw new BadRequestException({ message: errors });
-    }
 
     try {
       const created = await this.prisma.semester.create({
@@ -61,8 +58,39 @@ export class SemesterService {
         data: created,
       };
     } catch (error) {
-      console.error(error);
-      throw new BadRequestException('Gagal membuat semester');
+      handleCreateError(error, 'semester');
+    }
+  }
+
+  async update(id: number, rawData: UpdateSemesterDto) {
+    // const existing = await this.prisma.semester.findUniqueOrThrow({ where: { id } });
+    // if (!existing) {
+    //   throw new NotFoundException('Semester tidak ditemukan');
+    // }
+
+    const { tipe, tahunMulai, tahunSelesai, status } = parseAndThrow(updateSemesterSchema, rawData);
+    const { kode, nama } = this.generateKodeDanNama(tipe, tahunMulai, tahunSelesai);
+
+    // const errors = await this.validateUniqueSemester(kode, nama, id);
+    // if (Object.keys(errors).length > 0) {
+    //   throw new BadRequestException({ message: errors });
+    // }
+
+    try {
+      const existing = await this.prisma.semester.findUniqueOrThrow({ where: { id } });
+
+      const updated = await this.prisma.semester.update({
+        where: { id },
+        data: { kode, nama, tipe, tahunMulai, tahunSelesai, status },
+      });
+
+      return {
+        success: true,
+        message: 'Semester berhasil diperbarui',
+        data: updated,
+      };
+    } catch (error) {
+      handleUpdateError(error, 'semester');
     }
   }
 
@@ -145,12 +173,12 @@ export class SemesterService {
   }
 
   async findOne(id: number) {
-    const data = await this.prisma.semester.findUnique({ where: { id } });
-    if (!data) {
-      throw new NotFoundException('Semester tidak ditemukan');
+    try {
+      const data = await this.prisma.semester.findUniqueOrThrow({ where: { id } });
+      return { success: true, data };
+    } catch (error) {
+      handleFindError(error, 'semester');
     }
-
-    return { success: true, data };
   }
 
   async findByOne(param: ValidSemesterField, value: StringOrInt) {
@@ -163,43 +191,7 @@ export class SemesterService {
     return { success: true, data };
   }
 
-  async update(id: number, updateSemesterDto: UpdateSemesterDto) {
-    const existing = await this.prisma.semester.findUnique({ where: { id } });
-    if (!existing) {
-      throw new NotFoundException('Semester tidak ditemukan');
-    }
-
-    const { tipe, tahunMulai, tahunSelesai, status } = updateSemesterDto;
-    const { kode, nama } = this.generateKodeDanNama(tipe, tahunMulai, tahunSelesai);
-
-    const errors = await this.validateUniqueSemester(kode, nama, id);
-    if (Object.keys(errors).length > 0) {
-      throw new BadRequestException({ message: errors });
-    }
-
-    try {
-      const updated = await this.prisma.semester.update({
-        where: { id },
-        data: { kode, nama, tipe, tahunMulai, tahunSelesai, status },
-      });
-
-      return {
-        success: true,
-        message: 'Semester berhasil diperbarui',
-        data: updated,
-      };
-    } catch (error) {
-      console.error(error);
-      throw new BadRequestException('Gagal memperbarui semester');
-    }
-  }
-
   async remove(id: number) {
-    const existing = await this.prisma.semester.findUnique({ where: { id } });
-    if (!existing) {
-      throw new NotFoundException('Semester tidak ditemukan');
-    }
-
     try {
       const deleted = await this.prisma.semester.delete({ where: { id } });
       return {
@@ -208,8 +200,7 @@ export class SemesterService {
         data: deleted,
       };
     } catch (error) {
-      console.error(error);
-      throw new BadRequestException('Gagal menghapus semester');
+      handleFindError(error, 'semester');
     }
   }
 }
