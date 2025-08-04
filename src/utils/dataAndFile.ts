@@ -16,9 +16,12 @@ export class DataAndFileService {
     return `${uuidv4()}${path.extname(original)}`;
   }
 
-  async writeFile(file: Express.Multer.File, name: string): Promise<void> {
+  async writeFile(file: Express.Multer.File, name: string, subfolder = ''): Promise<void> {
     try {
-      const fullPath = path.join(this.UPLOAD_PATH, name);
+      const dirPath = path.join(this.UPLOAD_PATH, subfolder);
+      await fs.promises.mkdir(dirPath, { recursive: true });
+
+      const fullPath = path.join(dirPath, name);
       await fs.promises.writeFile(fullPath, file.buffer);
     } catch (err) {
       throw new InternalServerErrorException('Gagal menyimpan file');
@@ -31,6 +34,40 @@ export class DataAndFileService {
     if (fs.existsSync(fullPath)) {
       await fs.promises.unlink(fullPath);
     }
+  }
+
+  async handleUpload(params: {
+    file: Express.Multer.File;
+    uploadSubfolder?: string;
+  }): Promise<string> {
+    const { file, uploadSubfolder = '' } = params;
+
+    if (!file || !file.originalname) {
+      throw new BadRequestException('File tidak valid atau tidak ditemukan');
+    }
+
+    const savedFileName = this.generateFileName(file.originalname);
+    const relativePath = path.posix.join(uploadSubfolder, savedFileName);
+
+    await this.writeFile(file, savedFileName, uploadSubfolder);
+
+    return relativePath;
+  }
+
+  async handleUploadAndUpdate(params: {
+    file: Express.Multer.File;
+    oldFilePath?: string;
+    uploadSubfolder?: string;
+  }): Promise<string> {
+    const { file, oldFilePath, uploadSubfolder = '' } = params;
+
+    const relativePath = await this.handleUpload({ file, uploadSubfolder });
+
+    if (oldFilePath && !oldFilePath.includes('..')) {
+      await this.deleteFile(oldFilePath);
+    }
+
+    return relativePath;
   }
 
   validateAndInjectFilePath<T>(

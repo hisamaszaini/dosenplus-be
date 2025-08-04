@@ -22,7 +22,7 @@ type TransactionClient = Omit<PrismaClient, '$connect' | '$disconnect' | '$on' |
 
 @Injectable()
 export class UsersService {
-    private readonly UPLOAD_PATH = path.resolve(process.cwd(), 'uploads/profil');
+    private readonly UPLOAD_PATH = 'profil';
 
     constructor(private prisma: PrismaService, private hashEncryptUtil: HashAndEncryptService, private readonly fileUtil: DataAndFileService, private logActivityUtil: LogActivityService
     ) { }
@@ -166,22 +166,26 @@ export class UsersService {
         }
 
         const validatedData = validationResult.data;
+        const roles = validatedData.dataUser.roles || [];
 
-        const filePath = file?.path || file?.filename;
-        const savedFileName = file ? this.fileUtil.generateFileName(file.originalname) : undefined;
+        let relativePath: string | undefined;
 
-        if (file && savedFileName) {
+        if (file) {
+            const savedFileName = this.fileUtil.generateFileName(file.originalname);
+            relativePath = path.join(this.UPLOAD_PATH, savedFileName).replace(/\\/g, '/');
+
             if (validatedData.dosenBiodata) {
-                validatedData.dosenBiodata.fotoPath = savedFileName;
+                validatedData.dosenBiodata.fotoPath = relativePath;
             }
             if (validatedData.validatorBiodata) {
-                validatedData.validatorBiodata.fotoPath = savedFileName;
+                validatedData.validatorBiodata.fotoPath = relativePath;
             }
+
+            await this.fileUtil.writeFile(file, savedFileName, this.UPLOAD_PATH);
         }
 
         await this.validateUniqueUser(validatedData.dataUser.email, validatedData.dataUser.username);
 
-        const roles = validatedData.dataUser.roles || [];
         const roleValidationErrors: string[] = [];
 
         if (roles.includes('DOSEN') && !validatedData.dosenBiodata) {
@@ -212,10 +216,6 @@ export class UsersService {
         }
 
         try {
-            if (file && savedFileName) {
-                await this.fileUtil.writeFile(file, savedFileName);
-            }
-
             const result = await this.prisma.$transaction(async (tx) => {
                 const user = await this.createUserWithRoles(tx, validatedData.dataUser, roles);
                 await this.handleProfileCreationByRole(tx, user.id, validatedData);
@@ -230,8 +230,8 @@ export class UsersService {
             };
 
         } catch (error) {
-            if (file && savedFileName) {
-                await this.fileUtil.deleteFile(savedFileName);
+            if (file && relativePath) {
+                await this.fileUtil.deleteFile(relativePath);
             }
             throw new InternalServerErrorException('Gagal menyimpan user');
         }
@@ -251,15 +251,17 @@ export class UsersService {
 
         console.log(validated);
 
-        let savedFileName: string | undefined;
+        let relativePath: string | undefined;
+
         if (file) {
-            savedFileName = this.fileUtil.generateFileName(file.originalname);
+            const savedFileName = this.fileUtil.generateFileName(file.originalname);
+            relativePath = path.join(this.UPLOAD_PATH, savedFileName).replace(/\\/g, '/');
 
             if (validated.dosenBiodata) {
-                validated.dosenBiodata.fotoPath = savedFileName;
+                validated.dosenBiodata.fotoPath = relativePath;
             }
             if (validated.validatorBiodata) {
-                validated.validatorBiodata.fotoPath = savedFileName;
+                validated.validatorBiodata.fotoPath = relativePath;
             }
         }
 
@@ -357,8 +359,8 @@ export class UsersService {
                     }
                 }
 
-                if (file && savedFileName) {
-                    await this.fileUtil.writeFile(file, savedFileName);
+                if (file && relativePath) {
+                    await this.fileUtil.writeFile(file, path.basename(relativePath), this.UPLOAD_PATH);
                 }
 
                 const updatedUser = await tx.user.findUnique({
@@ -380,8 +382,8 @@ export class UsersService {
             });
         } catch (error) {
 
-            if (file && savedFileName) {
-                await this.fileUtil.deleteFile(savedFileName);
+            if (file && relativePath) {
+                await this.fileUtil.deleteFile(relativePath);
             }
 
             if (
@@ -544,7 +546,7 @@ export class UsersService {
         if (!file) return;
 
         const savedFileName = this.fileUtil.generateFileName(file.originalname);
-        console.log(savedFileName);
+        const relativePath = path.join(this.UPLOAD_PATH, savedFileName).replace(/\\/g, '/');
 
         const existingUser = await this.prisma.user.findUnique({
             where: { id: userId },
@@ -552,11 +554,11 @@ export class UsersService {
         });
 
         try {
-            await this.fileUtil.writeFile(file, savedFileName);
+            await this.fileUtil.writeFile(file, savedFileName, this.UPLOAD_PATH);
 
             await this.prisma.user.update({
                 where: { id: userId },
-                data: { fotoPath: savedFileName },
+                data: { fotoPath: relativePath },
             });
 
             if (existingUser?.fotoPath) {
@@ -568,7 +570,7 @@ export class UsersService {
                 message: 'Foto profil berhasil diperbarui',
             };
         } catch (error) {
-            await this.fileUtil.deleteFile(savedFileName);
+            await this.fileUtil.deleteFile(relativePath);
             throw new Error(`Gagal mengganti foto: ${error.message}`);
         }
     }

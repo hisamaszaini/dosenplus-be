@@ -22,7 +22,7 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 import { PendidikanService } from './pendidikan.service';
-import { CreatePendidikanDto } from './dto/create-pendidikan.dto';
+import { CreatePendidikanDto, updateStatusValidasiSchema } from './dto/create-pendidikan.dto';
 import { UpdatePendidikanDto } from './dto/update-pendidikan.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
@@ -51,19 +51,37 @@ export class PendidikanController {
     )
     file: Express.Multer.File,
     @Request() req,
-    @Body() body: CreatePendidikanDto,
+    @Body('data') dataRaw: string,
   ) {
+
+    console.log('FILE:', file);
+    console.log('REQ:', req);
+
     const dosenId = req.user.sub;
-    return this.pendidikanService.create(dosenId, body, file);
+
+    let data: CreatePendidikanDto;
+    try {
+      if (!dataRaw || typeof dataRaw !== 'string') {
+        throw new BadRequestException('data harus berupa string JSON.');
+      }
+      data = JSON.parse(dataRaw);
+      console.log(file);
+      console.log(data);
+    } catch {
+      throw new BadRequestException('data tidak valid. Harus berupa JSON string.');
+    }
+
+    return this.pendidikanService.create(dosenId, data, file);
   }
 
   // Create untuk Admin
   @Post('admin/:dosenId')
-  @Roles(TypeUserRole.DOSEN)
+  @Roles(TypeUserRole.ADMIN)
   @HttpCode(HttpStatus.CREATED)
   @UseInterceptors(FileInterceptor('file'))
   async createByAdmin(
     @Param('dosenId', ParseIntPipe) dosenId: number,
+
     @UploadedFile(
       new ParseFilePipe({
         validators: [
@@ -73,13 +91,27 @@ export class PendidikanController {
       }),
     )
     file: Express.Multer.File,
-    @Request() req,
-    @Body() body: CreatePendidikanDto,
+
+    @Body('data') dataRaw: string,
   ) {
     if (!dosenId) {
       throw new BadRequestException('ID Dosen wajib diisi.');
     }
-    return this.pendidikanService.create(dosenId, body, file);
+
+    let data: CreatePendidikanDto;
+    try {
+      if (!dataRaw || typeof dataRaw !== 'string') {
+        throw new BadRequestException('data harus berupa string JSON.');
+      }
+      data = JSON.parse(dataRaw);
+    } catch {
+      throw new BadRequestException('data tidak valid. Harus berupa JSON string.');
+    }
+
+    // console.log(file);
+    // console.log(data);
+
+    return this.pendidikanService.create(dosenId, data, file);
   }
 
   // Update
@@ -89,6 +121,7 @@ export class PendidikanController {
   @UseInterceptors(FileInterceptor('file'))
   async update(
     @Param('id', ParseIntPipe) id: number,
+
     @UploadedFile(
       new ParseFilePipe({
         validators: [
@@ -96,16 +129,82 @@ export class PendidikanController {
           new FileTypeValidator({ fileType: 'application/pdf' }),
         ],
         fileIsRequired: false,
-      })
+      }),
     )
     file: Express.Multer.File | undefined,
     @Request() req,
-    @Body() body: UpdatePendidikanDto,
+    @Body('data') dataRaw: string,
   ) {
     const dosenId = req.user.sub;
     const role = req.user.roles;
 
-    return this.pendidikanService.update(id, dosenId, body, file, role);
+    console.log('id: ', id);
+    console.log('dosenId:', dosenId);
+
+    let data: UpdatePendidikanDto;
+    try {
+      if (!dataRaw || typeof dataRaw !== 'string') {
+        throw new BadRequestException('data harus berupa string JSON.');
+      }
+      data = JSON.parse(dataRaw);
+    } catch {
+      throw new BadRequestException('data tidak valid. Harus berupa JSON string.');
+    }
+
+    return this.pendidikanService.update(id, dosenId, data, file, role);
+  }
+
+  //  Update untuk Admin
+  @Patch('admin/:dosenId/:id')
+  @Roles(TypeUserRole.ADMIN)
+  @HttpCode(HttpStatus.OK)
+  @UseInterceptors(FileInterceptor('file'))
+  async updateByAdmin(
+    @Param('dosenId', ParseIntPipe) dosenId: number,
+    @Param('id', ParseIntPipe) id: number,
+
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
+          new FileTypeValidator({ fileType: 'application/pdf' }),
+        ],
+        fileIsRequired: false,
+      }),
+    )
+    file: Express.Multer.File | undefined,
+
+    @Body('data') dataRaw: string,
+  ) {
+    let data: UpdatePendidikanDto;
+    try {
+      if (!dataRaw || typeof dataRaw !== 'string') {
+        throw new BadRequestException('data harus berupa string JSON.');
+      }
+      data = JSON.parse(dataRaw);
+    } catch {
+      throw new BadRequestException('data tidak valid. Harus berupa JSON string.');
+    }
+
+    return this.pendidikanService.update(id, dosenId, data, file, TypeUserRole.ADMIN);
+  }
+
+  @Patch(':id/validasi')
+  @Roles(TypeUserRole.ADMIN, TypeUserRole.VALIDATOR)
+  async validatePendidikan(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() rawData: any,
+    @Request() req,
+  ) {
+    const parsed = updateStatusValidasiSchema.safeParse(rawData);
+    if (!parsed.success) {
+      throw new BadRequestException(parsed.error.format());
+    }
+
+    const { statusValidasi, catatan } = parsed.data;
+    const reviewerId = req.user.sub;
+
+    return this.pendidikanService.validate(id, statusValidasi, catatan, reviewerId);
   }
 
   @Get()
@@ -138,7 +237,7 @@ export class PendidikanController {
     @Param('id', ParseIntPipe) id: number,
     @Request() req,
   ) {
-    const item = await this.pendidikanService.findOne(id, req.user.sub, req.user.role,);
+    const item = await this.pendidikanService.findOne(id, req.user.sub, req.user.role);
     return item;
   }
 

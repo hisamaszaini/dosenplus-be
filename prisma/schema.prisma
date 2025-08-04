@@ -56,6 +56,7 @@ model User {
   PendingBiodataDosen    PendingBiodataDosen[]
   PendingDataKepegawaian PendingDataKepegawaian[]
   ActivityLog            ActivityLog[]
+  Pendidikan             Pendidikan[]
 }
 
 model Role {
@@ -227,6 +228,8 @@ model Pendidikan {
   filePath String
 
   statusValidasi StatusValidasi @default(PENDING)
+  reviewerId     Int?
+  reviewer       User?          @relation(fields: [reviewerId], references: [id])
   catatan        String?
 
   createdAt DateTime @default(now())
@@ -570,11 +573,11 @@ model PengembanganDiri {
 }
 
 model ActivityLog {
-  id         Int        @id @default(autoincrement())
+  id         Int      @id @default(autoincrement())
   userId     Int
-  user       User       @relation(fields: [userId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
   targetType String
   targetId   Int
   action     String
-  createdAt  DateTime   @default(now())
+  createdAt  DateTime @default(now())
 }

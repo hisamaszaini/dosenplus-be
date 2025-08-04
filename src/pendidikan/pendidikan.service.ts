@@ -9,14 +9,14 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { PrismaService } from 'prisma/prisma.service';
-import { KategoriPendidikan, TypeUserRole } from '@prisma/client';
+import { KategoriPendidikan, StatusValidasi, TypeUserRole } from '@prisma/client';
 import { CreatePendidikanDto, fullPendidikanSchema } from './dto/create-pendidikan.dto';
 import { fullUpdatePendidikanSchema, UpdatePendidikanDto } from './dto/update-pendidikan.dto';
 import { DataAndFileService } from 'src/utils/dataAndFile';
 
 @Injectable()
 export class PendidikanService {
-  private readonly UPLOAD_PATH = path.resolve(process.cwd(), 'uploads/pendidikan');
+  private readonly UPLOAD_PATH = 'pendidikan';
 
   constructor(
     private readonly prisma: PrismaService,
@@ -35,12 +35,19 @@ export class PendidikanService {
   }
 
   async create(dosenId: number, rawData: any, file: Express.Multer.File) {
-    const savedFileName = this.fileUtil.generateFileName(file.originalname);
+    if (!file) {
+      throw new BadRequestException('File pendidikan wajib diunggah');
+    }
+
+    const relativePath = await this.fileUtil.handleUpload({
+      file,
+      uploadSubfolder: this.UPLOAD_PATH,
+    });
 
     const parsedData = this.fileUtil.validateAndInjectFilePath(
       fullPendidikanSchema,
       { ...rawData, dosenId },
-      savedFileName
+      relativePath
     );
 
     const dosen = await this.prisma.dosen.findUnique({
@@ -52,15 +59,13 @@ export class PendidikanService {
     }
 
     try {
-      await this.fileUtil.writeFile(file, savedFileName);
-
       const nilaiPak = await this.getNilaiPak(parsedData);
 
       const pendidikan = await this.prisma.pendidikan.create({
         data: {
           dosenId,
           kategori: parsedData.kategori,
-          filePath: savedFileName,
+          filePath: relativePath,
           nilaiPak,
         },
       });
@@ -102,7 +107,7 @@ export class PendidikanService {
       };
     } catch (error) {
       console.error('Error saat menyimpan pendidikan:', error);
-      await this.fileUtil.deleteFile(savedFileName);
+      await this.fileUtil.deleteFile(relativePath);
       throw new InternalServerErrorException('Gagal menyimpan pendidikan');
     }
   }
@@ -114,8 +119,12 @@ export class PendidikanService {
     file?: Express.Multer.File,
     role?: TypeUserRole,
   ) {
-    const schema = fullUpdatePendidikanSchema;
-    const parsed = schema.safeParse(rawData);
+    const parsed = fullUpdatePendidikanSchema.safeParse({
+      ...rawData,
+      id,
+      dosenId,
+    });
+
     if (!parsed.success) {
       throw new BadRequestException(parsed.error.format());
     }
@@ -135,9 +144,11 @@ export class PendidikanService {
 
     let filePath = existing.filePath;
     if (file) {
-      await this.fileUtil.deleteFile(filePath);
-      filePath = this.fileUtil.generateFileName(file.originalname);
-      await this.fileUtil.writeFile(file, filePath);
+      filePath = await this.fileUtil.handleUploadAndUpdate({
+        file,
+        oldFilePath: existing.filePath,
+        uploadSubfolder: this.UPLOAD_PATH,
+      });
     }
 
     const nilaiPak = this.getNilaiPak(data);
@@ -173,7 +184,7 @@ export class PendidikanService {
                 },
               },
             },
-            Diklat: { delete: true },
+            ...(existing.Diklat && { Diklat: { delete: true } }),
           },
         });
       } else {
@@ -225,7 +236,7 @@ export class PendidikanService {
                 },
               },
             },
-            Formal: { delete: true },
+            ...(existing.Formal && { Formal: { delete: true } }),
           },
         });
       }
@@ -309,6 +320,27 @@ export class PendidikanService {
     }
 
     return { success: true, data: pendidikan };
+  }
+
+  async validate(id: number, status: StatusValidasi, catatan: string | undefined, reviewerId: number,
+  ) {
+
+    if (status === StatusValidasi.REJECTED && (!catatan || catatan.trim() === '')) {
+      throw new BadRequestException('Catatan wajib diisi jika status ditolak');
+    }
+
+    const existing = await this.prisma.pendidikan.findUnique({ where: { id } });
+
+    if (!existing) throw new NotFoundException('Data pendidikan tidak ditemukan');
+
+    return this.prisma.pendidikan.update({
+      where: { id },
+      data: {
+        statusValidasi: status,
+        reviewerId: reviewerId,
+        catatan: status === 'REJECTED' ? catatan : catatan || null,
+      },
+    });
   }
 
   async delete(id: number, userId: number, role: TypeUserRole) {
