@@ -252,7 +252,7 @@ export class UsersService {
             validated.validatorBiodata.nama = validated.dataUser.name;
         }
 
-        const user = await this.prisma.user.findUniqueOrThrow({
+        const user = await this.prisma.user.findUnique({
             where: { id: userId },
             include: {
                 userRoles: { include: { role: true } },
@@ -375,7 +375,6 @@ export class UsersService {
 
             handleUpdateError(error, 'User')
 
-            throw new InternalServerErrorException('Gagal memperbarui user');
         }
     }
 
