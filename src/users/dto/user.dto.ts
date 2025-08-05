@@ -279,13 +279,19 @@ export type UpdateFlexibleUserDto = z.infer<typeof UpdateFlexibleUserSchema>;
 export type RoleData = z.infer<typeof RoleDataSchema>;
 export type UserRole = z.infer<typeof UserRoleSchema>;
 
+export enum StatusValidationEnum {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED'
+}
+
 export const CreatePendingBiodataDosenSchema = CreateDosenBiodataSchema.extend({
-  status: z.nativeEnum(StatusValidasi).default(StatusValidasi.PENDING),
+  status: z.nativeEnum(StatusValidationEnum).default(StatusValidationEnum.PENDING),
   catatan: z.string().optional().nullable().transform((val) => (val?.trim() || null))
 });
 
 export const CreatePendingDataKepegawaianSchema = CreateDataKepegawaianSchema.extend({
-  status: z.nativeEnum(StatusValidasi).default(StatusValidasi.PENDING),
+  status: z.nativeEnum(StatusValidationEnum).default(StatusValidationEnum.PENDING),
   catatan: z.string().optional().nullable().transform((val) => (val?.trim() || null))
 });
 
@@ -297,7 +303,7 @@ export const CreatePendingUpdateSchema = z.object({
 });
 
 export const UpdatePendingStatusSchema = z.object({
-  status: z.nativeEnum(StatusValidasi),
+  status: z.nativeEnum(StatusValidationEnum),
   catatan: z.string().optional().nullable().transform((val) => val?.trim() || null),
 });
 

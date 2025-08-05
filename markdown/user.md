@@ -62,7 +62,7 @@
 
 ### 🔄 Update User
 
-**Method:** `PUT`  
+**Method:** `PATCH`  
 **URL:** `http://127.0.0.1:3000/users/:id`  
 **Authorization:** Bearer token  
 **Content-Type:** `multipart/form-data`  
