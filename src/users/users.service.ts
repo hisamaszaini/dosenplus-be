@@ -245,10 +245,10 @@ export class UsersService {
     async updateFlexibleUser(userId: number, dto: UpdateFlexibleUserDto, file?: Express.Multer.File) {
         const validated = parseAndThrow(UpdateFlexibleUserSchema, dto);
 
-        if (validated.dosenBiodata) {
+        if (validated.dosenBiodata && validated.dataUser.name) {
             validated.dosenBiodata.nama = validated.dataUser.name;
         }
-        if (validated.validatorBiodata) {
+        if (validated.validatorBiodata && validated.dataUser.name) {
             validated.validatorBiodata.nama = validated.dataUser.name;
         }
 

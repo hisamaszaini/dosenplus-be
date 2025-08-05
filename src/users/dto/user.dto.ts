@@ -172,11 +172,11 @@ export const UpdateFlexibleUserSchema = z.object({
   dataUser: BaseUpdateUserSchema,
 })
   .and(z.object({
-    dosenBiodata: CreateDosenBiodataSchema.optional(),
+    dosenBiodata: CreateDosenBiodataSchema,
     dataKepegawaian: CreateDataKepegawaianSchema.optional(),
   }).partial())
   .and(z.object({
-    validatorBiodata: CreateValidatorBiodataSchema.optional(),
+    validatorBiodata: CreateValidatorBiodataSchema,
   }).partial())
   .superRefine((data, ctx) => {
     const roles = data.dataUser.roles || [];
