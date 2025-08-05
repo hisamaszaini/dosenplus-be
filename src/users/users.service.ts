@@ -16,7 +16,7 @@ import { BaseUpdateUserSchema, ChangePasswordDto, ChangePasswordSchema, CreateFl
 import z, { success, ZodError } from 'zod';
 import { DataAndFileService } from 'src/utils/dataAndFile';
 import { LogActivityService } from 'src/utils/logActivity';
-import { handlePrismaError } from 'src/common/utils/prisma-error-handler';
+import { handleFindError, handlePrismaError } from 'src/common/utils/prisma-error-handler';
 import { parseAndThrow } from 'src/common/utils/zod-helper';
 
 const SALT_ROUNDS = 10;
@@ -105,17 +105,20 @@ export class UsersService {
     }
 
     async findById(id: number) {
-        const user = await this.prisma.user.findUnique({
-            where: { id },
-            include: {
-                userRoles: { include: { role: true } },
-                dosen: { include: { dataKepegawaian: true, fakultas: true, prodi: true, pendidikan: true } },
-                validator: true,
-            },
-        });
-        if (!user) throw new NotFoundException('User tidak ditemukan.');
-        const { password, hashedRefreshToken, ...userData } = user;
-        return { success: true, data: userData };
+        try {
+            const user = await this.prisma.user.findUniqueOrThrow({
+                where: { id },
+                include: {
+                    userRoles: { include: { role: true } },
+                    dosen: { include: { dataKepegawaian: true, fakultas: true, prodi: true, pendidikan: true } },
+                    validator: true,
+                },
+            });
+            const { password, hashedRefreshToken, ...userData } = user;
+            return { success: true, data: userData };
+        } catch (error) {
+            handleFindError(error, 'User');
+        }
     }
 
     private async createUserWithRoles(tx: TransactionClient, dataUser: any, roles: TypeUserRole[]) {
@@ -354,14 +357,7 @@ export class UsersService {
                     }
                 }
 
-                const updatedUser = await tx.user.findUnique({
-                    where: { id: userId },
-                    include: {
-                        userRoles: { include: { role: true } },
-                        dosen: true,
-                        validator: true,
-                    },
-                });
+                const updatedUser = await this.findById(userId);
 
                 return updatedUser;
             });
