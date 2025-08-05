@@ -252,18 +252,18 @@ export class UsersService {
             validated.validatorBiodata.nama = validated.dataUser.name;
         }
 
-        const user = await this.prisma.user.findUniqueOrThrow({
-            where: { id: userId },
-            include: {
-                userRoles: { include: { role: true } },
-                dosen: true,
-                validator: true,
-            },
-        });
-
         let relativePath: string | undefined;
 
         try {
+            const user = await this.prisma.user.findUniqueOrThrow({
+                where: { id: userId },
+                include: {
+                    userRoles: { include: { role: true } },
+                    dosen: true,
+                    validator: true,
+                },
+            });
+            
             const roles = validated.dataUser.roles ?? [];
             const existingRoles = user.userRoles.map(r => r.role.name);
             const newRoles = roles.filter(r => !existingRoles.includes(r));
