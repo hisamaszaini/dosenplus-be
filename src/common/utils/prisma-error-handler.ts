@@ -1,8 +1,8 @@
 import {
     BadRequestException,
     NotFoundException,
-    ForbiddenException,
     InternalServerErrorException,
+    HttpException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 
@@ -59,6 +59,10 @@ export function handlePrismaError(error: unknown, context?: ErrorContext) {
 
     const ctx = { ...defaultContext, ...context };
     const operationText = OPERATION_MESSAGES[ctx.operation];
+
+    if (error instanceof HttpException) {
+        throw error;
+    }
 
     // Handle Prisma Known Request Errors
     if (error instanceof Prisma.PrismaClientKnownRequestError) {

@@ -1,10 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, HttpCode, HttpStatus, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator, Req, ParseIntPipe, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, HttpCode, HttpStatus, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator, Req, ParseIntPipe, Query, BadRequestException } from '@nestjs/common';
 import { PelaksanaanPendidikanService } from './pelaksanaan-pendidikan.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { TypeUserRole } from '@prisma/client';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { CreatePelaksanaanPendidikanDto } from './dto/create-pelaksanaan-pendidikan.dto';
+import { UpdatePelaksanaanPendidikanDto } from './dto/update-pelaksanaan-pendidikan.dto';
+import { ParseJsonStringPipe } from 'src/common/pipes/parse-json-string.pipe';
 
 @Controller('pelaksanaan-pendidikan')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -26,15 +29,53 @@ export class PelaksanaanPendidikanController {
     )
     file: Express.Multer.File,
 
-    @Body() body: any,
+    @Body('data') dataRaw: any,
     @Req() req: any
   ) {
+    let data: CreatePelaksanaanPendidikanDto;
+    try {
+      if (!dataRaw || typeof dataRaw !== 'string') {
+        throw new BadRequestException('data harus berupa string JSON.');
+      }
+      data = JSON.parse(dataRaw);
+    } catch {
+      throw new BadRequestException('data tidak valid. Harus berupa JSON string.');
+    }
     const dosenId = req.user.sub;
-    const kategori = body.kategori;
-
-    return this.pelaksanaanPendidikanService.create(dosenId, body, file);
+    return this.pelaksanaanPendidikanService.create(dosenId, data, file);
   }
 
+  @Post('admin/:dosenId')
+  @Roles(TypeUserRole.ADMIN)
+  @HttpCode(HttpStatus.CREATED)
+  @UseInterceptors(FileInterceptor('file'))
+  async createByAdmin(
+    @Param('dosenId', ParseIntPipe) dosenId: number,
+
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
+          new FileTypeValidator({ fileType: 'application/pdf' }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
+
+    @Body('data') dataRaw: any,
+    @Req() req: any
+  ) {
+    let data: CreatePelaksanaanPendidikanDto;
+    try {
+      if (!dataRaw || typeof dataRaw !== 'string') {
+        throw new BadRequestException('data harus berupa string JSON.');
+      }
+      data = JSON.parse(dataRaw);
+    } catch {
+      throw new BadRequestException('data tidak valid. Harus berupa JSON string.');
+    }
+    return this.pelaksanaanPendidikanService.create(dosenId, data, file);
+  }
 
   @Get()
   @Roles(TypeUserRole.DOSEN, TypeUserRole.ADMIN, TypeUserRole.VALIDATOR)
@@ -48,7 +89,6 @@ export class PelaksanaanPendidikanController {
     return this.pelaksanaanPendidikanService.findAll(query, dosenId, role);
   }
 
-
   @Get(':id')
   @Roles(TypeUserRole.ADMIN, TypeUserRole.VALIDATOR, TypeUserRole.DOSEN)
   async findOne(
@@ -60,7 +100,6 @@ export class PelaksanaanPendidikanController {
 
     return this.pelaksanaanPendidikanService.findOne(id, dosenId, role);
   }
-
 
   @Patch(':id')
   @Roles(TypeUserRole.DOSEN, TypeUserRole.ADMIN)
@@ -78,13 +117,38 @@ export class PelaksanaanPendidikanController {
     )
     file: Express.Multer.File,
 
-    @Body() body: any,
+    @Body('data', new ParseJsonStringPipe) data: any,
     @Req() req: any,
   ) {
     const dosenId = req.user.sub;
     const role = req.user.role;
+    return this.pelaksanaanPendidikanService.update(id, dosenId, data, role, file);
+  }
 
-    return this.pelaksanaanPendidikanService.update(id, dosenId, body, file, role);
+  @Patch('admin/:dosenId/:id')
+  @Roles(TypeUserRole.DOSEN, TypeUserRole.ADMIN)
+  @UseInterceptors(FileInterceptor('file'))
+  async updateByAdmin(
+    @Param('dosenId', ParseIntPipe) dosenId: number,
+    @Param('id', ParseIntPipe) id: number,
+
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
+          new FileTypeValidator({ fileType: 'application/pdf' }),
+        ],
+        fileIsRequired: false,
+      }),
+    )
+    file: Express.Multer.File,
+
+    @Body('data', new ParseJsonStringPipe) data: any,
+
+    @Req() req: any,
+  ) {
+    const role = req.user.role;
+    return this.pelaksanaanPendidikanService.update(id, dosenId, data, role, file);
   }
 
   @Delete(':id')

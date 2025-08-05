@@ -138,6 +138,8 @@ export class UsersService {
 
     private async handleProfileCreationByRole(tx: TransactionClient, userId: number, dto: any) {
         if (dto.dosenBiodata) {
+            dto.dosenBiodata.nama = dto.dataUser.name;
+
             if (dto.dosenBiodata.nip === undefined) {
                 dto.dosenBiodata.nip = null;
             }
@@ -147,6 +149,7 @@ export class UsersService {
             }
         }
         if (dto.validatorBiodata) {
+            dto.validatorBiodata.nama = dto.dataUser.name;
             await tx.validator.create({ data: { ...dto.validatorBiodata, id: userId } });
         }
     }
@@ -238,6 +241,13 @@ export class UsersService {
 
     async updateFlexibleUser(userId: number, dto: UpdateFlexibleUserDto, file?: Express.Multer.File) {
         const validated = parseAndThrow(UpdateFlexibleUserSchema, dto);
+
+        if (validated.dosenBiodata) {
+            validated.dosenBiodata.nama = validated.dataUser.name;
+        }
+        if (validated.validatorBiodata) {
+            validated.validatorBiodata.nama = validated.dataUser.name;
+        }
 
         const user = await this.prisma.user.findUnique({
             where: { id: userId },

@@ -1,16 +1,16 @@
 import { BadRequestException, ForbiddenException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
-import * as fs from 'fs';
-import * as path from 'path';
-import { v4 as uuidv4 } from 'uuid';
 import { PrismaService } from 'prisma/prisma.service';
 import { KategoriKegiatan, Prisma, Role, TypeUserRole } from '@prisma/client';
 import { fullPelaksanaanPendidikanSchema } from './dto/create-pelaksanaan-pendidikan.dto';
 import { fullUpdatePelaksanaanSchema } from './dto/update-pelaksanaan-pendidikan.dto';
 import { DataAndFileService } from 'src/utils/dataAndFile';
+import { parseAndThrow } from 'src/common/utils/zod-helper';
+import { handleCreateError, handleDeleteError, handleFindError, handleUpdateError } from 'src/common/utils/prisma-error-handler';
+import { hasRole } from 'src/common/utils/hasRole';
 
 @Injectable()
 export class PelaksanaanPendidikanService {
-  private readonly UPLOAD_PATH = path.resolve(process.cwd(), 'uploads/pendidikan');
+  private readonly UPLOAD_PATH = 'pendidikan';
 
   constructor(private readonly prisma: PrismaService, private readonly fileUtil: DataAndFileService) {
   }
@@ -112,29 +112,24 @@ export class PelaksanaanPendidikanService {
   async create(
     dosenId: number,
     rawData: any,
-    file: Express.Multer.File
+    file: Express.Multer.File,
   ) {
-    const schema = fullPelaksanaanPendidikanSchema;
-    const parsed = schema.safeParse(rawData);
+    const data = parseAndThrow(fullPelaksanaanPendidikanSchema, rawData);
 
-    if (!parsed.success) {
-      throw new BadRequestException(parsed.error.format());
-    }
-
-    const data = parsed.data;
-    const kategori = data.kategori;
-
-    const dosen = await this.prisma.dosen.findUnique({
+    const dosen = await this.prisma.dosen.findUniqueOrThrow({
       where: { id: dosenId },
       select: { jabatan: true },
     });
 
-    if (!dosen) throw new NotFoundException('Dosen tidak ditemukan');
-
-    const savedFileName = this.fileUtil.generateFileName(file.originalname);
+    let relativePath: string | undefined;
 
     try {
-      await this.fileUtil.writeFile(file, savedFileName);
+      relativePath = await this.fileUtil.handleUpload({
+        file,
+        uploadSubfolder: this.UPLOAD_PATH,
+      });
+
+      const kategori = data.kategori;
 
       const nilaiPak = await this.getNilaiPakByKategori(kategori, {
         ...data,
@@ -149,62 +144,72 @@ export class PelaksanaanPendidikanService {
             dosenId,
             semesterId: data.semesterId,
             kategori: data.kategori,
-            filePath: savedFileName,
+            filePath: relativePath,
             nilaiPak,
           },
         }),
       };
     } catch (error) {
-      console.error('Error saat menyimpan pelaksanaan pendidikan:', error);
-      await this.fileUtil.deleteFile(savedFileName);
-      throw new InternalServerErrorException('Gagal menyimpan pelaksanaan pendidikan');
+      if (relativePath) {
+        await this.fileUtil.deleteFile(relativePath);
+      }
+      handleCreateError(error, 'Pelaksanaan Pendidikan');
     }
   }
 
-  async update(id: number, dosenId: number, rawData: any, file?: Express.Multer.File, role?: TypeUserRole) {
-    const schema = fullUpdatePelaksanaanSchema;
-    const parsed = schema.safeParse(rawData);
-    if (!parsed.success) {
-      throw new BadRequestException(parsed.error.format());
-    }
+  async update(id: number, dosenId: number, rawData: any, role: TypeUserRole, file?: Express.Multer.File) {
+    const data = parseAndThrow(fullUpdatePelaksanaanSchema, rawData);
 
-    const data = parsed.data;
+    const existing = await this.prisma.pelaksanaanPendidikan.findUniqueOrThrow({ where: { id } });
 
-    const existing = await this.prisma.pelaksanaanPendidikan.findUnique({ where: { id } });
-    if (!existing) {
-      throw new NotFoundException('Data pelaksanaan pendidikan tidak ditemukan');
-    }
-
-    if (role !== TypeUserRole.ADMIN && existing.dosenId !== dosenId) {
+    if (!hasRole(role, TypeUserRole.ADMIN) && existing.dosenId !== dosenId) {
       throw new ForbiddenException('Anda tidak berhak memperbarui data ini');
     }
 
-    let filePath = existing.filePath;
-    if (file) {
-      await this.fileUtil.deleteFile(filePath);
-      filePath = this.fileUtil.generateFileName(file.originalname);
-      await this.fileUtil.writeFile(file, filePath);
-    }
+    let newFilePath: string | undefined = undefined;
 
-    const nilaiPak = await this.getNilaiPakByKategori(data.kategori, {
-      ...data,
-      jabatanFungsional: (await this.prisma.dosen.findUnique({ where: { id: dosenId }, select: { jabatan: true } }))?.jabatan,
-    });
+    try {
+      if (file) {
+        newFilePath = await this.fileUtil.handleUpload({
+          file,
+          uploadSubfolder: this.UPLOAD_PATH,
+        });
+      }
 
-    const updated = await this.prisma.pelaksanaanPendidikan.update({
-      where: { id },
-      data: {
+      const dosen = await this.prisma.dosen.findUnique({
+        where: { id: dosenId },
+        select: { jabatan: true },
+      });
+
+      const nilaiPak = await this.getNilaiPakByKategori(data.kategori, {
         ...data,
-        filePath,
-        nilaiPak,
-      },
-    });
+        jabatanFungsional: dosen?.jabatan,
+      });
 
-    return {
-      success: true,
-      message: 'Data berhasil diperbarui',
-      data: updated,
-    };
+      const updated = await this.prisma.pelaksanaanPendidikan.update({
+        where: { id },
+        data: {
+          ...data,
+          filePath: newFilePath ?? existing.filePath,
+          nilaiPak,
+        },
+      });
+
+      if (newFilePath && existing.filePath) {
+        await this.fileUtil.deleteFile(existing.filePath);
+      }
+
+      return {
+        success: true,
+        message: 'Data berhasil diperbarui',
+        data: updated,
+      };
+    } catch (error) {
+      if (newFilePath) {
+        await this.fileUtil.deleteFile(newFilePath);
+      }
+      handleUpdateError(error, 'Pelaksanaan Pendidikan');
+    }
   }
 
   async findAll(query: any, dosenId: number, role: TypeUserRole) {
@@ -263,42 +268,38 @@ export class PelaksanaanPendidikanService {
   }
 
   async findOne(id: number, dosenId: number, role: TypeUserRole) {
-    const data = await this.prisma.pelaksanaanPendidikan.findUnique({
-      where: { id },
-      include: {
-        dosen: { select: { id: true, nama: true } },
-        semester: true,
-      },
-    });
+    try {
+      const data = await this.prisma.pelaksanaanPendidikan.findUniqueOrThrow({
+        where: { id },
+        include: {
+          dosen: { select: { id: true, nama: true } },
+          semester: true,
+        },
+      });
 
-    if (!data) {
-      throw new NotFoundException('Data tidak ditemukan');
+      if (!hasRole(role, TypeUserRole.ADMIN) && data.dosenId !== dosenId) {
+        throw new ForbiddenException('Anda tidak diizinkan mengakses data ini');
+      }
+
+      return {
+        success: true,
+        data,
+      };
+    } catch (error) {
+      handleFindError(error, "Pelaksanaan Pendidikan");
     }
-
-    if (role !== TypeUserRole.ADMIN && data.dosenId !== dosenId) {
-      throw new ForbiddenException('Anda tidak diizinkan mengakses data ini');
-    }
-
-    return {
-      success: true,
-      data,
-    };
   }
 
   async delete(id: number, dosenId: number, role: TypeUserRole) {
-    const existing = await this.prisma.pelaksanaanPendidikan.findUnique({
-      where: { id },
-    });
-
-    if (!existing) {
-      throw new NotFoundException('Data tidak ditemukan');
-    }
-
-    if (role !== TypeUserRole.ADMIN && existing.dosenId !== dosenId) {
-      throw new ForbiddenException('Anda tidak diizinkan menghapus data ini');
-    }
-
     try {
+      const existing = await this.prisma.pelaksanaanPendidikan.findUniqueOrThrow({
+        where: { id },
+      });
+
+      if (!hasRole(role, TypeUserRole.ADMIN) && existing.dosenId !== dosenId) {
+        throw new ForbiddenException('Anda tidak diizinkan menghapus data ini');
+      }
+
       await this.prisma.$transaction(async (tx) => {
         await tx.pelaksanaanPendidikan.delete({ where: { id } });
       });
@@ -312,7 +313,7 @@ export class PelaksanaanPendidikanService {
         message: 'Data berhasil dihapus',
       };
     } catch (error) {
-      throw new InternalServerErrorException('Gagal menghapus data');
+      handleDeleteError(error, 'Pelaksanaan Pendidikan');
     }
   }
 }
