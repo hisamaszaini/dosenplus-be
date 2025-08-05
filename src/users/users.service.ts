@@ -16,7 +16,7 @@ import { BaseUpdateUserSchema, ChangePasswordDto, ChangePasswordSchema, CreateFl
 import z, { success, ZodError } from 'zod';
 import { DataAndFileService } from 'src/utils/dataAndFile';
 import { LogActivityService } from 'src/utils/logActivity';
-import { handleFindError, handlePrismaError } from 'src/common/utils/prisma-error-handler';
+import { handleFindError, handlePrismaError, handleUpdateError } from 'src/common/utils/prisma-error-handler';
 import { parseAndThrow } from 'src/common/utils/zod-helper';
 
 const SALT_ROUNDS = 10;
@@ -252,7 +252,7 @@ export class UsersService {
             validated.validatorBiodata.nama = validated.dataUser.name;
         }
 
-        const user = await this.prisma.user.findUnique({
+        const user = await this.prisma.user.findUniqueOrThrow({
             where: { id: userId },
             include: {
                 userRoles: { include: { role: true } },
@@ -260,8 +260,6 @@ export class UsersService {
                 validator: true,
             },
         });
-
-        if (!user) throw new NotFoundException('User tidak ditemukan.');
 
         let relativePath: string | undefined;
 
@@ -271,7 +269,6 @@ export class UsersService {
             const newRoles = roles.filter(r => !existingRoles.includes(r));
             const removedRoles = existingRoles.filter(r => !roles.includes(r));
 
-            // Upload file & hapus yang lama (jika ada)
             if (file) {
                 relativePath = await this.fileUtil.handleUploadAndUpdate({
                     file,
@@ -287,7 +284,7 @@ export class UsersService {
                 await this.validateFakultasProdi(validated.dosenBiodata.fakultasId, validated.dosenBiodata.prodiId);
             }
 
-            const updated = await this.prisma.$transaction(async (tx) => {
+            await this.prisma.$transaction(async (tx) => {
                 await tx.user.update({
                     where: { id: userId },
                     data: {
@@ -356,16 +353,16 @@ export class UsersService {
                         });
                     }
                 }
-
-                const updatedUser = await this.findById(userId);
-
-                return updatedUser;
             });
+
+
+            const updatedUser = await this.findById(userId);
+            const userData = updatedUser?.data;
 
             return {
                 success: true,
                 message: 'User berhasil diperbarui',
-                data: updated,
+                data: userData,
             };
         } catch (error) {
             if (process.env.NODE_ENV !== 'production') {
@@ -376,7 +373,8 @@ export class UsersService {
                 await this.fileUtil.deleteFile(relativePath);
             }
 
-            handlePrismaError(error);
+            handleUpdateError(error, 'User')
+
             throw new InternalServerErrorException('Gagal memperbarui user');
         }
     }
