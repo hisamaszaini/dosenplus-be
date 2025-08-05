@@ -134,9 +134,9 @@ export const DataKepegawaianSchema = z.object({
 
 export const BaseUpdateUserSchema = z
   .object({
-    email: z.string().email(),
-    username: z.string().min(3),
-    name: z.string().min(3),
+    email: z.string().email().optional(),
+    username: z.string().min(3).optional(),
+    name: z.string().min(3).optional(),
     status: z.nativeEnum(UserStatus).optional(),
     password: z.string().min(8).optional().or(z.literal('')),
     confirmPassword: z.string().min(8).optional().or(z.literal('')),
@@ -172,11 +172,11 @@ export const UpdateFlexibleUserSchema = z.object({
   dataUser: BaseUpdateUserSchema,
 })
   .and(z.object({
-    dosenBiodata: CreateDosenBiodataSchema,
+    dosenBiodata: CreateDosenBiodataSchema.optional(),
     dataKepegawaian: CreateDataKepegawaianSchema.optional(),
   }).partial())
   .and(z.object({
-    validatorBiodata: CreateValidatorBiodataSchema,
+    validatorBiodata: CreateValidatorBiodataSchema.optional(),
   }).partial())
   .superRefine((data, ctx) => {
     const roles = data.dataUser.roles || [];
