@@ -252,7 +252,7 @@ export class UsersService {
             validated.validatorBiodata.nama = validated.dataUser.name;
         }
 
-        const user = await this.prisma.user.findUnique({
+        const user = await this.prisma.user.findUniqueOrThrow({
             where: { id: userId },
             include: {
                 userRoles: { include: { role: true } },
