@@ -137,7 +137,7 @@ export const BaseUpdateUserSchema = z
     email: z.string().email(),
     username: z.string().min(3),
     name: z.string().min(3),
-    status: z.nativeEnum(UserStatus),
+    status: z.nativeEnum(UserStatus).optional(),
     password: z.string().min(8).optional().or(z.literal('')),
     confirmPassword: z.string().min(8).optional().or(z.literal('')),
     roles: z.array(z.nativeEnum(USER_ROLES)).optional(),
