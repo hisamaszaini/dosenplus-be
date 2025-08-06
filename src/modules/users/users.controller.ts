@@ -90,9 +90,9 @@ export class UsersController {
   @Patch('dosen/pending/:dosenId')
   @Roles(TypeUserRole.ADMIN, TypeUserRole.VALIDATOR)
   handlePendingValidation(
-    @Request() req,
     @Param('dosenId', ParseIntPipe) dosenId: number,
-    @Body() dto: any
+    @Body() dto: ValidatePendingUpdateDto,
+    @Request() req,
   ) {
     const reviewerId = req.user.sub;
     console.log(dto);
