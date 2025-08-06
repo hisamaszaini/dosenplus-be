@@ -5,7 +5,7 @@ import {
     InternalServerErrorException,
     NotFoundException,
 } from '@nestjs/common';
-import { PrismaClient, TypeUserRole, UserStatus } from '@prisma/client';
+import { Prisma, PrismaClient, TypeUserRole, UserStatus } from '@prisma/client';
 import { BaseUpdateUserSchema, ChangePasswordDto, ChangePasswordSchema, CreateFlexibleUserSchema, CreatePendingUpdateDto, CreatePendingUpdateSchema, CreateValidatorBiodataSchema, UpdateDosenProfileSchema, UpdateFlexibleUserDto, UpdateFlexibleUserSchema, UpdateValidatorProfileSchema, ValidatePendingUpdateDto, ValidatePendingUpdateSchema, type CreateFlexibleUserDto } from './dto/user.dto';
 import z, { ZodError } from 'zod';
 import { LogActivityService } from '@/utils/logActivity';
@@ -24,16 +24,6 @@ export class UsersService {
     constructor(private prisma: PrismaService, private logActivityUtil: LogActivityService
     ) { }
 
-    private async validateUniqueUser(email: string, username: string) {
-        const existingUser = await this.prisma.user.findFirst({ where: { OR: [{ email }, { username }] } });
-        const errors: Record<string, string> = {};
-        if (existingUser) {
-            if (existingUser.email === email) errors.email = 'Email sudah digunakan.';
-            if (existingUser.username === username) errors.username = 'Username sudah digunakan.';
-        }
-        if (Object.keys(errors).length > 0) throw new BadRequestException(errors);
-    }
-
     private async validateFakultasProdi(fakultasId: number, prodiId: number) {
         const fakultas = await this.prisma.fakultas.findUnique({ where: { id: fakultasId } });
         if (!fakultas) throw new BadRequestException('Fakultas tidak ditemukan.');
@@ -41,7 +31,45 @@ export class UsersService {
         if (!prodi) throw new BadRequestException('Program Studi tidak ditemukan atau tidak sesuai dengan fakultas.');
     }
 
-    private async validateUniqueBiodata(userId: number, dto: UpdateFlexibleUserDto) {
+    private async validateUniqueUser(
+        dto: CreateFlexibleUserDto | UpdateFlexibleUserDto,
+        userId?: number,
+    ) {
+        const { email, username } = dto.dataUser || {};
+        const errors: Record<string, string> = {};
+
+        const OR: Prisma.UserWhereInput[] = [];
+        if (email) OR.push({ email });
+        if (username) OR.push({ username });
+
+        if (OR.length === 0) return;
+
+        const existingUser = await this.prisma.user.findFirst({
+            where: {
+                OR,
+                ...(userId ? { NOT: { id: userId } } : {}),
+            },
+        });
+
+        if (existingUser) {
+            if (email && existingUser.email === email) {
+                errors['dataUser.email'] = 'Email sudah digunakan oleh pengguna lain.';
+            }
+            if (username && existingUser.username === username) {
+                errors['dataUser.username'] = 'Username sudah digunakan oleh pengguna lain.';
+            }
+        }
+
+        if (Object.keys(errors).length > 0) {
+            throw new BadRequestException({ success: false, message: errors, data: null });
+        }
+    }
+
+
+    private async validateUniqueBiodata(
+        dto: CreateFlexibleUserDto | UpdateFlexibleUserDto,
+        userId?: number,
+    ) {
         const errors: Record<string, string> = {};
 
         if (dto.dosenBiodata) {
@@ -49,21 +77,21 @@ export class UsersService {
 
             if (nip) {
                 const existing = await this.prisma.dosen.findFirst({
-                    where: { nip, NOT: { id: userId } },
+                    where: { nip, ...(userId ? { NOT: { id: userId } } : {}) },
                 });
                 if (existing) errors['dosenBiodata.nip'] = 'NIP sudah digunakan oleh dosen lain.';
             }
 
             if (nuptk) {
                 const existing = await this.prisma.dosen.findFirst({
-                    where: { nuptk, NOT: { id: userId } },
+                    where: { nuptk, ...(userId ? { NOT: { id: userId } } : {}) },
                 });
                 if (existing) errors['dosenBiodata.nuptk'] = 'NUPTK sudah digunakan oleh dosen lain.';
             }
 
             if (no_hp) {
                 const existing = await this.prisma.dosen.findFirst({
-                    where: { no_hp, NOT: { id: userId } },
+                    where: { no_hp, ...(userId ? { NOT: { id: userId } } : {}) },
                 });
                 if (existing) errors['dosenBiodata.no_hp'] = 'No. HP sudah digunakan oleh dosen lain.';
             }
@@ -74,14 +102,14 @@ export class UsersService {
 
             if (nip) {
                 const existing = await this.prisma.validator.findFirst({
-                    where: { nip, NOT: { id: userId } },
+                    where: { nip, ...(userId ? { NOT: { id: userId } } : {}) },
                 });
                 if (existing) errors['validatorBiodata.nip'] = 'NIP sudah digunakan oleh validator lain.';
             }
 
             if (no_hp) {
                 const existing = await this.prisma.validator.findFirst({
-                    where: { no_hp, NOT: { id: userId } },
+                    where: { no_hp, ...(userId ? { NOT: { id: userId } } : {}) },
                 });
                 if (existing) errors['validatorBiodata.no_hp'] = 'No. HP sudah digunakan oleh validator lain.';
             }
@@ -167,10 +195,8 @@ export class UsersService {
             validatedData.dataUser.fotoPath = relativePath;
         }
 
-        await this.validateUniqueUser(
-            validatedData.dataUser.email,
-            validatedData.dataUser.username,
-        );
+        await this.validateUniqueUser(validatedData);
+        await this.validateUniqueBiodata(validatedData);
 
         const roleValidationErrors: string[] = [];
 
@@ -265,6 +291,9 @@ export class UsersService {
             const newRoles = roles.filter(r => !existingRoles.includes(r));
             const removedRoles = existingRoles.filter(r => !roles.includes(r));
 
+            await this.validateUniqueUser(validated, userId);
+            await this.validateUniqueBiodata(validated, userId);
+
             if (file) {
                 relativePath = await handleUploadAndUpdate({
                     file,
@@ -273,8 +302,6 @@ export class UsersService {
                 });
                 validated.dataUser.fotoPath = relativePath;
             }
-
-            await this.validateUniqueBiodata(userId, validated);
 
             if (validated.dosenBiodata) {
                 await this.validateFakultasProdi(validated.dosenBiodata.fakultasId, validated.dosenBiodata.prodiId);
