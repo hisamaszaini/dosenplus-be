@@ -84,8 +84,6 @@ export class UsersController {
   @Roles(TypeUserRole.DOSEN)
   updatePendingData(@Req() req: any, @Body() dto: CreatePendingUpdateDto) {
     const dosenId = req.user.sub;
-    console.log(dosenId);
-    console.log(dto);
     return this.usersService.submitPendingUpdate(dosenId, dto);
   }
 
@@ -97,9 +95,6 @@ export class UsersController {
     @Request() req,
   ) {
     const reviewerId = req.user.sub;
-    console.log(dosenId);
-    console.log(reviewerId);
-    console.log(data);
     return this.usersService.validatePendingUpdate(dosenId, reviewerId, data);
   }
 

@@ -990,8 +990,8 @@ export class UsersService {
             });
         }
 
-        // Update status dan log
-        await this.prisma.pendingUpdateDosen.update({
+        // Update status dan reviewer
+        const updated = await this.prisma.pendingUpdateDosen.update({
             where: { dosenId },
             data: {
                 status,
@@ -1000,6 +1000,7 @@ export class UsersService {
             },
         });
 
+        // Log aktivitas
         await this.logActivityUtil.createLog(
             dosenId,
             'VALIDASI_PROFILE',
@@ -1010,7 +1011,7 @@ export class UsersService {
         return {
             success: true,
             message: `Data pengajuan berhasil ${status === 'APPROVED' ? 'disetujui' : 'ditolak'}.`,
-            data: pending,
+            data: updated,
         };
     }
 
