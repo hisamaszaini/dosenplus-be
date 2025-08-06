@@ -288,11 +288,11 @@
 **Request Body:**
 ```json
 {
-    "nama": "Dosen Baru",
-    "nip": "1980111122330002",
-    "nuptk": "5566778899",
+    "nama": "Dosen 3 Baru Sekali",
+    "nip": "1980111122330882",
+    "nuptk": "5566778823",
     "jenis_kelamin": "Laki-laki",
-    "no_hp": "081234567897",
+    "no_hp": "081234567894",
     "prodiId": 1,
     "fakultasId": 1,
     "jabatan": "Lektor Kepala",
@@ -309,58 +309,97 @@
 **Response (Success):**
 ```json
 {
-  "success": true,
-  "message": "Permintaan update telah dikirim dan menunggu peninjauan."
+    "success": true,
+    "message": "Permintaan update telah dikirim dan menunggu peninjauan.",
+    "data": {
+        "nama": "Dosen 3 Baru Sekali",
+        "nip": "1980111122330882",
+        "nuptk": "5566778823",
+        "jenis_kelamin": "Laki-laki",
+        "no_hp": "081234567894",
+        "prodiId": 1,
+        "fakultasId": 1,
+        "jabatan": "Lektor Kepala",
+        "npwp": "987654321012345",
+        "nama_bank": "BRIS",
+        "no_rek": "112233445566",
+        "bpjs_kesehatan": "112233",
+        "bpjs_tkerja": "445566",
+        "no_kk": "9988776655443322"
+    }
 }
 ```
 
 ---
-
-### ✅ Validasi Biodata Dosen (oleh Admin / Validator)
+### ✅ Validasi Biodata dan Kepegawaian Dosen (oleh Admin / Validator)
 
 **Method:** `PATCH`  
-**URL:** `http://127.0.0.1:3000/users/dosen/pending/biodata/1`  
+**URL:** `http://127.0.0.1:3000/users/dosen/pending/:dosenId`  
 **Authorization:** Bearer token (Admin / Validator)
+
+---
+
+#### 🟩 Contoh Validasi Diterima (`APPROVED`)
 
 **Request Body:**
 ```json
 {
   "status": "APPROVED",
-  "catatan": "Biodata sudah sesuai"
+  "catatan": "Data sudah lengkap dan valid"
 }
 ```
 
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Validasi biodata approved"
-}
-```
+> Catatan (`catatan`) **opsional** jika status `APPROVED`.
 
 ---
 
-### ✅ Validasi Data Kepegawaian Dosen (oleh Admin / Validator)
-
-**Method:** `PATCH`  
-**URL:** `http://127.0.0.1:3000/users/dosen/pending/kepegawaian/1`  
-**Authorization:** Bearer token (Admin / Validator)
+#### 🟥 Contoh Validasi Ditolak (`REJECTED`)
 
 **Request Body:**
 ```json
 {
-  "status": "APPROVED",
-  "catatan": "Data kepegawaian sudah sesuai"
+  "status": "REJECTED",
+  "catatan": "Nama belum sesuai dengan NIDN"
 }
 ```
 
-**Response:**
+> Catatan (`catatan`) **wajib** jika status `REJECTED`.
+
+---
+
+**Contoh Response:**
 ```json
 {
   "success": true,
-  "message": "Validasi data kepegawaian approved"
+  "message": "Data pengajuan berhasil ditolak.",
+  "data": {
+    "id": 1,
+    "dosenId": 5,
+    "nama": "Dosen 3 Baru Sekali",
+    "nip": "1980111122330882",
+    "nuptk": "5566778823",
+    "jenis_kelamin": "Laki-laki",
+    "no_hp": "081234567894",
+    "prodiId": 1,
+    "fakultasId": 1,
+    "jabatan": "Lektor Kepala",
+    "fotoPath": null,
+    "npwp": "987654321012345",
+    "nama_bank": "BRIS",
+    "no_rek": "112233445566",
+    "bpjs_kesehatan": "112233",
+    "bpjs_tkerja": "445566",
+    "no_kk": "9988776655443322",
+    "status": "REJECTED",
+    "reviewerId": 5,
+    "catatan": "Nama belum sesuai dengan NIDN",
+    "createdAt": "2025-08-06T08:49:21.498Z",
+    "updatedAt": "2025-08-06T09:47:54.125Z"
+  }
 }
 ```
+
+---
 
 ### 🔍 Get User by ID
 
@@ -460,6 +499,8 @@
   }
 }
 ```
+
+---
 
 ### 👨‍🏫 Get All Dosen (Admin Only)
 
