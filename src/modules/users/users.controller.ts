@@ -92,7 +92,7 @@ export class UsersController {
   handlePendingValidation(
     @Request() req,
     @Param('dosenId', ParseIntPipe) dosenId: number,
-    @Body() dto: ValidatePendingUpdateDto
+    @Body() dto: any
   ) {
     const reviewerId = req.user.sub;
     console.log(dto);
