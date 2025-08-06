@@ -931,6 +931,9 @@ export class UsersService {
 
         const pending = await this.prisma.pendingUpdateDosen.findUnique({
             where: { dosenId },
+            include: {
+                dosen: { include: { user: true } },
+            },
         });
 
         if (!pending) {
@@ -943,7 +946,6 @@ export class UsersService {
 
         if (status === 'APPROVED') {
             const allowedJabatan = ['Asisten Ahli', 'Lektor', 'Lektor Kepala', 'Guru Besar'];
-
             if (!pending.jabatan || !allowedJabatan.includes(pending.jabatan)) {
                 throw new BadRequestException({
                     success: false,
@@ -952,7 +954,7 @@ export class UsersService {
                 });
             }
 
-            // Salin ke Dosen
+            // Update Dosen
             await this.prisma.dosen.update({
                 where: { id: dosenId },
                 data: {
@@ -967,7 +969,7 @@ export class UsersService {
                 },
             });
 
-            // Salin ke DataKepegawaian
+            // Update Data Kepegawaian
             await this.prisma.dataKepegawaian.upsert({
                 where: { id: dosenId },
                 update: {
@@ -988,9 +990,30 @@ export class UsersService {
                     no_kk: pending.no_kk,
                 },
             });
+
+            // Update nama di tabel User
+            await this.prisma.user.update({
+                where: { id: pending.dosen.user.id },
+                data: {
+                    name: pending.nama,
+                },
+            });
+
+            // Jika user juga VALIDATOR, update validatorBiodata
+            const userRoles = pending.dosen.user.roles;
+            if (userRoles.includes('VALIDATOR')) {
+                await this.prisma.validatorBiodata.update({
+                    where: { id: pending.dosen.user.id },
+                    data: {
+                        nama: pending.nama,
+                        nip: pending.nip,
+                        no_hp: pending.no_hp,
+                    },
+                });
+            }
         }
 
-        // Update status dan reviewer
+        // Update status dan reviewerId
         const updated = await this.prisma.pendingUpdateDosen.update({
             where: { dosenId },
             data: {
@@ -1000,7 +1023,6 @@ export class UsersService {
             },
         });
 
-        // Log aktivitas
         await this.logActivityUtil.createLog(
             dosenId,
             'VALIDASI_PROFILE',
