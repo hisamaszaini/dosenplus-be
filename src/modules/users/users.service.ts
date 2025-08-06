@@ -346,12 +346,22 @@ export class UsersService {
 
                 // Validator
                 if (roles.includes('VALIDATOR')) {
-                    if (user.validator && validated.dataUser.name) {
-                        await tx.validator.update({
-                            where: { id: userId },
-                            data: { nama: validated.dataUser.name },
-                        });
+                    if (user.validator) {
+                        if (validated.validatorBiodata) {
+                            // Update semua field dari validatorBiodata
+                            await tx.validator.update({
+                                where: { id: userId },
+                                data: validated.validatorBiodata,
+                            });
+                        } else if (validated.dataUser.name) {
+                            // Hanya update nama
+                            await tx.validator.update({
+                                where: { id: userId },
+                                data: { nama: validated.dataUser.name },
+                            });
+                        }
                     } else if (validated.validatorBiodata) {
+                        // Buat baru kalau belum ada dan ada data validator
                         await tx.validator.create({
                             data: { ...validated.validatorBiodata, id: userId },
                         });
