@@ -1000,9 +1000,19 @@ export class UsersService {
             });
 
             // Jika user juga VALIDATOR, update validatorBiodata
-            const userRoles = pending.dosen.user.roles;
-            if (userRoles.includes('VALIDATOR')) {
-                await this.prisma.validatorBiodata.update({
+            const roles = await this.prisma.userRole.findMany({
+                where: { userId: dosenId },
+                select: {
+                    role: {
+                        select: { name: true },
+                    },
+                },
+            });
+
+            const roleNames = roles.map((r) => r.role.name);
+
+            if (roleNames.includes('VALIDATOR')) {
+                await this.prisma.validator.update({
                     where: { id: pending.dosen.user.id },
                     data: {
                         nama: pending.nama,
