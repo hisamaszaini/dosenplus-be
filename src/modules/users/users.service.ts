@@ -919,7 +919,7 @@ export class UsersService {
 
         return {
             success: true,
-            message: 'Permintaan update profil berhasil dikirim dan menunggu validasi.',
+            message: 'Permintaan update telah dikirim dan menunggu peninjauan.',
         };
     }
 

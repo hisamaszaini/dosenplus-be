@@ -95,6 +95,7 @@ export class UsersController {
     @Body() dto: ValidatePendingUpdateDto
   ) {
     const reviewerId = req.user.sub;
+    console.log(dto);
     return this.usersService.validatePendingUpdate(dosenId, reviewerId, dto);
   }
 

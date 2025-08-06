@@ -288,25 +288,22 @@
 **Request Body:**
 ```json
 {
-  "biodata": {
     "nama": "Dosen Baru",
     "nip": "1980111122330002",
     "nuptk": "5566778899",
     "jenis_kelamin": "Laki-laki",
-    "no_hp": "081234567899",
+    "no_hp": "081234567897",
     "prodiId": 1,
     "fakultasId": 1,
-    "jabatan": "Lektor Kepala"
-  },
-  "kepegawaian": {
+    "jabatan": "Lektor Kepala",
     "npwp": "987654321012345",
-    "nama_bank": "BRI",
+    "nama_bank": "BRIS",
     "no_rek": "112233445566",
     "bpjs_kesehatan": "112233",
     "bpjs_tkerja": "445566",
     "no_kk": "9988776655443322"
-  }
 }
+
 ```
 
 **Response (Success):**
