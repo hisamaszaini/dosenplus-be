@@ -95,6 +95,8 @@ export class UsersController {
     @Request() req,
   ) {
     const reviewerId = req.user.sub;
+    console.log(dosenId);
+    console.log(reviewerId);
     console.log(data);
     return this.usersService.validatePendingUpdate(dosenId, reviewerId, data);
   }
