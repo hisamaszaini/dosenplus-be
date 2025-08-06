@@ -886,63 +886,48 @@ export class UsersService {
     }
 
     async submitPendingUpdate(dosenId: number, dto: CreatePendingUpdateDto) {
-        const parsed = CreatePendingUpdateSchema.safeParse(dto);
-        if (!parsed.success) {
-            throw new BadRequestException({
+        const data = parseAndThrow(CreatePendingUpdateSchema, dto);
+
+        try {
+            const saved = await this.prisma.pendingUpdateDosen.upsert({
+                where: { dosenId },
+                update: {
+                    ...data,
+                    status: 'PENDING',
+                },
+                create: {
+                    ...data,
+                    dosenId,
+                    status: 'PENDING',
+                },
+            });
+
+            await this.logActivityUtil.createLog(
+                dosenId,
+                'UPDATE_PROFILE',
+                saved.id,
+                'CREATE',
+            );
+
+            return {
+                success: true,
+                message: 'Permintaan update telah dikirim dan menunggu peninjauan.',
+                data,
+            };
+        } catch (error) {
+            console.error('Gagal submit pending update:', error);
+
+            throw new InternalServerErrorException({
                 success: false,
-                message: this.formatZodErrors(parsed.error),
+                message: 'Terjadi kesalahan saat menyimpan data.',
                 data: null,
             });
         }
-
-        const data = parsed.data;
-
-        const saved = await this.prisma.pendingUpdateDosen.upsert({
-            where: { dosenId },
-            update: {
-                ...data,
-                status: 'PENDING',
-            },
-            create: {
-                ...data,
-                dosenId,
-                status: 'PENDING',
-            },
-        });
-
-        await this.logActivityUtil.createLog(
-            dosenId,
-            'UPDATE_PROFILE',
-            saved.id,
-            'CREATE',
-        );
-
-        return {
-            success: true,
-            message: 'Permintaan update telah dikirim dan menunggu peninjauan.',
-            data: data
-        };
     }
 
+
     async validatePendingUpdate(dosenId: number, reviewerId: number, dto: ValidatePendingUpdateDto) {
-        const parsed = ValidatePendingUpdateSchema.safeParse(dto);
-        if (!parsed.success) {
-            throw new BadRequestException({
-                success: false,
-                message: this.formatZodErrors(parsed.error),
-                data: null,
-            });
-        }
-
-        const { status, catatan } = parsed.data;
-
-        if (status === 'REJECTED' && (!catatan || catatan.trim() === '')) {
-            throw new BadRequestException({
-                success: false,
-                message: 'Catatan penolakan wajib diisi.',
-                data: null,
-            });
-        }
+        const { status, catatan } = parseAndThrow(ValidatePendingUpdateSchema, dto);
 
         const pending = await this.prisma.pendingUpdateDosen.findUnique({
             where: { dosenId },
@@ -967,7 +952,7 @@ export class UsersService {
                 });
             }
 
-            // salin ke Dosen
+            // Salin ke Dosen
             await this.prisma.dosen.update({
                 where: { id: dosenId },
                 data: {
@@ -982,7 +967,7 @@ export class UsersService {
                 },
             });
 
-            // salin ke DataKepegawaian
+            // Salin ke DataKepegawaian
             await this.prisma.dataKepegawaian.upsert({
                 where: { id: dosenId },
                 update: {
@@ -1005,13 +990,13 @@ export class UsersService {
             });
         }
 
-        // update status & log
+        // Update status dan log
         await this.prisma.pendingUpdateDosen.update({
             where: { dosenId },
             data: {
                 status,
                 catatan,
-                reviewerId: reviewerId,
+                reviewerId,
             },
         });
 
@@ -1025,7 +1010,7 @@ export class UsersService {
         return {
             success: true,
             message: `Data pengajuan berhasil ${status === 'APPROVED' ? 'disetujui' : 'ditolak'}.`,
-            data: pending
+            data: pending,
         };
     }
 
