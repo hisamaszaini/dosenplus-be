@@ -920,6 +920,7 @@ export class UsersService {
         return {
             success: true,
             message: 'Permintaan update telah dikirim dan menunggu peninjauan.',
+            data: data
         };
     }
 
@@ -1024,6 +1025,7 @@ export class UsersService {
         return {
             success: true,
             message: `Data pengajuan berhasil ${status === 'APPROVED' ? 'disetujui' : 'ditolak'}.`,
+            data: pending
         };
     }
 
