@@ -58,6 +58,9 @@ export class SemesterService {
         data: created,
       };
     } catch (error) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('[CREATE] Semester Failed:', error);
+      }
       handleCreateError(error, 'semester');
     }
   }
@@ -90,6 +93,9 @@ export class SemesterService {
         data: updated,
       };
     } catch (error) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('[UPDATE] Semester Failed:', error);
+      }
       handleUpdateError(error, 'semester');
     }
   }
@@ -200,6 +206,9 @@ export class SemesterService {
         data: deleted,
       };
     } catch (error) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('[DELETE] Semester Failed:', error);
+      }
       handleFindError(error, 'semester');
     }
   }
