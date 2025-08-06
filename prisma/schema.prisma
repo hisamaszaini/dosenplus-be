@@ -38,25 +38,24 @@ enum StatusValidasi {
 }
 
 model User {
-  id                     Int                      @id @default(autoincrement())
-  email                  String                   @unique
-  username               String                   @unique
-  name                   String
-  password               String
-  status                 UserStatus               @default(ACTIVE)
-  fotoPath               String?
-  hashedRefreshToken     String?
-  passwordResetToken     String?
-  passwordResetExpires   DateTime?
-  createdAt              DateTime                 @default(now())
-  updatedAt              DateTime                 @updatedAt
-  dosen                  Dosen?
-  validator              Validator?
-  userRoles              UserRole[]
-  PendingBiodataDosen    PendingBiodataDosen[]
-  PendingDataKepegawaian PendingDataKepegawaian[]
-  ActivityLog            ActivityLog[]
-  Pendidikan             Pendidikan[]
+  id                   Int                  @id @default(autoincrement())
+  email                String               @unique
+  username             String               @unique
+  name                 String
+  password             String
+  status               UserStatus           @default(ACTIVE)
+  fotoPath             String?
+  hashedRefreshToken   String?
+  passwordResetToken   String?
+  passwordResetExpires DateTime?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  dosen                Dosen?
+  validator            Validator?
+  userRoles            UserRole[]
+  ActivityLog          ActivityLog[]
+  Pendidikan           Pendidikan[]
+  PendingUpdateDosen   PendingUpdateDosen[]
 }
 
 model Role {
@@ -91,7 +90,7 @@ model Fakultas {
   dosen Dosen[]
 
   createdAt                 DateTime                    @default(now())
-  updateAt                  DateTime                    @updatedAt
+  updatedAt                 DateTime                    @updatedAt
   Perkuliahan               Perkuliahan[]
   BimbinganSeminar          BimbinganSeminar[]
   BimbinganKknPknPkl        BimbinganKknPknPkl[]
@@ -99,7 +98,7 @@ model Fakultas {
   ProdukBahanLainnya        ProdukBahanLainnya[]
   JabatanStruktural         JabatanStruktural[]
   PengembanganDiri          PengembanganDiri[]
-  PendingBiodataDosen       PendingBiodataDosen[]
+  PendingUpdateDosen        PendingUpdateDosen[]
 }
 
 model Prodi {
@@ -113,7 +112,7 @@ model Prodi {
   dosen Dosen[]
 
   createdAt DateTime @default(now())
-  updateAt  DateTime @updatedAt
+  updatedAt DateTime @updatedAt
 
   Perkuliahan               Perkuliahan[]
   BimbinganSeminar          BimbinganSeminar[]
@@ -123,7 +122,7 @@ model Prodi {
   JabatanStruktural         JabatanStruktural[]
   BimbingDosen              BimbingDosen[]
   PengembanganDiri          PengembanganDiri[]
-  PendingBiodataDosen       PendingBiodataDosen[]
+  PendingUpdateDosen        PendingUpdateDosen[]
 }
 
 model Dosen {
@@ -138,21 +137,20 @@ model Dosen {
   prodi           Prodi            @relation(fields: [prodiId], references: [id])
   fakultasId      Int
   fakultas        Fakultas         @relation(fields: [fakultasId], references: [id])
-  jabatan         String?
+  jabatan         String
   dataKepegawaian DataKepegawaian?
 
   createdAt DateTime @default(now())
-  updateAt  DateTime @updatedAt
+  updatedAt DateTime @updatedAt
 
-  pendidikan             Pendidikan[]
-  PelaksanaanPendidikan  PelaksanaanPendidikan[]
-  PendingDataKepegawaian PendingDataKepegawaian?
-  PendingBiodataDosen    PendingBiodataDosen?
+  pendidikan            Pendidikan[]
+  pelaksanaanPendidikan PelaksanaanPendidikan[]
+  PendingUpdateDosen    PendingUpdateDosen?
 }
 
 model DataKepegawaian {
   id             Int     @id
-  npwp           String? @unique
+  npwp           String?
   nama_bank      String?
   no_rek         String?
   bpjs_kesehatan String?
@@ -161,9 +159,12 @@ model DataKepegawaian {
   dosen          Dosen   @relation(fields: [id], references: [id], onDelete: Cascade)
 }
 
-model PendingBiodataDosen {
-  id            Int      @id @default(autoincrement())
-  dosenId       Int      @unique
+model PendingUpdateDosen {
+  id      Int   @id @default(autoincrement())
+  dosenId Int   @unique
+  dosen   Dosen @relation(fields: [dosenId], references: [id], onDelete: Cascade)
+
+  // === Biodata ===
   nama          String
   nip           String?
   nuptk         String?
@@ -176,20 +177,7 @@ model PendingBiodataDosen {
   jabatan       String?
   fotoPath      String?
 
-  status     StatusValidasi @default(PENDING)
-  reviewerId Int?
-  reviewer   User?          @relation(fields: [reviewerId], references: [id])
-  catatan    String?
-
-  dosen     Dosen    @relation(fields: [dosenId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model PendingDataKepegawaian {
-  id             Int     @id @default(autoincrement())
-  dosenId        Int     @unique
-  dosen          Dosen   @relation(fields: [dosenId], references: [id], onDelete: Cascade)
+  // === Data Kepegawaian ===
   npwp           String?
   nama_bank      String?
   no_rek         String?
@@ -197,6 +185,7 @@ model PendingDataKepegawaian {
   bpjs_tkerja    String?
   no_kk          String?
 
+  // === Metadata ===
   status     StatusValidasi @default(PENDING)
   reviewerId Int?
   reviewer   User?          @relation(fields: [reviewerId], references: [id])
@@ -282,7 +271,7 @@ model Semester {
   status       Boolean
 
   createdAt             DateTime                @default(now())
-  updateAt              DateTime                @updatedAt
+  updatedAt             DateTime                @updatedAt
   PelaksanaanPendidikan PelaksanaanPendidikan[]
 
   @@index([tipe])
@@ -350,7 +339,7 @@ model PelaksanaanPendidikan {
   pengembanganDiri     PengembanganDiri?
 
   createdAt DateTime @default(now())
-  updateAt  DateTime @updatedAt
+  updatedAt DateTime @updatedAt
 }
 
 model Perkuliahan {
