@@ -91,12 +91,12 @@ export class UsersController {
   @Roles(TypeUserRole.ADMIN, TypeUserRole.VALIDATOR)
   handlePendingValidation(
     @Param('dosenId', ParseIntPipe) dosenId: number,
-    @Body() dto: ValidatePendingUpdateDto,
+    @Body() data: any,
     @Request() req,
   ) {
     const reviewerId = req.user.sub;
-    console.log(dto);
-    return this.usersService.validatePendingUpdate(dosenId, reviewerId, dto);
+    console.log(data);
+    return this.usersService.validatePendingUpdate(dosenId, reviewerId, data);
   }
 
   @Get()
