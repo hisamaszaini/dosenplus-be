@@ -4,7 +4,7 @@ import {
   BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateSemesterDto, createSemesterSchema, FindSemesterQueryDto, findSemesterQuerySchema, UpdateSemesterDto, updateSemesterSchema } from './dto/semester.dto';
+import { CreateSemesterDto, createSemesterSchema, findSemesterQuerySchema, UpdateSemesterDto, updateSemesterSchema } from './dto/semester.dto';
 import { handleCreateError, handleFindError, handleUpdateError } from '@/common/utils/prisma-error-handler';
 import { parseAndThrow } from '@/common/utils/zod-helper';
 import { PrismaService } from '../../../prisma/prisma.service';
