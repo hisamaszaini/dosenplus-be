@@ -1,4 +1,4 @@
-import { Prisma, NamaSemester } from '@prisma/client';
+import { Prisma, NamaSemester, SemesterStatus } from '@prisma/client';
 import {
   Injectable,
   BadRequestException,
@@ -47,6 +47,11 @@ export class SemesterService {
     const { tipe, tahunMulai, tahunSelesai, status } = parseAndThrow(createSemesterSchema, rawData);
     const { kode, nama } = this.generateKodeDanNama(tipe, tahunMulai, tahunSelesai);
 
+    const errors = await this.validateUniqueSemester(kode, nama);
+    if (Object.keys(errors).length > 0) {
+      throw new BadRequestException({ message: errors });
+    }
+
     try {
       const created = await this.prisma.semester.create({
         data: { kode, nama, tipe, tahunMulai, tahunSelesai, status },
@@ -74,10 +79,10 @@ export class SemesterService {
     const { tipe, tahunMulai, tahunSelesai, status } = parseAndThrow(updateSemesterSchema, rawData);
     const { kode, nama } = this.generateKodeDanNama(tipe, tahunMulai, tahunSelesai);
 
-    // const errors = await this.validateUniqueSemester(kode, nama, id);
-    // if (Object.keys(errors).length > 0) {
-    //   throw new BadRequestException({ message: errors });
-    // }
+    const errors = await this.validateUniqueSemester(kode, nama, id);
+    if (Object.keys(errors).length > 0) {
+      throw new BadRequestException({ message: errors });
+    }
 
     try {
       const existing = await this.prisma.semester.findUniqueOrThrow({ where: { id } });
@@ -107,6 +112,7 @@ export class SemesterService {
     tahunMulai?: number;
     tahunSelesai?: number;
     tipe?: NamaSemester;
+    status?: SemesterStatus;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }) {
@@ -117,6 +123,7 @@ export class SemesterService {
       tahunMulai,
       tahunSelesai,
       tipe,
+      status,
       sortBy = 'kode',
       sortOrder = 'desc',
     } = params;
@@ -142,6 +149,10 @@ export class SemesterService {
 
     if (tahunSelesai) {
       where.tahunSelesai = { lte: Number(tahunSelesai) };
+    }
+
+    if (status) {
+      where.status = status;
     }
 
     const take = Number(limit);
