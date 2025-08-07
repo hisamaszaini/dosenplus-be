@@ -139,10 +139,6 @@ export class SemesterService {
       }
     }
 
-    if (tipe) {
-      where.tipe = tipe;
-    }
-
     if (tahunMulai) {
       where.tahunMulai = { gte: Number(tahunMulai) };
     }
@@ -151,8 +147,20 @@ export class SemesterService {
       where.tahunSelesai = { lte: Number(tahunSelesai) };
     }
 
-    if (status) {
-      where.status = status;
+    const castedStatus = (status && Object.values(SemesterStatus).includes(status as SemesterStatus))
+      ? (status as SemesterStatus)
+      : undefined;
+
+    const castedTipe = (tipe && Object.values(NamaSemester).includes(tipe as NamaSemester))
+      ? (tipe as NamaSemester)
+      : undefined;
+
+    if (castedTipe) {
+      where.tipe = castedTipe;
+    }
+
+    if (castedStatus) {
+      where.status = castedStatus;
     }
 
     const take = Number(limit);
