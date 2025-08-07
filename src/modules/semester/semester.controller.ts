@@ -3,7 +3,7 @@ import { JwtAuthGuard } from '@/modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@/modules/auth/guards/roles.guard';
 import { SemesterService } from './semester.service';
 import { Roles } from '@/modules/auth/decorators/roles.decorator';
-import { NamaSemester, TypeUserRole } from '@prisma/client';
+import { NamaSemester, SemesterStatus, TypeUserRole } from '@prisma/client';
 import { CreateSemesterDto, UpdateSemesterDto } from './dto/semester.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -25,11 +25,12 @@ export class SemesterController {
         @Query('search') search?: string,
         @Query('tahunMulai') tahunMulai?: number,
         @Query('tahunSelesai') tahunSelesai?: number,
-        @Query('tipe') tipe?: NamaSemester,
         @Query('sortBy') sortBy = 'tahunMulai',
-        @Query('sortOrder') sortOrder: 'asc' | 'desc' = 'desc'
+        @Query('sortOrder') sortOrder: 'asc' | 'desc' = 'desc',
+        @Query('tipe') tipe?: NamaSemester,
+        @Query('status') status?: SemesterStatus,
     ) {
-        return this.semesterService.findAll({ page, limit, search, tahunMulai, tahunSelesai, sortBy, sortOrder });
+        return this.semesterService.findAll({ page, limit, search, tahunMulai, tahunSelesai, tipe, status, sortBy, sortOrder });
     }
 
     @Get(':id')
