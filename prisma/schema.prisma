@@ -261,6 +261,11 @@ enum NamaSemester {
   GANJIL
 }
 
+enum SemesterStatus {
+  ACTIVE
+  INACTIVE
+}
+
 model Semester {
   id           Int          @id @default(autoincrement())
   kode         Int          @unique
@@ -268,7 +273,7 @@ model Semester {
   tipe         NamaSemester
   tahunMulai   Int
   tahunSelesai Int
-  status       Boolean
+  status       SemesterStatus @default(ACTIVE)
 
   createdAt             DateTime                @default(now())
   updatedAt             DateTime                @updatedAt
