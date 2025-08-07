@@ -19,18 +19,8 @@ export class SemesterController {
 
     @Get()
     @Roles(TypeUserRole.ADMIN, TypeUserRole.DOSEN, TypeUserRole.VALIDATOR)
-    findAll(
-        @Query('page') page?: number,
-        @Query('limit') limit?: number,
-        @Query('search') search?: string,
-        @Query('tahunMulai') tahunMulai?: number,
-        @Query('tahunSelesai') tahunSelesai?: number,
-        @Query('sortBy') sortBy = 'tahunMulai',
-        @Query('sortOrder') sortOrder: 'asc' | 'desc' = 'desc',
-        @Query('tipe') tipe?: NamaSemester,
-        @Query('status') status?: SemesterStatus,
-    ) {
-        return this.semesterService.findAll({ page, limit, search, tahunMulai, tahunSelesai, tipe, status, sortBy, sortOrder });
+    findAll(@Query() query: Record<string, any>) {
+        return this.semesterService.findAll(query);
     }
 
     @Get(':id')

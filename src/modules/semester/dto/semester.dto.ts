@@ -26,6 +26,24 @@ export const semesterResponseSchema = createSemesterSchema.extend({
   nama: z.string(),
 });
 
+export const findSemesterQuerySchema = z
+  .object({
+    page: z.string().optional().transform(val => (val ? parseInt(val) : 1)).refine(val => !isNaN(val) && val > 0, { message: 'Page harus angka positif' }),
+    limit: z.string().optional().transform(val => (val ? parseInt(val) : 10)).refine(val => !isNaN(val) && val > 0 && val <= 100, { message: 'Limit harus antara 1–100' }),
+    search: z.string().optional(),
+    tahunMulai: z.string().optional().transform(val => (val ? parseInt(val) : undefined)).refine(val => val === undefined || (!isNaN(val) && val >= 2000), { message: 'Tahun mulai tidak valid' }),
+    tahunSelesai: z.string().optional().transform(val => (val ? parseInt(val) : undefined)).refine(val => val === undefined || (!isNaN(val) && val <= 3000), { message: 'Tahun selesai tidak valid' }),
+    sortBy: z.string().optional().default('tahunMulai'),
+    sortOrder: z.enum(['asc', 'desc']).optional().default('desc'),
+    tipe: z.nativeEnum(NamaSemester).optional(),
+    status: z.nativeEnum(SemesterStatus).optional(),
+  })
+  .refine(data => !data.tahunMulai || !data.tahunSelesai || data.tahunMulai <= data.tahunSelesai, {
+    message: 'Tahun mulai tidak boleh lebih besar dari tahun selesai',
+    path: ['tahunMulai'],
+  });
+
 export type CreateSemesterDto = z.infer<typeof createSemesterSchema>;
 export type UpdateSemesterDto = z.infer<typeof updateSemesterSchema>;
-export type Semester = z.infer<typeof semesterResponseSchema>; 
+export type Semester = z.infer<typeof semesterResponseSchema>;
+export type FindSemesterQueryDto = z.infer<typeof findSemesterQuerySchema>;

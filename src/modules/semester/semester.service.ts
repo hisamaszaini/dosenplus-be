@@ -4,7 +4,7 @@ import {
   BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateSemesterDto, createSemesterSchema, UpdateSemesterDto, updateSemesterSchema } from './dto/semester.dto';
+import { CreateSemesterDto, createSemesterSchema, FindSemesterQueryDto, findSemesterQuerySchema, UpdateSemesterDto, updateSemesterSchema } from './dto/semester.dto';
 import { handleCreateError, handleFindError, handleUpdateError } from '@/common/utils/prisma-error-handler';
 import { parseAndThrow } from '@/common/utils/zod-helper';
 import { PrismaService } from '../../../prisma/prisma.service';
@@ -105,17 +105,8 @@ export class SemesterService {
     }
   }
 
-  async findAll(params: {
-    page?: number;
-    limit?: number;
-    search?: string;
-    tahunMulai?: number;
-    tahunSelesai?: number;
-    tipe?: NamaSemester;
-    status?: SemesterStatus;
-    sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
-  }) {
+  async findAll(query: any) {
+    const params = parseAndThrow(findSemesterQuerySchema, query);
     const {
       page = 1,
       limit = 10,
