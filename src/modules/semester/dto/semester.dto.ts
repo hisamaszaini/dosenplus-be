@@ -35,8 +35,8 @@ export const findSemesterQuerySchema = z
     tahunSelesai: z.string().optional().transform(val => (val ? parseInt(val) : undefined)).refine(val => val === undefined || (!isNaN(val) && val <= 3000), { message: 'Tahun selesai tidak valid' }),
     sortBy: z.string().optional().default('tahunMulai'),
     sortOrder: z.enum(['asc', 'desc']).optional().default('desc'),
-    tipe: z.nativeEnum(NamaSemester).optional(),
-    status: z.nativeEnum(SemesterStatus).optional(),
+    tipe: z.string().transform(val => (val === '' ? undefined : val)).optional().pipe(z.nativeEnum(NamaSemester).optional()),
+    status: z.string().transform(val => (val === '' ? undefined : val)).optional().pipe(z.nativeEnum(SemesterStatus).optional()),
   })
   .refine(data => !data.tahunMulai || !data.tahunSelesai || data.tahunMulai <= data.tahunSelesai, {
     message: 'Tahun mulai tidak boleh lebih besar dari tahun selesai',
