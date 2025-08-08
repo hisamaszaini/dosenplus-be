@@ -1,6 +1,6 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, Query, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, Query, Request, Res, UseGuards } from '@nestjs/common';
+import { Response } from 'express';
 import { AuthService } from './auth.service';
-
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -12,8 +12,79 @@ export class AuthController {
 
   @UseGuards(LocalAuthGuard)
   @Post('login')
-  async login(@Request() req, @Body() dto: LoginDto) {
-    return this.authService.login(req.user);
+  async login(
+    @Request() req,
+    @Res({ passthrough: true }) res: Response,
+    @Body() dto: LoginDto,
+  ) {
+    const { accessToken, refreshToken } = await this.authService.login(req.user);
+
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 15 * 60 * 1000,
+      path: '/',
+    });
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: '/auth/refresh',
+    });
+
+    return { message: 'Login berhasil' };
+  }
+
+  @UseGuards(JwtRefreshGuard)
+  @Post('refresh')
+  async refreshTokens(
+    @Request() req,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const userId = req.user.sub;
+    const { accessToken, refreshToken } = await this.authService.refreshTokens(
+      userId,
+      req.user.refreshToken,
+    );
+
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 15 * 60 * 1000,
+      path: '/',
+    });
+
+    res.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        path: '/auth/refresh',
+    });
+
+    return { message: 'Token diperbarui' };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
+  async logout(
+    @Request() req,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const userId = req.user.sub;
+    await this.authService.logout(userId);
+
+    res.clearCookie('accessToken');
+    res.clearCookie('refreshToken', { path: '/auth/refresh' });
+
+    return {
+      message: 'Logout berhasil',
+    };
   }
 
   @Post('forgot-password')
@@ -27,26 +98,5 @@ export class AuthController {
     @Body('password') pass: string,
   ) {
     return this.authService.resetPassword(token, pass);
-  }
-
-  @UseGuards(JwtRefreshGuard)
-  @Post('refresh')
-  refreshTokens(@Request() req) {
-    const userId = req.user.sub;
-    const refreshToken = req.user.refreshToken;
-    return this.authService.refreshTokens(userId, refreshToken);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Post('logout')
-  @HttpCode(HttpStatus.OK)
-  async logout(@Request() req) {
-    const userId = req.user.sub;
-    await this.authService.logout(userId);
-
-    return {
-      message: 'Logout berhasil',
-      statusCode: HttpStatus.OK
-    };
   }
 }

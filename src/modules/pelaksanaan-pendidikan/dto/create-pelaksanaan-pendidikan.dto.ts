@@ -8,10 +8,10 @@ const fileSchema = z
   });
 
 export const pelaksanaanPendidikanBaseSchema = z.object({
-  dosenId: z.coerce.number().positive({ message: 'ID Dosen diisi' }),
+  // dosenId: z.coerce.number().positive({ message: 'ID Dosen diisi' }),
   semesterId: z.coerce.number().positive({ message: 'ID Semester wajib diisi' }),
-  nilaiPak: z.coerce.number().positive({ message: 'Nilai Pak wajib diisi' }),
-  filePath: z.string().min(6),
+  // nilaiPak: z.coerce.number().positive({ message: 'Nilai Pak wajib diisi' }),
+  // filePath: z.string().min(6),
 });
 
 export const perkuliahanSchema = z.object({
