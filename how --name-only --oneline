@@ -1,0 +1,265 @@
+[33mcommit 7bf3a6ddb3723fed15d6829dd33607d622a402df[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Fri Aug 8 20:04:55 2025 +0700
+
+    fix pelaksanaan pendidikan
+
+[33mcommit 544faa3df121c035966712301d44aa928b09ebc7[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Thu Aug 7 21:07:27 2025 +0700
+
+    Add filter semester status
+
+[33mcommit 000bc33f5f28b50204138b5c0faffd9b636c9293[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Thu Aug 7 21:05:06 2025 +0700
+
+    Add filter semester status
+
+[33mcommit 45fe7d10df9260c3d5c67ef6f5b3dad6c40f2dfd[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Thu Aug 7 21:04:41 2025 +0700
+
+    Add filter semester status
+
+[33mcommit e00bc55d641d8a18400a20d39fd4e83425e54ab6[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Thu Aug 7 20:22:13 2025 +0700
+
+    Add filter semester status
+
+[33mcommit 2b54b3a2b80ad8f818a4cff11d7cafe2c9a4d78e[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Thu Aug 7 20:19:24 2025 +0700
+
+    Add filter semester status
+
+[33mcommit 82b9ae8c797b3cd25721cb6160f205046d0c0085[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Thu Aug 7 20:11:45 2025 +0700
+
+    Add filter semester status
+
+[33mcommit ecff765909fb54663d97d646aae8bd0e7791d24d[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Thu Aug 7 19:41:14 2025 +0700
+
+    change semesterStatus to Active Inactive
+
+[33mcommit 4c7b3dc7b2479a223cba0d72c51a48a084605c90[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Thu Aug 7 06:58:03 2025 +0700
+
+    Specific error for user create n update
+
+[33mcommit 42c64e2e03e80df000bf3f4fe6bd9d66a7c66346[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Thu Aug 7 03:51:56 2025 +0700
+
+    Fix typo update validator
+
+[33mcommit 8a0dd4fd3272cb0729dd242a9dc30c501eb3009f[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Wed Aug 6 16:56:03 2025 +0700
+
+    Menyesuaikan markdown user untuk pengajuan dan validasi update dosen
+
+[33mcommit 686be2c7e9eb4496c2d16717ad239558bc60d326[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Wed Aug 6 16:46:33 2025 +0700
+
+    sinkronisasi pengajuan update dosen ke user, sekaligus validator
+
+[33mcommit f7c37fe0763122f386814b8de4c5fa8e9ba3d99a[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Wed Aug 6 16:41:06 2025 +0700
+
+    sinkronisasi pengajuan update dosen ke user, sekaligus validator
+
+[33mcommit c3d2703ded3a8499c311fa828afb896cbfa6b211[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Wed Aug 6 16:36:42 2025 +0700
+
+    debug pending update service
+
+[33mcommit 2d3fbf64066c4f9e3ce7998a3821e2f768174e71[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Wed Aug 6 16:27:41 2025 +0700
+
+    debug pending update service
+
+[33mcommit b3f9287f373cd56d38b332bca502f74ed2a2c096[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Wed Aug 6 16:22:18 2025 +0700
+
+    debug pending update
+
+[33mcommit fb06b8dbeca64990497d8d36cd6ffab52fa6c771[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Wed Aug 6 16:20:23 2025 +0700
+
+    debug pending update
+
+[33mcommit 0da57908e3d7c1ab3c2989bb8d5badf3db4968b7[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Wed Aug 6 16:19:26 2025 +0700
+
+    debug pending update
+
+[33mcommit 4d7a10771ace6c4613c04dda6f2823e04503051b[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Wed Aug 6 16:17:18 2025 +0700
+
+    debug pending update
+
+[33mcommit ec5c0867625696af656fddc90d6cd8009105dc2a[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Wed Aug 6 16:16:17 2025 +0700
+
+    debug pending update
+
+[33mcommit 977244b420fabc403f968a0474cb0f7157b98973[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Wed Aug 6 16:15:08 2025 +0700
+
+    debug pending update
+
+[33mcommit c59c8a8b2adc06a22aaea23ec459790d0408d41b[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Wed Aug 6 16:12:48 2025 +0700
+
+    debug pending update
+
+[33mcommit f142f69816e38191df789b694dae3e3aa767393b[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Wed Aug 6 16:09:30 2025 +0700
+
+    debug pending update
+
+[33mcommit d0ab34552728a35cac450d7349dcc3a974abc230[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Wed Aug 6 15:44:36 2025 +0700
+
+    Semester conole.error()
+
+[33mcommit 28c1978a4de15457251f34f35448c526f14c25c7[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Wed Aug 6 15:07:05 2025 +0700
+
+    simple schema
+
+[33mcommit 8e747582e149fa0b5d2ca25262090755bf7a51de[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Tue Aug 5 19:04:36 2025 +0700
+
+    optional on user
+
+[33mcommit 00cde15be88c1566539f269ef58fb3df7af95c4b[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Tue Aug 5 18:54:39 2025 +0700
+
+    optional on user
+
+[33mcommit 31b7cf3e1de10cd49e4678469b1cab7573ea10f9[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Tue Aug 5 18:51:32 2025 +0700
+
+    Hidden sensitive field on user
+
+[33mcommit 441635754d94bfd92db4f4cbefa25072e66623b2[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Tue Aug 5 18:27:24 2025 +0700
+
+    Hidden sensitive field on user
+
+[33mcommit d6596d01a2610bff361b1d7967d0c2fe9a4a479c[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Tue Aug 5 18:25:52 2025 +0700
+
+    Hidden sensitive field on user
+
+[33mcommit 6cf429c9d50d7d95047130d70b17237a9cda43c8[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Tue Aug 5 18:23:29 2025 +0700
+
+    Hidden sensitive field on user
+
+[33mcommit 3fd5a390e88881eddbe583a58de6e3e886402272[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Tue Aug 5 18:16:03 2025 +0700
+
+    Hidden sensitive field on user
+
+[33mcommit b4a1a395dd3b5efffd71e86a2efea181df4d9555[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Tue Aug 5 18:08:49 2025 +0700
+
+    Hidden sensitive field on user
+
+[33mcommit f36cac056a03777862744639423602a37e087cfa[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Tue Aug 5 16:35:59 2025 +0700
+
+    markdown user
+
+[33mcommit f29b00d86c789317182e1f7e459394d94b04a3f0[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Tue Aug 5 07:56:56 2025 +0700
+
+    biodata.nama = dataUser.name
+
+[33mcommit cefa0a0bf8414105e711b6692a2e8ccdae4cd962[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Mon Aug 4 19:23:10 2025 +0700
+
+    Semester markdown
+
+[33mcommit 930df95e4a55a3c379d7cbefe57ae2045daa8d54[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Mon Aug 4 18:37:19 2025 +0700
+
+    Parse Schema using utils and handle prisma error (duplicate, data not found, relational not valid, etc)
+
+[33mcommit 6b8aa5256cbd035d83cf347e7fca4f0e6e54fc6e[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Mon Aug 4 11:28:56 2025 +0700
+
+    Markdown pendidikan
+
+[33mcommit a0127b83c8de7872100ce67a3975dd40d1c7613a[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Mon Aug 4 11:27:19 2025 +0700
+
+    Markdown pendidikan
+
+[33mcommit 95098c70e2088803bb7984ca363e0c3343c5d304[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Mon Aug 4 10:58:00 2025 +0700
+
+    markdown pendidikan
+
+[33mcommit 59cc290a4e2f1e7195edd59091d08e148b4b3f79[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Sun Aug 3 20:04:34 2025 +0700
+
+    Markdown
+
+[33mcommit 547030df062cdf5a900b2176a62476d9475b626d[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Sun Aug 3 19:30:54 2025 +0700
+
+    Markdown
+
+[33mcommit 441a71a0bdf4f4d306970e55721725676443f14f[m
+Author: hisamaszaini <muhammadhisamaszaini@gmail.com>
+Date:   Sun Aug 3 17:30:22 2025 +0700
+
+    Request Update Biodata and Data Kepegawaian Dosen
+
+[33mcommit 4a9c598ee5dfcb98901ebbab5b27142bae1460f7[m
+Author: Muhammad Hisam Aszaini <88798648+hisamaszaini@users.noreply.github.com>
+Date:   Fri Aug 1 19:30:21 2025 +0700
+
+    Delete uploads directory
+
+[3
