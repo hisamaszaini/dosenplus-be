@@ -40,6 +40,8 @@ export class PelaksanaanPendidikanService {
   }
 
   private async getNilaiPakByKategori(kategori: string, data: any): Promise<number> {
+    console.log(`[CREATE] PelaksanaanPendidikan: ${kategori}`);
+    console.log(`[CREATE] data: ${data}`);
     switch (kategori) {
       case 'PERKULIAHAN': {
         const totalSks = await this.hitungTotalSksPerkuliahan(data.dosenId, data.semesterId);
@@ -116,14 +118,14 @@ export class PelaksanaanPendidikanService {
   ) {
     const data = parseAndThrow(fullPelaksanaanPendidikanSchema, rawData);
 
-    const dosen = await this.prisma.dosen.findUniqueOrThrow({
-      where: { id: dosenId },
-      select: { jabatan: true },
-    });
-
     let relativePath: string | undefined;
 
     try {
+      const dosen = await this.prisma.dosen.findUniqueOrThrow({
+        where: { id: dosenId },
+        select: { jabatan: true },
+      });
+
       relativePath = await handleUpload({
         file,
         uploadSubfolder: this.UPLOAD_PATH,
