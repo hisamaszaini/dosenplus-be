@@ -41,7 +41,7 @@ export class PelaksanaanPendidikanService {
 
   private async getNilaiPakByKategori(kategori: string, data: any): Promise<number> {
     console.log(`[CREATE] PelaksanaanPendidikan: ${kategori}`);
-    console.log(`[CREATE] data: ${data}`);
+    console.log(`[CREATE] dosenId: ${data.dosenId}, semester: ${data.semesterId}`);
     switch (kategori) {
       case 'PERKULIAHAN': {
         const totalSks = await this.hitungTotalSksPerkuliahan(data.dosenId, data.semesterId);
