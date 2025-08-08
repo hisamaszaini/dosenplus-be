@@ -39,7 +39,7 @@ export class PelaksanaanPendidikanService {
     return total._sum.totalSks ?? 0;
   }
 
-  private async getNilaiPakByKategori(kategori: string, data: any): Promise<number> {
+  private async getNilaiPakByKategori(kategori: string, dosenId: number, data: any): Promise<number> {
     console.log(`[CREATE] PelaksanaanPendidikan: ${kategori}`);
     console.log(`[CREATE] dosenId: ${data.dosenId}, semester: ${data.semesterId}`);
     switch (kategori) {
@@ -133,7 +133,7 @@ export class PelaksanaanPendidikanService {
 
       const kategori = data.kategori;
 
-      const nilaiPak = await this.getNilaiPakByKategori(kategori, {
+      const nilaiPak = await this.getNilaiPakByKategori(kategori, dosenId, {
         ...data,
         jabatanFungsional: dosen.jabatan,
       });
@@ -183,7 +183,7 @@ export class PelaksanaanPendidikanService {
         select: { jabatan: true },
       });
 
-      const nilaiPak = await this.getNilaiPakByKategori(data.kategori, {
+      const nilaiPak = await this.getNilaiPakByKategori(data.kategori, existing.dosenId, {
         ...data,
         jabatanFungsional: dosen?.jabatan,
       });
