@@ -44,8 +44,8 @@ export class PelaksanaanPendidikanService {
 
 
   private async getNilaiPakByKategori(kategori: string, dosenId: number, data: any): Promise<number> {
-    console.log(`[CREATE] PelaksanaanPendidikan: ${kategori}`);
-    console.log(`[CREATE] dosenId: ${dosenId}, semester: ${data.semesterId}`);
+    console.log(`PelaksanaanPendidikan: ${kategori}`);
+    console.log(`dosenId: ${dosenId}, semester: ${data.semesterId}`);
     const dosen = await this.prisma.dosen.findUniqueOrThrow({
       where: { id: dosenId },
       select: { jabatan: true },
@@ -190,21 +190,22 @@ export class PelaksanaanPendidikanService {
 
   async update(id: number, dosenId: number, rawData: any, role: TypeUserRole, file?: Express.Multer.File) {
     const data = parseAndThrow(fullUpdatePelaksanaanSchema, rawData);
-
-    const existing = await this.prisma.pelaksanaanPendidikan.findUniqueOrThrow({ where: { id } });
-
-    if (!hasRole(role, TypeUserRole.ADMIN) && existing.dosenId !== dosenId) {
-      throw new ForbiddenException('Anda tidak berhak memperbarui data ini');
-    }
-
-    if (data.kategori === KategoriKegiatan.PERKULIAHAN && data.jumlahKelas && data.sks) {
-      const totalSks = data.jumlahKelas * data.sks;
-      data.totalSks = totalSks;
-    }
+    console.log(`[UPDATE] Data setelah parse: ${JSON.stringify(data, null, 2)}`);
 
     let newFilePath: string | undefined = undefined;
 
     try {
+      const existing = await this.prisma.pelaksanaanPendidikan.findUniqueOrThrow({ where: { id } });
+
+      if (!hasRole(role, TypeUserRole.ADMIN) && existing.dosenId !== dosenId) {
+        throw new ForbiddenException('Anda tidak berhak memperbarui data ini');
+      }
+
+      if (data.kategori === KategoriKegiatan.PERKULIAHAN && data.jumlahKelas && data.sks) {
+        const totalSks = data.jumlahKelas * data.sks;
+        data.totalSks = totalSks;
+      }
+      
       if (file) {
         newFilePath = await handleUpload({
           file,
