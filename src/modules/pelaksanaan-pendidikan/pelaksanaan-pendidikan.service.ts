@@ -144,7 +144,7 @@ export class PelaksanaanPendidikanService {
     file: Express.Multer.File,
   ) {
     const data = parseAndThrow(fullPelaksanaanPendidikanSchema, rawData);
-    console.log(`[CREATE] Data setelah prase: ${data}`);
+    console.log(`[CREATE] Data setelah parse: ${JSON.stringify(data, null, 2)}`);
 
     let relativePath: string | undefined;
 
