@@ -46,10 +46,10 @@ export class PelaksanaanPendidikanService {
   private async getNilaiPakByKategori(kategori: string, dosenId: number, data: any): Promise<number> {
     console.log(`PelaksanaanPendidikan: ${kategori}`);
     console.log(`dosenId: ${dosenId}, semester: ${data.semesterId}`);
-    const dosen = await this.prisma.dosen.findUniqueOrThrow({
-      where: { id: dosenId },
-      select: { jabatan: true },
-    });
+    // const dosen = await this.prisma.dosen.findUniqueOrThrow({
+    //   where: { id: dosenId },
+    //   select: { jabatan: true },
+    // });
 
     switch (kategori) {
       case 'PERKULIAHAN': {
@@ -62,6 +62,8 @@ export class PelaksanaanPendidikanService {
           const availableAwal = Math.max(0, 10 - totalSksBefore);
           const awalCount = Math.min(availableAwal, data.totalSks);
           const lanjutCount = Math.max(0, data.totalSks - awalCount);
+
+          console.log(`awalCount: ${awalCount}, lanjutCount: ${lanjutCount}`);
 
           // Hitung bobot berdasarkan jabatan fungsional
           let bobot: number;
@@ -204,6 +206,7 @@ export class PelaksanaanPendidikanService {
       if (data.kategori === KategoriKegiatan.PERKULIAHAN && data.jumlahKelas && data.sks) {
         const totalSks = data.jumlahKelas * data.sks;
         data.totalSks = totalSks;
+        console.log(`Total SKS: ${totalSks}`);
       }
 
       if (file) {
