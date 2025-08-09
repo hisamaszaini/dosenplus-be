@@ -166,7 +166,7 @@ export class PelaksanaanPendidikanService {
         jabatanFungsional: dosen.jabatan,
       });
 
-      console.log(nilaiPak);
+      console.log(`Nilai PAK: ${nilaiPak}`);
 
       return {
         success: true,
