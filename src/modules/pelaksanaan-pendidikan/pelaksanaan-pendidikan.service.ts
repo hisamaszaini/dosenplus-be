@@ -56,10 +56,11 @@ export class PelaksanaanPendidikanService {
         return await this.prisma.$transaction(async (tx) => {
           // Hitung total SKS yang sudah ada semester ini
           const totalSksBefore = await this.hitungTotalSksPerkuliahan(dosenId, data.semesterId);
-          console.log(`Kuota SKS semester ini: ${totalSksBefore}`);
+          console.log(`Total SKS semester ini sudah terpakai: ${totalSksBefore}`);
 
-          // Hitung sisa kuota awal
-          const availableAwal = Math.max(0, 10 - totalSksBefore);
+          const kuotaSksSemesterIni = 10; // Kouota Tiap Semester
+
+          const availableAwal = Math.max(0, kuotaSksSemesterIni - totalSksBefore);
           const awalCount = Math.min(availableAwal, data.totalSks);
           const lanjutCount = Math.max(0, data.totalSks - awalCount);
 
