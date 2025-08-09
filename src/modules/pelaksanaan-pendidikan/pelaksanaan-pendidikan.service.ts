@@ -205,7 +205,7 @@ export class PelaksanaanPendidikanService {
         const totalSks = data.jumlahKelas * data.sks;
         data.totalSks = totalSks;
       }
-      
+
       if (file) {
         newFilePath = await handleUpload({
           file,
@@ -222,6 +222,7 @@ export class PelaksanaanPendidikanService {
         ...data,
         jabatanFungsional: dosen?.jabatan,
       });
+      console.log(`Nilai PAK: ${nilaiPak}`);
 
       const updated = await this.prisma.pelaksanaanPendidikan.update({
         where: { id },
