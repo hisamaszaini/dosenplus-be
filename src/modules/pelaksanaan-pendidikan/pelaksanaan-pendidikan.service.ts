@@ -144,6 +144,7 @@ export class PelaksanaanPendidikanService {
     file: Express.Multer.File,
   ) {
     const data = parseAndThrow(fullPelaksanaanPendidikanSchema, rawData);
+    console.log(`[CREATE] Data setelah prase: ${data}`);
 
     let relativePath: string | undefined;
 
