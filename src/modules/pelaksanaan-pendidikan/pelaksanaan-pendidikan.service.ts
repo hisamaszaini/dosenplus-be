@@ -197,6 +197,11 @@ export class PelaksanaanPendidikanService {
       throw new ForbiddenException('Anda tidak berhak memperbarui data ini');
     }
 
+    if (data.kategori === KategoriKegiatan.PERKULIAHAN && data.jumlahKelas && data.sks) {
+      const totalSks = data.jumlahKelas * data.sks;
+      data.totalSks = totalSks;
+    }
+
     let newFilePath: string | undefined = undefined;
 
     try {

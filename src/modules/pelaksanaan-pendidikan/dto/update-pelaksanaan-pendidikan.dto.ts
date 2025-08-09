@@ -2,11 +2,11 @@ import { JabatanFungsional, JenisBahanPengajaran, JenisBimbingan, JenisDataserin
 import { z } from 'zod';
 
 export const pelaksanaanPendidikanUpdateBaseSchema = z.object({
-  id: z.coerce.number().positive({ message: 'ID wajib diisi untuk update' }),
-  dosenId: z.coerce.number().positive({ message: 'ID Dosen diisi' }),
+  // id: z.coerce.number().positive({ message: 'ID wajib diisi untuk update' }),
+  // dosenId: z.coerce.number().positive({ message: 'ID Dosen diisi' }),
   semesterId: z.coerce.number().positive({ message: 'ID Semester wajib diisi' }),
-  nilaiPak: z.coerce.number().positive({ message: 'Nilai Pak wajib diisi' }),
-  filePath: z.string().min(6).optional(), // Optional untuk update
+  // nilaiPak: z.coerce.number().positive({ message: 'Nilai Pak wajib diisi' }),
+  // filePath: z.string().min(6).optional(),
 });
 
 export const updatePerkuliahanSchema = z.object({
@@ -16,6 +16,7 @@ export const updatePerkuliahanSchema = z.object({
   jumlahKelas: z.coerce.number().positive({ message: 'Jumlah kelas harus > 0' }).optional(),
   prodiId: z.coerce.number().positive({ message: 'ID Prodi wajib diisi' }).optional(),
   fakultasId: z.coerce.number().positive({ message: 'ID Fakultas wajib diisi' }).optional(),
+  totalSks: z.coerce.number().positive({ message: 'Total SKS harus lebih besar dari 0' }).optional(),
 }).merge(pelaksanaanPendidikanUpdateBaseSchema);
 
 export const updateBimbinganSeminarSchema = z.object({
