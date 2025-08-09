@@ -63,7 +63,7 @@ export class PelaksanaanPendidikanService {
           const awalCount = Math.min(availableAwal, data.totalSks);
           const lanjutCount = Math.max(0, data.totalSks - awalCount);
 
-          console.log(`awalCount: ${awalCount}, lanjutCount: ${lanjutCount}`);
+          console.log(`availableAwal: ${availableAwal}, awalCount: ${awalCount}, lanjutCount: ${lanjutCount}`);
 
           // Hitung bobot berdasarkan jabatan fungsional
           let bobot: number;
