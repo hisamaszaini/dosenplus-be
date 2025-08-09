@@ -23,25 +23,18 @@ export class PelaksanaanPendidikanService {
         semesterId,
         kategori: 'PERKULIAHAN',
       },
-      select: { id: true },
-    });
-
-    const pelaksanaanIds = pelaksanaan.map(p => p.id);
-
-    if (pelaksanaanIds.length === 0) return 0;
-
-    const total = await this.prisma.perkuliahan.aggregate({
-      where: {
-        pelaksanaanId: { in: pelaksanaanIds },
-      },
-      _sum: {
-        totalSks: true,
+      include: {
+        perkuliahan: true,
       },
     });
 
-    return total._sum.totalSks ?? 0;
+    let totalSks = 0;
+    for (const p of pelaksanaan) {
+      if (p.perkuliahan) totalSks += p.perkuliahan.totalSks;
+    }
+
+    return totalSks;
   }
-
 
   private async getNilaiPakByKategori(kategori: string, dosenId: number, data: any): Promise<number> {
     console.log(`PelaksanaanPendidikan: ${kategori}`);
