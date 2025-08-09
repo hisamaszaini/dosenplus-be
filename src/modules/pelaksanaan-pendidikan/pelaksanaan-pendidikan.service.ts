@@ -42,18 +42,45 @@ export class PelaksanaanPendidikanService {
   private async getNilaiPakByKategori(kategori: string, dosenId: number, data: any): Promise<number> {
     console.log(`[CREATE] PelaksanaanPendidikan: ${kategori}`);
     console.log(`[CREATE] dosenId: ${data.dosenId}, semester: ${data.semesterId}`);
+    const dosen = await this.prisma.dosen.findUniqueOrThrow({
+      where: { id: dosenId },
+      select: { jabatan: true },
+    });
+
     switch (kategori) {
       case 'PERKULIAHAN': {
-        const totalSks = await this.hitungTotalSksPerkuliahan(data.dosenId, data.semesterId);
+        return await this.prisma.$transaction(async (tx) => {
+          // Hitung total SKS yang sudah ada semester ini
+          const result = await tx.$queryRawUnsafe<{ totalSks: number }[]>(
+            `
+          SELECT COALESCE(SUM(sks), 0) AS "totalSks"
+          FROM "PelaksanaanPendidikan"
+          WHERE "dosenId" = $1
+            AND "semesterId" = $2
+            AND kategori = 'PERKULIAHAN'
+          FOR UPDATE
+          `,
+            dosenId,
+            data.semesterId
+          );
 
-        const awal = Math.min(10, totalSks);
-        const lanjut = Math.max(0, totalSks - 10);
+          const totalSksBefore = Number(result[0]?.totalSks || 0);
 
-        if (data.jabatanFungsional === 'Asisten Ahli') {
-          return awal * 0.5 + lanjut * 0.25;
-        } else {
-          return awal * 1 + lanjut * 0.5;
-        }
+          // Hitung sisa kuota awal
+          const availableAwal = Math.max(0, 10 - totalSksBefore);
+          const awalCount = Math.min(availableAwal, data.sks);
+          const lanjutCount = Math.max(0, data.sks - awalCount);
+
+          // Hitung bobot
+          let bobot: number;
+          if (data.jabatanFungsional === 'Asisten Ahli') {
+            bobot = awalCount * 0.5 + lanjutCount * 0.25;
+          } else {
+            bobot = awalCount * 1 + lanjutCount * 0.5;
+          }
+
+          return bobot;
+        });
       }
 
       case 'BIMBINGAN_SEMINAR':
@@ -132,6 +159,7 @@ export class PelaksanaanPendidikanService {
       });
 
       const kategori = data.kategori;
+      console.log(dosen.jabatan);
 
       const nilaiPak = await this.getNilaiPakByKategori(kategori, dosenId, {
         ...data,
