@@ -21,7 +21,7 @@ export const perkuliahanSchema = z.object({
   jumlahKelas: z.coerce.number().positive({ message: 'Jumlah kelas harus > 0' }),
   prodiId: z.coerce.number().positive({ message: 'ID Prodi wajib diisi' }),
   fakultasId: z.coerce.number().positive({ message: 'ID Fakultas wajib diisi' }),
-  totalSks: z.coerce.number().positive({ message: 'SKS wajib diisi dan harus > 0' }).optional(),
+  totalSks: z.coerce.number().positive({ message: 'Total SKS harus lebih besar dari 0' }).optional(),
 });
 
 export const bimbinganSeminarSchema = z.object({

@@ -148,6 +148,7 @@ export class PelaksanaanPendidikanService {
 
     if (data.kategori === KategoriKegiatan.PERKULIAHAN) {
       const totalSks = data.jumlahKelas * data.sks;
+      data.totalSks = data.jumlahKelas * data.sks;
       console.log(`Total SKS: ${totalSks}`);
     }
 
