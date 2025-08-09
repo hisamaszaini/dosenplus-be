@@ -41,7 +41,7 @@ export class PelaksanaanPendidikanService {
 
   private async getNilaiPakByKategori(kategori: string, dosenId: number, data: any): Promise<number> {
     console.log(`[CREATE] PelaksanaanPendidikan: ${kategori}`);
-    console.log(`[CREATE] dosenId: ${data.dosenId}, semester: ${data.semesterId}`);
+    console.log(`[CREATE] dosenId: ${dosenId}, semester: ${data.semesterId}`);
     const dosen = await this.prisma.dosen.findUniqueOrThrow({
       where: { id: dosenId },
       select: { jabatan: true },
