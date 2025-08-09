@@ -146,6 +146,9 @@ export class PelaksanaanPendidikanService {
     const data = parseAndThrow(fullPelaksanaanPendidikanSchema, rawData);
     console.log(`[CREATE] Data setelah parse: ${JSON.stringify(data, null, 2)}`);
 
+    const totalSks = data.jumlahKelas * data.sks;
+    console.log(totalSks);
+
     let relativePath: string | undefined;
 
     try {
