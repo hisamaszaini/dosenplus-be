@@ -166,6 +166,8 @@ export class PelaksanaanPendidikanService {
         jabatanFungsional: dosen.jabatan,
       });
 
+      console.log(nilaiPak);
+
       return {
         success: true,
         message: 'Data berhasil ditambahkan',
