@@ -16,6 +16,7 @@ export class PelaksanaanPendidikanService {
   }
 
   private async hitungTotalSksPerkuliahan(dosenId: number, semesterId: number): Promise<number> {
+    // Cari semua pelaksanaan pendidikan kategori PERKULIAHAN untuk dosen dan semester tertentu
     const pelaksanaan = await this.prisma.pelaksanaanPendidikan.findMany({
       where: {
         dosenId,
@@ -33,11 +34,14 @@ export class PelaksanaanPendidikanService {
       where: {
         pelaksanaanId: { in: pelaksanaanIds },
       },
-      _sum: { totalSks: true },
+      _sum: {
+        totalSks: true,
+      },
     });
 
     return total._sum.totalSks ?? 0;
   }
+
 
   private async getNilaiPakByKategori(kategori: string, dosenId: number, data: any): Promise<number> {
     console.log(`[CREATE] PelaksanaanPendidikan: ${kategori}`);
@@ -51,27 +55,14 @@ export class PelaksanaanPendidikanService {
       case 'PERKULIAHAN': {
         return await this.prisma.$transaction(async (tx) => {
           // Hitung total SKS yang sudah ada semester ini
-          const result = await tx.$queryRawUnsafe<{ totalSks: number }[]>(
-            `
-          SELECT COALESCE(SUM(sks), 0) AS "totalSks"
-          FROM "PelaksanaanPendidikan"
-          WHERE "dosenId" = $1
-            AND "semesterId" = $2
-            AND kategori = 'PERKULIAHAN'
-          FOR UPDATE
-          `,
-            dosenId,
-            data.semesterId
-          );
-
-          const totalSksBefore = Number(result[0]?.totalSks || 0);
+          const totalSksBefore = await this.hitungTotalSksPerkuliahan(dosenId, data.semesterId);
 
           // Hitung sisa kuota awal
           const availableAwal = Math.max(0, 10 - totalSksBefore);
-          const awalCount = Math.min(availableAwal, data.sks);
-          const lanjutCount = Math.max(0, data.sks - awalCount);
+          const awalCount = Math.min(availableAwal, data.totalSks);
+          const lanjutCount = Math.max(0, data.totalSks - awalCount);
 
-          // Hitung bobot
+          // Hitung bobot berdasarkan jabatan fungsional
           let bobot: number;
           if (data.jabatanFungsional === 'Asisten Ahli') {
             bobot = awalCount * 0.5 + lanjutCount * 0.25;
@@ -148,7 +139,7 @@ export class PelaksanaanPendidikanService {
 
     if (data.kategori === KategoriKegiatan.PERKULIAHAN) {
       const totalSks = data.jumlahKelas * data.sks;
-      data.totalSks = data.jumlahKelas * data.sks;
+      data.totalSks = totalSks;
       console.log(`Total SKS: ${totalSks}`);
     }
 
