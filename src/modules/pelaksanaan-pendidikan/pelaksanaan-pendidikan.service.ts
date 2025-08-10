@@ -48,16 +48,15 @@ export class PelaksanaanPendidikanService {
       case 'PERKULIAHAN': {
         return await this.prisma.$transaction(async (tx) => {
           // Hitung total SKS yang sudah ada semester ini
-          const totalSksBefore = await this.hitungTotalSksPerkuliahan(dosenId, data.semesterId);
-          console.log(`Total SKS semester ini sudah terpakai: ${totalSksBefore}`);
+          const totalSksSemesterIni = await this.hitungTotalSksPerkuliahan(dosenId, data.semesterId);
+          console.log(`Total SKS semester ini sudah terpakai: ${totalSksSemesterIni}`);
 
-          const kuotaSksSemesterIni = 10; // Kouota Tiap Semester
-
-          const availableAwal = Math.max(0, kuotaSksSemesterIni - totalSksBefore);
-          const awalCount = Math.min(availableAwal, data.totalSks);
+          const kuotaSksSemesterIni = 10; // Kuota tiap semester
+          const sisaKuota = kuotaSksSemesterIni - totalSksSemesterIni;
+          const awalCount = Math.max(0, Math.min(sisaKuota, data.totalSks));
           const lanjutCount = Math.max(0, data.totalSks - awalCount);
 
-          console.log(`availableAwal: ${availableAwal}, awalCount: ${awalCount}, lanjutCount: ${lanjutCount}`);
+          console.log(`Sisa kuota: ${sisaKuota}, awalCount: ${awalCount}, ${lanjutCount}`);
 
           // Hitung bobot berdasarkan jabatan fungsional
           let bobot: number;
