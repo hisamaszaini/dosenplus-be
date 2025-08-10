@@ -16,24 +16,20 @@ export class PelaksanaanPendidikanService {
   }
 
   private async hitungTotalSksPerkuliahan(dosenId: number, semesterId: number): Promise<number> {
-    // Cari semua pelaksanaan pendidikan kategori PERKULIAHAN untuk dosen dan semester tertentu
-    const pelaksanaan = await this.prisma.pelaksanaanPendidikan.findMany({
-      where: {
-        dosenId,
-        semesterId,
-        kategori: 'PERKULIAHAN',
+    const result = await this.prisma.perkuliahan.aggregate({
+      _sum: {
+        totalSks: true,
       },
-      include: {
-        perkuliahan: true,
+      where: {
+        pelaksanaan: {
+          dosenId,
+          semesterId,
+          kategori: 'PERKULIAHAN',
+        },
       },
     });
 
-    let totalSks = 0;
-    for (const p of pelaksanaan) {
-      if (p.perkuliahan) totalSks += p.perkuliahan.totalSks;
-    }
-
-    return totalSks;
+    return result._sum.totalSks || 0;
   }
 
   private async getNilaiPakByKategori(kategori: string, dosenId: number, data: any): Promise<number> {
