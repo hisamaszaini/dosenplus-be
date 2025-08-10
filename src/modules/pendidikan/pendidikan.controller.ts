@@ -136,7 +136,7 @@ export class PendidikanController {
     @Body('data') dataRaw: string,
   ) {
     const dosenId = req.user.sub;
-    const roles = req.user.roles;
+    const roles = Array.isArray(req.user.roles) ? req.user.roles : req.user.roles ? [req.user.roles] : [];
 
     console.log('id: ', id);
     console.log('dosenId:', dosenId);

@@ -115,8 +115,8 @@ export class PendidikanService {
     id: number,
     dosenId: number,
     rawData: any,
+    roles: TypeUserRole[] = [],
     file?: Express.Multer.File,
-    roles?: TypeUserRole,
   ) {
     const parsed = fullUpdatePendidikanSchema.safeParse({ ...rawData, id, dosenId });
     if (!parsed.success) {
