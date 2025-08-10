@@ -116,7 +116,7 @@ export class PendidikanService {
     dosenId: number,
     rawData: any,
     file?: Express.Multer.File,
-    role?: TypeUserRole,
+    roles?: TypeUserRole,
   ) {
     const parsed = fullUpdatePendidikanSchema.safeParse({ ...rawData, id, dosenId });
     if (!parsed.success) {
@@ -136,8 +136,12 @@ export class PendidikanService {
 
     if (!existing) throw new NotFoundException('Data pendidikan tidak ditemukan');
 
-    if (role !== TypeUserRole.ADMIN && existing.dosenId !== dosenId) {
-      throw new ForbiddenException('Anda tidak berhak memperbarui data ini');
+    if (
+      !roles.includes(TypeUserRole.ADMIN) &&
+      !roles.includes(TypeUserRole.VALIDATOR) &&
+      existing.dosenId !== dosenId
+    ) {
+      throw new ForbiddenException('Anda tidak berhak mengakses data ini');
     }
 
     let filePath = existing.filePath;
@@ -349,7 +353,7 @@ export class PendidikanService {
     };
   }
 
-  async findOne(id: number, userId: number, role: TypeUserRole) {
+  async findOne(id: number, userId: number, roles: TypeUserRole[]) {
     const pendidikan = await this.prisma.pendidikan.findUnique({
       where: { id },
       include: {
@@ -359,13 +363,21 @@ export class PendidikanService {
       },
     });
 
-    if (!pendidikan) throw new NotFoundException('Data tidak ditemukan');
-    if (role !== TypeUserRole.ADMIN && pendidikan.dosenId !== userId) {
+    if (!pendidikan) {
+      throw new NotFoundException('Data tidak ditemukan');
+    }
+
+    if (
+      !roles.includes(TypeUserRole.ADMIN) &&
+      !roles.includes(TypeUserRole.VALIDATOR) &&
+      pendidikan.dosenId !== userId
+    ) {
       throw new ForbiddenException('Anda tidak berhak mengakses data ini');
     }
 
     return { success: true, data: pendidikan };
   }
+
 
   async validate(id: number, status: StatusValidasi, catatan: string | undefined, reviewerId: number,
   ) {
@@ -388,11 +400,15 @@ export class PendidikanService {
     });
   }
 
-  async delete(id: number, userId: number, role: TypeUserRole) {
+  async delete(id: number, userId: number, roles: TypeUserRole) {
     const existing = await this.prisma.pendidikan.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Data tidak ditemukan');
-    if (role !== TypeUserRole.ADMIN && existing.dosenId !== userId) {
-      throw new ForbiddenException('Tidak diizinkan menghapus data ini');
+    if (
+      !roles.includes(TypeUserRole.ADMIN) &&
+      !roles.includes(TypeUserRole.VALIDATOR) &&
+      existing.dosenId !== userId
+    ) {
+      throw new ForbiddenException('Anda tidak berhak mengakses data ini');
     }
 
     await this.prisma.pendidikan.delete({ where: { id } });

@@ -136,7 +136,7 @@ export class PendidikanController {
     @Body('data') dataRaw: string,
   ) {
     const dosenId = req.user.sub;
-    const role = req.user.roles;
+    const roles = req.user.roles;
 
     console.log('id: ', id);
     console.log('dosenId:', dosenId);
@@ -151,7 +151,7 @@ export class PendidikanController {
       throw new BadRequestException('data tidak valid. Harus berupa JSON string.');
     }
 
-    return this.pendidikanService.update(id, dosenId, data, file, role);
+    return this.pendidikanService.update(id, dosenId, data, roles, file);
   }
 
   //  Update untuk Admin
@@ -175,6 +175,7 @@ export class PendidikanController {
     file: Express.Multer.File | undefined,
 
     @Body('data') dataRaw: string,
+    @Request() req,
   ) {
     let data: UpdatePendidikanDto;
     try {
@@ -185,8 +186,8 @@ export class PendidikanController {
     } catch {
       throw new BadRequestException('data tidak valid. Harus berupa JSON string.');
     }
-
-    return this.pendidikanService.update(id, dosenId, data, file, TypeUserRole.ADMIN);
+    const roles = req.user.roles
+    return this.pendidikanService.update(id, dosenId, data, roles, file);
   }
 
   @Patch(':id/validasi')
