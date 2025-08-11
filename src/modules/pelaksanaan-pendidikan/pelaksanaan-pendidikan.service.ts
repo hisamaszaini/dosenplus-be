@@ -15,6 +15,25 @@ export class PelaksanaanPendidikanService {
   constructor(private readonly prisma: PrismaService) {
   }
 
+  private kategoriToRelationKey(kategori: KategoriKegiatan): string {
+    const map: Record<KategoriKegiatan, string> = {
+      PERKULIAHAN: 'perkuliahan',
+      BIMBINGAN_SEMINAR: 'bimbinganSeminar',
+      BIMBINGAN_TUGAS_AKHIR: 'bimbinganTugasAkhir',
+      BIMBINGAN_KKN_PKN_PKL: 'bimbinganKknPknPkl',
+      PENGUJI_UJIAN_AKHIR: 'pengujiUjianAkhir',
+      PEMBINA_KEGIATAN_MHS: 'pembinaKegiatanMhs',
+      PENGEMBANGAN_PROGRAM: 'pengembanganProgram',
+      BAHAN_PENGAJARAN: 'bahanPengajaran',
+      ORASI_ILMIAH: 'orasiIlmiah',
+      JABATAN_STRUKTURAL: 'jabatanStruktural',
+      BIMBING_DOSEN: 'bimbingDosen',
+      DATA_SERING_PENCAKOKAN: 'dataseringPencakokan',
+      PENGEMBANGAN_DIRI: 'pengembanganDiri',
+    };
+    return map[kategori];
+  }
+
   private async hitungTotalSksPerkuliahan(dosenId: number, semesterId: number): Promise<number> {
     const result = await this.prisma.perkuliahan.aggregate({
       _sum: {
@@ -121,18 +140,11 @@ export class PelaksanaanPendidikanService {
     }
   }
 
-  async create(
-    dosenId: number,
-    rawData: any,
-    file: Express.Multer.File,
-  ) {
+  async create(dosenId: number, rawData: any, file: Express.Multer.File) {
     const data = parseAndThrow(fullPelaksanaanPendidikanSchema, rawData);
-    console.log(`[CREATE] Data setelah parse: ${JSON.stringify(data, null, 2)}`);
 
     if (data.kategori === KategoriKegiatan.PERKULIAHAN) {
-      const totalSks = data.jumlahKelas * data.sks;
-      data.totalSks = totalSks;
-      console.log(`Total SKS: ${totalSks}`);
+      data.totalSks = data.jumlahKelas * data.sks;
     }
 
     let relativePath: string | undefined;
@@ -148,15 +160,14 @@ export class PelaksanaanPendidikanService {
         uploadSubfolder: this.UPLOAD_PATH,
       });
 
-      const kategori = data.kategori;
-      console.log(dosen.jabatan);
-
-      const nilaiPak = await this.getNilaiPakByKategori(kategori, dosenId, {
+      const nilaiPak = await this.getNilaiPakByKategori(data.kategori, dosenId, {
         ...data,
         jabatanFungsional: dosen.jabatan,
       });
 
-      console.log(`Nilai PAK: ${nilaiPak}`);
+      const relationKey = this.kategoriToRelationKey(data.kategori);
+
+      const { kategori, semesterId, ...kategoriFields } = data;
 
       return {
         success: true,
@@ -164,10 +175,13 @@ export class PelaksanaanPendidikanService {
         data: await this.prisma.pelaksanaanPendidikan.create({
           data: {
             dosenId,
-            semesterId: data.semesterId,
+            semesterId,
             kategori: data.kategori,
             filePath: relativePath,
             nilaiPak,
+            [relationKey]: {
+              create: kategoriFields,
+            },
           },
         }),
       };
