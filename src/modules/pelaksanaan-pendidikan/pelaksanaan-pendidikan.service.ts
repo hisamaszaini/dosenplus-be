@@ -281,6 +281,7 @@ export class PelaksanaanPendidikanService {
         include: {
           dosen: { select: { id: true, nama: true } },
           semester: true,
+          perkuliahan: true,
         },
       }),
     ]);
