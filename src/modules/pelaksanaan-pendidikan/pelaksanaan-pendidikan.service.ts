@@ -1,5 +1,5 @@
 import { BadRequestException, ForbiddenException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
-import { KategoriKegiatan, Prisma, Role, TypeUserRole } from '@prisma/client';
+import { JenisBahanPengajaran, KategoriKegiatan, Prisma, Role, TypeUserRole } from '@prisma/client';
 import { fullPelaksanaanPendidikanSchema } from './dto/create-pelaksanaan-pendidikan.dto';
 import { fullUpdatePelaksanaanSchema } from './dto/update-pelaksanaan-pendidikan.dto';
 import { parseAndThrow } from '@/common/utils/zod-helper';
@@ -210,6 +210,50 @@ export class PelaksanaanPendidikanService {
     }
   }
 
+  private async createBahanPengajaran(
+    dosenId: number,
+    semesterId: number,
+    kategori: KategoriKegiatan,
+    relativePath: string,
+    nilaiPak: number,
+    data: any
+  ) {
+    const { jenis, ...restData } = data;
+
+    let bahanPengajaranData: any = { jenis };
+
+    if (jenis === JenisBahanPengajaran.BUKU_AJAR) {
+      const { judul, tglTerbit, penerbit, jumlahHalaman, isbn } = restData;
+      bahanPengajaranData.bukuAjar = {
+        create: { judul, tglTerbit, penerbit, jumlahHalaman, isbn }
+      };
+    } else if (jenis === JenisBahanPengajaran.PRODUK_LAIN) {
+      const { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId } = restData;
+      bahanPengajaranData.produkLain = {
+        create: { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId }
+      };
+    } else {
+      throw new Error(`Jenis bahan pengajaran tidak valid: ${jenis}`);
+    }
+
+    return {
+      success: true,
+      message: 'Data bahan pengajaran berhasil ditambahkan',
+      data: await this.prisma.pelaksanaanPendidikan.create({
+        data: {
+          dosenId,
+          semesterId,
+          kategori,
+          filePath: relativePath,
+          nilaiPak,
+          bahanPengajaran: {
+            create: bahanPengajaranData
+          }
+        },
+      }),
+    };
+  }
+
   async create(dosenId: number, rawData: any, file: Express.Multer.File) {
     const data = parseAndThrow(fullPelaksanaanPendidikanSchema, rawData);
     console.log(`[CREATE] Data setelah parse: ${JSON.stringify(data, null, 2)}`);
@@ -237,9 +281,37 @@ export class PelaksanaanPendidikanService {
       });
       console.log(`Nilai PAK: ${nilaiPak}`);
 
-      const relationKey = this.kategoriToRelationKey(data.kategori);
-
       const { kategori, semesterId, ...kategoriFields } = data;
+
+      // Khusus Kategori Bahan Pengajaran
+      let bahanPengajaranData;
+      if (data.kategori === KategoriKegiatan.BAHAN_PENGAJARAN) {
+        if (data.jenis === JenisBahanPengajaran.BUKU_AJAR) {
+          const { judul, tglTerbit, penerbit, jumlahHalaman, isbn } = data;
+          const bahanPengajaranData = { jenis: data.jenis, bukuAjar: { create: { judul, tglTerbit, penerbit, jumlahHalaman, isbn } } };
+        } else {
+          const { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId } = data;
+          const bahanPengajaranData = { jenis: data.jenis, produkLain: { create: { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId } } };
+        }
+
+        return {
+          success: true,
+          message: 'Data berhasil ditambahkan',
+          data: await this.prisma.pelaksanaanPendidikan.create({
+            data: {
+              dosenId,
+              semesterId,
+              kategori,
+              filePath: relativePath,
+              nilaiPak,
+              bahanPengajaran: { create: bahanPengajaranData }
+            },
+          }),
+        };
+      }
+
+      // Kategori lain
+      const relationKey = this.kategoriToRelationKey(data.kategori);
 
       return {
         success: true,
