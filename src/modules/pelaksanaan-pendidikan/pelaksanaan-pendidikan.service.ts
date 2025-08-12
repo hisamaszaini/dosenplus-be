@@ -195,6 +195,7 @@ export class PelaksanaanPendidikanService {
         ...data,
         jabatanFungsional: dosen.jabatan,
       });
+      console.log(`Nilai PAK: ${nilaiPak}`);
 
       const relationKey = this.kategoriToRelationKey(data.kategori);
 
