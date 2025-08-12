@@ -260,12 +260,22 @@ export class PelaksanaanPendidikanService {
       }, id);
       console.log(`Nilai PAK: ${nilaiPak}`);
 
+      const { kategori, semesterId, ...kategoriFields } = data;
+
+      // Tentukan key relasi berdasar kategori
+      const relationKey = this.kategoriToRelationKey(kategori);
+
       const updated = await this.prisma.pelaksanaanPendidikan.update({
         where: { id },
         data: {
-          ...data,
+          dosenId,
+          semesterId,
+          kategori,
           filePath: newFilePath ?? existing.filePath,
           nilaiPak,
+          [relationKey]: {
+            update: kategoriFields,
+          },
         },
       });
 
