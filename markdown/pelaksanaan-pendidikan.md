@@ -436,3 +436,555 @@ jumlahMhs: 19
 - Jika file tidak diupload saat update, file lama tetap dipertahankan.  
 - `statusValidasi` akan kembali ke `PENDING` setelah update.  
 - `nilaiPak` dihitung otomatis berdasarkan data terbaru.
+
+## Create Pelaksanaan Pendidikan - BIMBINGAN_TUGAS_AKHIR
+
+**Endpoint**  
+```
+POST {{host}}:{{port}}/pelaksanaan-pendidikan
+```
+
+**Deskripsi**  
+Membuat record pelaksanaan pendidikan kategori **BIMBINGAN_TUGAS_AKHIR** (misal: Skripsi, Tesis, Disertasi).  
+File PDF **wajib** dilampirkan.
+
+---
+
+### Request
+
+**Headers**  
+```
+Content-Type: multipart/form-data
+Authorization: Bearer <accessToken>
+```
+
+**Form Data**  
+| Field        | Tipe    | Wajib | Keterangan                                  |
+|--------------|---------|-------|---------------------------------------------|
+| file         | File    | Ya    | File PDF bukti kegiatan                      |
+| semesterId   | Integer | Ya    | ID Semester                                 |
+| kategori     | String  | Ya    | Nilai harus `BIMBINGAN_TUGAS_AKHIR`          |
+| jenis        | String  | Ya    | Jenis tugas akhir (`Skripsi`, `Tesis`, `Disertasi`) |
+| peran        | String  | Ya    | Peran dalam bimbingan (`Pembimbing Utama`, `Pembimbing Pendamping`) |
+| jumlahMhs    | Integer | Ya    | Jumlah mahasiswa yang dibimbing             |
+
+**Contoh Body (form-data)**  
+```
+file: (upload PDF)
+semesterId: 14
+kategori: BIMBINGAN_TUGAS_AKHIR
+jenis: Disertasi
+peran: Pembimbing Utama
+jumlahMhs: 2
+```
+
+---
+
+### Response
+
+**Status: 200 OK**  
+```json
+{
+  "success": true,
+  "message": "Data berhasil ditambahkan",
+  "data": {
+    "id": 24,
+    "dosenId": 5,
+    "semesterId": 14,
+    "kategori": "BIMBINGAN_TUGAS_AKHIR",
+    "nilaiPak": 16,
+    "filePath": "pendidikan/1630c83c-810f-4046-ba5a-fe02021384b8.pdf",
+    "statusValidasi": "PENDING",
+    "catatan": null,
+    "createdAt": "2025-08-12T07:46:02.613Z",
+    "updatedAt": "2025-08-12T07:46:02.613Z"
+  }
+}
+```
+
+---
+
+## Update Pelaksanaan Pendidikan - BIMBINGAN_TUGAS_AKHIR
+
+**Endpoint**  
+```
+PATCH {{host}}:{{port}}/pelaksanaan-pendidikan/:id
+```
+
+**Deskripsi**  
+Memperbarui data pelaksanaan pendidikan kategori **BIMBINGAN_TUGAS_AKHIR** berdasarkan `id`.  
+File PDF **opsional** untuk diupload ulang.
+
+---
+
+### Request
+
+**Headers**  
+```
+Content-Type: multipart/form-data
+Authorization: Bearer <accessToken>
+```
+
+**Form Data**  
+| Field        | Tipe    | Wajib | Keterangan                                  |
+|--------------|---------|-------|---------------------------------------------|
+| file         | File    | Tidak | File PDF bukti kegiatan (opsional)           |
+| semesterId   | Integer | Ya    | ID Semester                                 |
+| kategori     | String  | Ya    | Nilai harus `BIMBINGAN_TUGAS_AKHIR`          |
+| jenis        | String  | Ya    | Jenis tugas akhir (`Skripsi`, `Tesis`, `Disertasi`) |
+| peran        | String  | Ya    | Peran dalam bimbingan (`Pembimbing Utama`, `Pembimbing Pendamping`) |
+| jumlahMhs    | Integer | Ya    | Jumlah mahasiswa yang dibimbing             |
+
+**Contoh Body (form-data)**  
+```
+file: (upload PDF, opsional)
+semesterId: 14
+kategori: BIMBINGAN_TUGAS_AKHIR
+jenis: Disertasi
+peran: Pembimbing Pendamping
+jumlahMhs: 2
+```
+
+---
+
+### Response
+
+**Status: 200 OK**  
+```json
+{
+  "success": true,
+  "message": "Data berhasil diperbarui",
+  "data": {
+    "id": 24,
+    "dosenId": 5,
+    "semesterId": 14,
+    "kategori": "BIMBINGAN_TUGAS_AKHIR",
+    "nilaiPak": 12,
+    "filePath": "pendidikan/1630c83c-810f-4046-ba5a-fe02021384b8.pdf",
+    "statusValidasi": "PENDING",
+    "catatan": null,
+    "createdAt": "2025-08-12T07:46:02.613Z",
+    "updatedAt": "2025-08-12T07:47:59.506Z"
+  }
+}
+```
+
+---
+
+**Catatan**  
+- `nilaiPak` otomatis menyesuaikan berdasarkan `peran` dan `jumlahMhs`.  
+- Jika file tidak diupload saat update, file lama akan tetap digunakan.  
+- `statusValidasi` akan kembali ke `PENDING` setelah update.
+
+## Create Pelaksanaan Pendidikan - PENGUJI_UJIAN_AKHIR
+
+**Endpoint**  
+```
+POST {{host}}:{{port}}/pelaksanaan-pendidikan
+```
+
+**Deskripsi**  
+Membuat record pelaksanaan pendidikan kategori **PENGUJI_UJIAN_AKHIR** (misal: Skripsi, Tesis, Disertasi).  
+File PDF **wajib** dilampirkan.
+
+---
+
+### Request
+
+**Headers**  
+```
+Content-Type: multipart/form-data
+Authorization: Bearer <accessToken>
+```
+
+**Form Data**  
+| Field        | Tipe    | Wajib | Keterangan                                 |
+|--------------|---------|-------|--------------------------------------------|
+| file         | File    | Ya    | File PDF bukti kegiatan                     |
+| semesterId   | Integer | Ya    | ID Semester                                |
+| kategori     | String  | Ya    | Nilai harus `PENGUJI_UJIAN_AKHIR`           |
+| peran        | String  | Ya    | Peran (`Ketua Penguji`, `Anggota Penguji`) |
+| jumlahMhs    | Integer | Ya    | Jumlah mahasiswa diuji                     |
+
+**Contoh Body (form-data)**  
+```
+file: (upload PDF)
+semesterId: 14
+kategori: PENGUJI_UJIAN_AKHIR
+peran: Ketua Penguji
+jumlahMhs: 1
+```
+
+---
+
+### Response
+
+**Status: 200 OK**  
+```json
+{
+  "success": true,
+  "message": "Data berhasil ditambahkan",
+  "data": {
+    "id": 25,
+    "dosenId": 5,
+    "semesterId": 14,
+    "kategori": "PENGUJI_UJIAN_AKHIR",
+    "nilaiPak": 1,
+    "filePath": "pendidikan/e0625fe2-a77f-4264-93ca-101d723aedbd.pdf",
+    "statusValidasi": "PENDING",
+    "catatan": null,
+    "createdAt": "2025-08-12T07:52:12.072Z",
+    "updatedAt": "2025-08-12T07:52:12.072Z"
+  }
+}
+```
+
+---
+
+## Update Pelaksanaan Pendidikan - PENGUJI_UJIAN_AKHIR
+
+**Endpoint**  
+```
+PATCH {{host}}:{{port}}/pelaksanaan-pendidikan/:id
+```
+
+**Deskripsi**  
+Memperbarui data pelaksanaan pendidikan kategori **PENGUJI_UJIAN_AKHIR** berdasarkan `id`.  
+File PDF **opsional** untuk diupload ulang.
+
+---
+
+### Request
+
+**Headers**  
+```
+Content-Type: multipart/form-data
+Authorization: Bearer <accessToken>
+```
+
+**Form Data**  
+| Field        | Tipe    | Wajib | Keterangan                                 |
+|--------------|---------|-------|--------------------------------------------|
+| file         | File    | Tidak | File PDF bukti kegiatan (opsional)          |
+| semesterId   | Integer | Ya    | ID Semester                                |
+| kategori     | String  | Ya    | Nilai harus `PENGUJI_UJIAN_AKHIR`           |
+| peran        | String  | Ya    | Peran (`Ketua Penguji`, `Anggota Penguji`) |
+| jumlahMhs    | Integer | Ya    | Jumlah mahasiswa diuji                     |
+
+**Contoh Body (form-data)**  
+```
+file: (upload PDF, opsional)
+semesterId: 14
+kategori: PENGUJI_UJIAN_AKHIR
+peran: Anggota Penguji
+jumlahMhs: 4
+```
+
+---
+
+### Response
+
+**Status: 200 OK**  
+```json
+{
+  "success": true,
+  "message": "Data berhasil diperbarui",
+  "data": {
+    "id": 25,
+    "dosenId": 5,
+    "semesterId": 14,
+    "kategori": "PENGUJI_UJIAN_AKHIR",
+    "nilaiPak": 2,
+    "filePath": "pendidikan/e0625fe2-a77f-4264-93ca-101d723aedbd.pdf",
+    "statusValidasi": "PENDING",
+    "catatan": null,
+    "createdAt": "2025-08-12T07:52:12.072Z",
+    "updatedAt": "2025-08-12T07:54:23.326Z"
+  }
+}
+```
+
+---
+
+**Catatan**  
+- `nilaiPak` otomatis dihitung berdasarkan `peran` dan `jumlahMhs`.  
+- Jika file tidak diupload saat update, file lama akan tetap digunakan.  
+- `statusValidasi` akan kembali ke `PENDING` setelah update.
+
+## Create Pelaksanaan Pendidikan - PEMBINA_KEGIATAN_MHS
+
+**Endpoint**  
+```
+POST {{host}}:{{port}}/pelaksanaan-pendidikan
+```
+
+**Deskripsi**  
+Membuat record pelaksanaan pendidikan kategori **PEMBINA_KEGIATAN_MHS**.  
+File PDF **wajib** dilampirkan.
+
+---
+
+### Request
+
+**Headers**  
+```
+Content-Type: multipart/form-data
+Authorization: Bearer <accessToken>
+```
+
+**Form Data**  
+| Field         | Tipe    | Wajib | Keterangan                               |
+|---------------|---------|-------|------------------------------------------|
+| file          | File    | Ya    | File PDF bukti kegiatan                  |
+| semesterId    | Integer | Ya    | ID Semester                              |
+| kategori      | String  | Ya    | Nilai harus `PEMBINA_KEGIATAN_MHS`        |
+| namaKegiatan  | String  | Ya    | Nama kegiatan yang dibina                 |
+| luaran        | String  | Ya    | Hasil/luaran kegiatan                     |
+
+**Contoh Body (form-data)**  
+```
+file: (upload PDF)
+semesterId: 14
+kategori: PEMBINA_KEGIATAN_MHS
+namaKegiatan: Pembinaan UKM Robotika
+luaran: Lomba Robot Nasional
+```
+
+---
+
+### Response
+
+**Status: 200 OK**  
+```json
+{
+  "success": true,
+  "message": "Data berhasil ditambahkan",
+  "data": {
+    "id": 26,
+    "dosenId": 5,
+    "semesterId": 14,
+    "kategori": "PEMBINA_KEGIATAN_MHS",
+    "nilaiPak": 2,
+    "filePath": "pendidikan/512954fa-609d-40ef-8b54-15ed18576b90.pdf",
+    "statusValidasi": "PENDING",
+    "catatan": null,
+    "createdAt": "2025-08-12T07:58:30.348Z",
+    "updatedAt": "2025-08-12T07:58:30.348Z"
+  }
+}
+```
+
+---
+
+## Update Pelaksanaan Pendidikan - PEMBINA_KEGIATAN_MHS
+
+**Endpoint**  
+```
+PATCH {{host}}:{{port}}/pelaksanaan-pendidikan/:id
+```
+
+**Deskripsi**  
+Memperbarui data pelaksanaan pendidikan kategori **PEMBINA_KEGIATAN_MHS** berdasarkan `id`.  
+File PDF **opsional** untuk diupload ulang.
+
+---
+
+### Request
+
+**Headers**  
+```
+Content-Type: multipart/form-data
+Authorization: Bearer <accessToken>
+```
+
+**Form Data**  
+| Field         | Tipe    | Wajib | Keterangan                               |
+|---------------|---------|-------|------------------------------------------|
+| file          | File    | Tidak | File PDF bukti kegiatan (opsional)       |
+| semesterId    | Integer | Ya    | ID Semester                              |
+| kategori      | String  | Ya    | Nilai harus `PEMBINA_KEGIATAN_MHS`        |
+| namaKegiatan  | String  | Ya    | Nama kegiatan yang dibina                 |
+| luaran        | String  | Ya    | Hasil/luaran kegiatan                     |
+
+**Contoh Body (form-data)**  
+```
+file: (upload PDF, opsional)
+semesterId: 14
+kategori: PEMBINA_KEGIATAN_MHS
+namaKegiatan: Pembinaan UKM Sepak Bola
+luaran: Lomba Sepak Bola Nasional
+```
+
+---
+
+### Response
+
+**Status: 200 OK**  
+```json
+{
+  "success": true,
+  "message": "Data berhasil diperbarui",
+  "data": {
+    "id": 26,
+    "dosenId": 5,
+    "semesterId": 14,
+    "kategori": "PEMBINA_KEGIATAN_MHS",
+    "nilaiPak": 2,
+    "filePath": "pendidikan/512954fa-609d-40ef-8b54-15ed18576b90.pdf",
+    "statusValidasi": "PENDING",
+    "catatan": null,
+    "createdAt": "2025-08-12T07:58:30.348Z",
+    "updatedAt": "2025-08-12T08:00:00.971Z"
+  }
+}
+```
+
+---
+
+**Catatan**  
+- `nilaiPak` otomatis dihitung oleh sistem.  
+- Jika file tidak diupload saat update, file lama akan tetap digunakan.  
+- `statusValidasi` akan kembali ke `PENDING` setelah update.
+
+## Create Pelaksanaan Pendidikan - PENGEMBANGAN_PROGRAM
+
+**Endpoint**  
+```
+POST {{host}}:{{port}}/pelaksanaan-pendidikan
+```
+
+**Deskripsi**  
+Membuat record pelaksanaan pendidikan kategori **PENGEMBANGAN_PROGRAM**.  
+File PDF **wajib** dilampirkan.
+
+---
+
+### Request
+
+**Headers**  
+```
+Content-Type: multipart/form-data
+Authorization: Bearer <accessToken>
+```
+
+**Form Data**  
+| Field               | Tipe    | Wajib | Keterangan                                         |
+|---------------------|---------|-------|----------------------------------------------------|
+| file                | File    | Ya    | File PDF bukti kegiatan                            |
+| semesterId          | Integer | Ya    | ID Semester                                        |
+| kategori            | String  | Ya    | Nilai harus `PENGEMBANGAN_PROGRAM`                  |
+| mataKuliah          | String  | Ya    | Nama mata kuliah yang dikembangkan                 |
+| programPengembangan | String  | Ya    | Deskripsi program pengembangan                     |
+| prodiId             | Integer | Ya    | ID Program Studi                                   |
+| fakultasId          | Integer | Ya    | ID Fakultas                                        |
+
+**Contoh Body (form-data)**  
+```
+file: (upload PDF)
+semesterId: 14
+kategori: PENGEMBANGAN_PROGRAM
+mataKuliah: Algoritma dan Struktur Data
+programPengembangan: Pengembangan Modul Pembelajaran Interaktif
+prodiId: 1
+fakultasId: 1
+```
+
+---
+
+### Response
+
+**Status: 200 OK**  
+```json
+{
+  "success": true,
+  "message": "Data berhasil ditambahkan",
+  "data": {
+    "id": 27,
+    "dosenId": 5,
+    "semesterId": 14,
+    "kategori": "PENGEMBANGAN_PROGRAM",
+    "nilaiPak": 2,
+    "filePath": "pendidikan/16ba1187-9144-46b0-8eae-5f1c23bd7199.pdf",
+    "statusValidasi": "PENDING",
+    "catatan": null,
+    "createdAt": "2025-08-12T08:05:11.483Z",
+    "updatedAt": "2025-08-12T08:05:11.483Z"
+  }
+}
+```
+
+---
+
+## Update Pelaksanaan Pendidikan - PENGEMBANGAN_PROGRAM
+
+**Endpoint**  
+```
+PATCH {{host}}:{{port}}/pelaksanaan-pendidikan/:id
+```
+
+**Deskripsi**  
+Memperbarui data pelaksanaan pendidikan kategori **PENGEMBANGAN_PROGRAM** berdasarkan `id`.  
+File PDF **opsional** untuk diupload ulang.
+
+---
+
+### Request
+
+**Headers**  
+```
+Content-Type: multipart/form-data
+Authorization: Bearer <accessToken>
+```
+
+**Form Data**  
+| Field               | Tipe    | Wajib | Keterangan                                         |
+|---------------------|---------|-------|----------------------------------------------------|
+| file                | File    | Tidak | File PDF bukti kegiatan (opsional)                 |
+| semesterId          | Integer | Ya    | ID Semester                                        |
+| kategori            | String  | Ya    | Nilai harus `PENGEMBANGAN_PROGRAM`                  |
+| mataKuliah          | String  | Ya    | Nama mata kuliah yang dikembangkan                 |
+| programPengembangan | String  | Ya    | Deskripsi program pengembangan                     |
+| prodiId             | Integer | Ya    | ID Program Studi                                   |
+| fakultasId          | Integer | Ya    | ID Fakultas                                        |
+
+**Contoh Body (form-data)**  
+```
+file: (upload PDF, opsional)
+semesterId: 14
+kategori: PENGEMBANGAN_PROGRAM
+mataKuliah: Algoritma dan Struktur Data
+programPengembangan: Pengembangan Modul Pembelajaran Interaktif dan Efektif
+prodiId: 6
+fakultasId: 1
+```
+
+---
+
+### Response
+
+**Status: 200 OK**  
+```json
+{
+  "success": true,
+  "message": "Data berhasil diperbarui",
+  "data": {
+    "id": 27,
+    "dosenId": 5,
+    "semesterId": 14,
+    "kategori": "PENGEMBANGAN_PROGRAM",
+    "nilaiPak": 2,
+    "filePath": "pendidikan/16ba1187-9144-46b0-8eae-5f1c23bd7199.pdf",
+    "statusValidasi": "PENDING",
+    "catatan": null,
+    "createdAt": "2025-08-12T08:05:11.483Z",
+    "updatedAt": "2025-08-12T08:07:04.324Z"
+  }
+}
+```
+
+---
+
+**Catatan**  
+- `nilaiPak` otomatis dihitung oleh sistem.  
+- Jika file tidak diupload saat update, file lama akan tetap digunakan.  
+- `statusValidasi` akan kembali ke `PENDING` setelah update.

@@ -139,7 +139,7 @@ export class PelaksanaanPendidikanService {
             default:
               nilaiPak = 0;
           }
-        } else {
+        } else if (peran === 'Pembimbing Pendamping') {
           switch (jenis) {
             case 'Disertasi':
               nilaiPak = 6 * jumlahMhs;
