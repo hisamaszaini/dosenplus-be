@@ -536,6 +536,10 @@ export class PelaksanaanPendidikanService {
       };
 
     } catch (error) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('UPDATE PelaksanaanPendidikan FAILED:', error);
+      }
+
       // Hapus file baru jika transaksi gagal
       if (newFilePath) {
         await deleteFileFromDisk(newFilePath);
