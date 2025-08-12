@@ -293,3 +293,146 @@ jumlahMhs: 8
 - Jika file tidak diupload, file lama tetap dipertahankan.  
 - `statusValidasi` akan kembali ke `PENDING` setelah update.  
 - `nilaiPak` dihitung otomatis berdasarkan data terbaru.
+
+## Create Pelaksanaan Pendidikan - BIMBINGAN_KKN_PKN_PKL
+
+**Endpoint**  
+```
+POST {{host}}:{{port}}/pelaksanaan-pendidikan
+```
+
+**Deskripsi**  
+Membuat record pelaksanaan pendidikan kategori **BIMBINGAN_KKN_PKN_PKL** (misal: KKN, PKN, PKL).  
+File PDF **wajib** dilampirkan.
+
+---
+
+### Request
+
+**Headers**  
+```
+Content-Type: multipart/form-data
+Authorization: Bearer <accessToken>
+```
+
+**Form Data**  
+| Field        | Tipe    | Wajib | Keterangan                                  |
+|--------------|---------|-------|---------------------------------------------|
+| file         | File    | Ya    | File PDF bukti kegiatan                      |
+| semesterId   | Integer | Ya    | ID Semester                                 |
+| kategori     | String  | Ya    | Pilih dari enum `KategoriKegiatan` (contoh: `BIMBINGAN_KKN_PKN_PKL`) |
+| jenis        | String  | Ya    | Jenis bimbingan (`KKN`, `PKN`, atau `PKL`) |
+| prodiId      | Integer | Ya    | ID Program Studi                            |
+| fakultasId   | Integer | Ya    | ID Fakultas                                 |
+| jumlahMhs    | Integer | Ya    | Jumlah mahasiswa yang dibimbing             |
+
+**Contoh Body (form-data)**  
+```
+file: (upload PDF)
+semesterId: 14
+kategori: BIMBINGAN_KKN_PKN_PKL
+jenis: KKN
+prodiId: 1
+fakultasId: 1
+jumlahMhs: 20
+```
+
+---
+
+### Response
+
+**Status: 200 OK**  
+```json
+{
+  "success": true,
+  "message": "Data berhasil ditambahkan",
+  "data": {
+    "id": 23,
+    "dosenId": 5,
+    "semesterId": 14,
+    "kategori": "BIMBINGAN_KKN_PKN_PKL",
+    "nilaiPak": 20,
+    "filePath": "pendidikan/6e5a7c8f-f91f-49b4-a77d-29f2a3785eb6.pdf",
+    "statusValidasi": "PENDING",
+    "catatan": null,
+    "createdAt": "2025-08-12T04:27:54.692Z",
+    "updatedAt": "2025-08-12T04:27:54.692Z"
+  }
+}
+```
+
+---
+
+## Update Pelaksanaan Pendidikan - BIMBINGAN_KKN_PKN_PKL
+
+**Endpoint**  
+```
+PATCH {{host}}:{{port}}/pelaksanaan-pendidikan/:id
+```
+
+**Deskripsi**  
+Memperbarui data pelaksanaan pendidikan kategori **BIMBINGAN_KKN_PKN_PKL** berdasarkan `id`.  
+File PDF **opsional** untuk diupload ulang.
+
+---
+
+### Request
+
+**Headers**  
+```
+Content-Type: multipart/form-data
+Authorization: Bearer <accessToken>
+```
+
+**Form Data**  
+| Field        | Tipe    | Wajib | Keterangan                                  |
+|--------------|---------|-------|---------------------------------------------|
+| file         | File    | Tidak | File PDF bukti kegiatan (opsional)           |
+| semesterId   | Integer | Ya    | ID Semester                                 |
+| kategori     | String  | Ya    | Pilih dari enum `KategoriKegiatan` (contoh: `BIMBINGAN_KKN_PKN_PKL`) |
+| jenis        | String  | Ya    | Jenis bimbingan (`KKN`, `PKN`, atau `PKL`)  |
+| prodiId      | Integer | Ya    | ID Program Studi                            |
+| fakultasId   | Integer | Ya    | ID Fakultas                                 |
+| jumlahMhs    | Integer | Ya    | Jumlah mahasiswa yang dibimbing             |
+
+**Contoh Body (form-data)**  
+```
+file: (upload PDF, opsional)
+semesterId: 14
+kategori: BIMBINGAN_KKN_PKN_PKL
+jenis: KKN
+prodiId: 1
+fakultasId: 1
+jumlahMhs: 19
+```
+
+---
+
+### Response
+
+**Status: 200 OK**  
+```json
+{
+  "success": true,
+  "message": "Data berhasil diperbarui",
+  "data": {
+    "id": 23,
+    "dosenId": 5,
+    "semesterId": 14,
+    "kategori": "BIMBINGAN_KKN_PKN_PKL",
+    "nilaiPak": 19,
+    "filePath": "pendidikan/6e5a7c8f-f91f-49b4-a77d-29f2a3785eb6.pdf",
+    "statusValidasi": "PENDING",
+    "catatan": null,
+    "createdAt": "2025-08-12T04:27:54.692Z",
+    "updatedAt": "2025-08-12T04:32:53.456Z"
+  }
+}
+```
+
+---
+
+**Catatan**  
+- Jika file tidak diupload saat update, file lama tetap dipertahankan.  
+- `statusValidasi` akan kembali ke `PENDING` setelah update.  
+- `nilaiPak` dihitung otomatis berdasarkan data terbaru.
