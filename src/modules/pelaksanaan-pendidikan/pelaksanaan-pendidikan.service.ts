@@ -437,7 +437,7 @@ export class PelaksanaanPendidikanService {
           const existingBahan = existing.bahanPengajaran;
           const jenisSama = existingBahan?.jenis === data.jenis;
 
-          /* 1. Kalau jenis tetap, update isi saja */
+          /* 1. Update isi saja kalau jenis sama */
           if (jenisSama) {
             if (data.jenis === JenisBahanPengajaran.BUKU_AJAR) {
               const { judul, tglTerbit, penerbit, jumlahHalaman, isbn } = data;
@@ -453,7 +453,7 @@ export class PelaksanaanPendidikanService {
               });
             }
           } else {
-            /* 2. Kalau jenis berubah maka hapus data lama, lalu buat baru */
+            /* 2. Jika jenis berubah maka hapus data lama, buat baru, lalu connect */
             if (existingBahan?.bukuAjar) {
               await tx.bukuAjar.delete({ where: { id: existingBahan.bukuAjar.id } });
             }
@@ -461,23 +461,35 @@ export class PelaksanaanPendidikanService {
               await tx.produkBahanLainnya.delete({ where: { id: existingBahan.produkLain.id } });
             }
 
-            let bahanPengajaranData: any = { jenis: data.jenis };
-
+            let newRelasi: any = {};
             if (data.jenis === JenisBahanPengajaran.BUKU_AJAR) {
               const { judul, tglTerbit, penerbit, jumlahHalaman, isbn } = data;
-              bahanPengajaranData.bukuAjar = { create: { judul, tglTerbit, penerbit, jumlahHalaman, isbn } };
+              newRelasi = {
+                bukuAjar: { create: { judul, tglTerbit, penerbit, jumlahHalaman, isbn } },
+                produkLain: { disconnect: true },
+              };
             } else {
               const { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId } = data;
-              bahanPengajaranData.produkLain = { create: { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId } };
+              newRelasi = {
+                produkLain: { create: { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId } },
+                bukuAjar: { disconnect: true },
+              };
             }
 
+            /* update relasi secara eksplisit */
             await tx.pelaksanaanPendidikan.update({
               where: { id },
-              data: { bahanPengajaran: { upsert: { create: bahanPengajaranData, update: { jenis: data.jenis } } } },
+              data: {
+                bahanPengajaran: {
+                  update: {
+                    jenis: data.jenis,
+                    ...newRelasi,
+                  },
+                },
+              },
             });
           }
 
-          /* 3. Ambil hasil akhir */
           const updated = await tx.pelaksanaanPendidikan.findUnique({
             where: { id },
             include: { bahanPengajaran: { include: { bukuAjar: true, produkLain: true } } },
