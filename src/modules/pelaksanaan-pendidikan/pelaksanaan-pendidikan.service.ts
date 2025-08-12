@@ -434,31 +434,36 @@ export class PelaksanaanPendidikanService {
 
         // Khusus kategori Bahan Pengajaran
         if (kategori === KategoriKegiatan.BAHAN_PENGAJARAN) {
+          // Hapus data lama terlebih dahulu jika ada
+          if (existing.bahanPengajaran) {
+            if (existing.bahanPengajaran.bukuAjar) {
+              await tx.bukuAjar.delete({
+                where: { id: existing.bahanPengajaran.bukuAjar.id }
+              });
+            }
+            if (existing.bahanPengajaran.produkLain) {
+              await tx.produkBahanLainnya.delete({
+                where: { id: existing.bahanPengajaran.produkLain.id }
+              });
+            }
+          }
+
+          // Siapkan data bahan pengajaran
           let bahanPengajaranData: any = {
             jenis: data.jenis
           };
 
-          // Handle bukuAjar atau produkLain
+          // Tambahkan data sesuai jenis
           if (data.jenis === JenisBahanPengajaran.BUKU_AJAR) {
             const { judul, tglTerbit, penerbit, jumlahHalaman, isbn } = data;
             bahanPengajaranData.bukuAjar = {
-              upsert: {
-                create: { judul, tglTerbit, penerbit, jumlahHalaman, isbn },
-                update: { judul, tglTerbit, penerbit, jumlahHalaman, isbn }
-              }
+              create: { judul, tglTerbit, penerbit, jumlahHalaman, isbn }
             };
-            // Pastikan produkLain tidak ada
-            bahanPengajaranData.produkLain = { disconnect: true };
           } else {
             const { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId } = data;
             bahanPengajaranData.produkLain = {
-              upsert: {
-                create: { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId },
-                update: { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId }
-              }
+              create: { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId }
             };
-            // Pastikan bukuAjar tidak ada
-            bahanPengajaranData.bukuAjar = { disconnect: true };
           }
 
           const updated = await tx.pelaksanaanPendidikan.update({
