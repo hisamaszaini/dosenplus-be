@@ -92,6 +92,7 @@ export class PelaksanaanPendidikanService {
           // Jika semester sama, kurangi oldSks supaya tidak double count
           if (oldSemesterId === data.semesterId) {
             totalSksSemesterIni -= oldSks;
+            console.log(`Total SKS sebelumnya: ${oldSks}`);
           }
 
           console.log(`Total SKS semester ini setelah adjustment: ${totalSksSemesterIni}`);
