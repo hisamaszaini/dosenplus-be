@@ -475,7 +475,7 @@ export class PelaksanaanPendidikanService {
             };
           }
 
-          console.log('Bahan Pengajaran:', bahanPengajaranData);
+          console.log('Bahan Pengajaran:', JSON.stringify(bahanPengajaranData, null, 2));
 
           // Update utama dalam transaksi
           const updated = await tx.pelaksanaanPendidikan.update({
