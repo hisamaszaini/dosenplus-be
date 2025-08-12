@@ -434,23 +434,35 @@ export class PelaksanaanPendidikanService {
 
         // Khusus kategori Bahan Pengajaran
         if (kategori === KategoriKegiatan.BAHAN_PENGAJARAN) {
-          let bahanPengajaranPayload: any = { jenis: data.jenis };
+          // Hapus data lama jika jenis berubah
+          if (
+            existing.kategori === KategoriKegiatan.BAHAN_PENGAJARAN &&
+            existing.bahanPengajaran &&
+            existing.bahanPengajaran.jenis !== data.jenis
+          ) {
+            if (existing.bahanPengajaran.bukuAjar) {
+              await tx.bukuAjar.delete({ where: { id: existing.bahanPengajaran.bukuAjar.id } });
+            }
+            if (existing.bahanPengajaran.produkLain) {
+              await tx.produkBahanLainnya.delete({ where: { id: existing.bahanPengajaran.produkLain.id } });
+            }
+          }
+
+          let bahanPengajaranData: any = {
+            jenis: data.jenis
+          };
 
           if (data.jenis === JenisBahanPengajaran.BUKU_AJAR) {
             const { judul, tglTerbit, penerbit, jumlahHalaman, isbn } = data;
-            bahanPengajaranPayload.bukuAjar = {
+            bahanPengajaranData.bukuAjar = {
               create: { judul, tglTerbit, penerbit, jumlahHalaman, isbn },
-              update: { judul, tglTerbit, penerbit, jumlahHalaman, isbn },
             };
           } else {
             const { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId } = data;
-            bahanPengajaranPayload.produkLain = {
+            bahanPengajaranData.produkLain = {
               create: { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId },
-              update: { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId },
             };
           }
-
-          console.log('Bahan Pengajaran Payload:', JSON.stringify(bahanPengajaranPayload, null, 2));
 
           const updated = await tx.pelaksanaanPendidikan.update({
             where: { id },
@@ -464,15 +476,13 @@ export class PelaksanaanPendidikanService {
               catatan: null,
               bahanPengajaran: {
                 upsert: {
-                  create: bahanPengajaranPayload,
-                  update: bahanPengajaranPayload,
+                  create: bahanPengajaranData,
+                  update: bahanPengajaranData,
                 },
               },
             },
             include: {
-              bahanPengajaran: {
-                include: { bukuAjar: true, produkLain: true },
-              },
+              bahanPengajaran: { include: { bukuAjar: true, produkLain: true } },
             },
           });
 
