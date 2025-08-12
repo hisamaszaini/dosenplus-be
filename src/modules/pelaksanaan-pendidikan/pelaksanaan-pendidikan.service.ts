@@ -434,50 +434,24 @@ export class PelaksanaanPendidikanService {
 
         // Khusus kategori Bahan Pengajaran
         if (kategori === KategoriKegiatan.BAHAN_PENGAJARAN) {
-          let bahanPengajaranData: any = { jenis: data.jenis };
+          let bahanPengajaranPayload: any = { jenis: data.jenis };
 
-          // Hapus entitas lama jika jenis berubah
-          if (
-            existing.kategori === KategoriKegiatan.BAHAN_PENGAJARAN &&
-            existing.bahanPengajaran &&
-            existing.bahanPengajaran.jenis !== data.jenis
-          ) {
-            // Hapus Buku Ajar
-            if (existing.bahanPengajaran.bukuAjar) {
-              await tx.bukuAjar.delete({
-                where: { id: existing.bahanPengajaran.bukuAjar.id },
-              });
-            }
-            // Hapus Produk Lain
-            if (existing.bahanPengajaran.produkLain) {
-              await tx.produkBahanLainnya.delete({
-                where: { id: existing.bahanPengajaran.produkLain.id },
-              });
-            }
-          }
-
-          // Data baru berdasarkan jenis
           if (data.jenis === JenisBahanPengajaran.BUKU_AJAR) {
             const { judul, tglTerbit, penerbit, jumlahHalaman, isbn } = data;
-            bahanPengajaranData.bukuAjar = {
-              upsert: {
-                create: { judul, tglTerbit, penerbit, jumlahHalaman, isbn },
-                update: { judul, tglTerbit, penerbit, jumlahHalaman, isbn },
-              },
+            bahanPengajaranPayload.bukuAjar = {
+              create: { judul, tglTerbit, penerbit, jumlahHalaman, isbn },
+              update: { judul, tglTerbit, penerbit, jumlahHalaman, isbn },
             };
           } else {
             const { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId } = data;
-            bahanPengajaranData.produkLain = {
-              upsert: {
-                create: { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId },
-                update: { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId },
-              },
+            bahanPengajaranPayload.produkLain = {
+              create: { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId },
+              update: { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId },
             };
           }
 
-          console.log('Bahan Pengajaran:', JSON.stringify(bahanPengajaranData, null, 2));
+          console.log('Bahan Pengajaran Payload:', JSON.stringify(bahanPengajaranPayload, null, 2));
 
-          // Update utama dalam transaksi
           const updated = await tx.pelaksanaanPendidikan.update({
             where: { id },
             data: {
@@ -490,8 +464,8 @@ export class PelaksanaanPendidikanService {
               catatan: null,
               bahanPengajaran: {
                 upsert: {
-                  create: bahanPengajaranData,
-                  update: bahanPengajaranData,
+                  create: bahanPengajaranPayload,
+                  update: bahanPengajaranPayload,
                 },
               },
             },
