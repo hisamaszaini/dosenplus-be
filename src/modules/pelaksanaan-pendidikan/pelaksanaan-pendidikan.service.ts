@@ -1,5 +1,5 @@
 import { BadRequestException, ForbiddenException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
-import { JenisBahanPengajaran, KategoriKegiatan, Prisma, Role, TypeUserRole } from '@prisma/client';
+import { JenisBahanPengajaran, KategoriKegiatan, Prisma, Role, StatusValidasi, TypeUserRole } from '@prisma/client';
 import { fullPelaksanaanPendidikanSchema } from './dto/create-pelaksanaan-pendidikan.dto';
 import { fullUpdatePelaksanaanSchema } from './dto/update-pelaksanaan-pendidikan.dto';
 import { parseAndThrow } from '@/common/utils/zod-helper';
@@ -343,25 +343,20 @@ export class PelaksanaanPendidikanService {
     }
   }
 
-  async update(id: number, dosenId: number, rawData: any, role: TypeUserRole, file?: Express.Multer.File) {
+  async update(
+    id: number,
+    dosenId: number,
+    rawData: any,
+    role: TypeUserRole,
+    file?: Express.Multer.File
+  ) {
     const data = parseAndThrow(fullUpdatePelaksanaanSchema, rawData);
     console.log(`[UPDATE] Data setelah parse: ${JSON.stringify(data, null, 2)}`);
 
-    let newFilePath: string | undefined = undefined;
+    let newFilePath: string | undefined;
 
     try {
-      const existing = await this.prisma.pelaksanaanPendidikan.findUniqueOrThrow({ where: { id } });
-
-      if (!hasRole(role, TypeUserRole.ADMIN) && existing.dosenId !== dosenId) {
-        throw new ForbiddenException('Anda tidak berhak memperbarui data ini');
-      }
-
-      if (data.kategori === KategoriKegiatan.PERKULIAHAN && data.jumlahKelas && data.sks) {
-        const totalSks = data.jumlahKelas * data.sks;
-        data.totalSks = totalSks;
-        console.log(`Total SKS: ${totalSks}`);
-      }
-
+      // Upload file di luar transaksi (karena file system operation)
       if (file) {
         newFilePath = await handleUpload({
           file,
@@ -369,46 +364,174 @@ export class PelaksanaanPendidikanService {
         });
       }
 
-      const dosen = await this.prisma.dosen.findUnique({
-        where: { id: dosenId },
-        select: { jabatan: true },
-      });
-
-      const nilaiPak = await this.getNilaiPakByKategori(data.kategori, existing.dosenId, {
-        ...data,
-        jabatanFungsional: dosen?.jabatan,
-      }, id);
-      console.log(`Nilai PAK: ${nilaiPak}`);
-
-      const { kategori, semesterId, ...kategoriFields } = data;
-
-      // Tentukan key relasi berdasar kategori
-      const relationKey = this.kategoriToRelationKey(kategori);
-
-      const updated = await this.prisma.pelaksanaanPendidikan.update({
-        where: { id },
-        data: {
-          dosenId,
-          semesterId,
-          kategori,
-          filePath: newFilePath ?? existing.filePath,
-          nilaiPak,
-          [relationKey]: {
-            update: kategoriFields,
+      // Gunakan transaction untuk operasi database
+      const result = await this.prisma.$transaction(async (tx) => {
+        const existing = await tx.pelaksanaanPendidikan.findUniqueOrThrow({
+          where: { id },
+          include: {
+            bahanPengajaran: {
+              include: {
+                bukuAjar: true,
+                produkLain: true,
+              },
+            },
           },
-        },
+        });
+
+        if (!hasRole(role, TypeUserRole.ADMIN) && existing.dosenId !== dosenId) {
+          throw new ForbiddenException('Anda tidak berhak memperbarui data ini');
+        }
+
+        // Hitung total SKS untuk kategori PERKULIAHAN
+        if (
+          data.kategori === KategoriKegiatan.PERKULIAHAN &&
+          data.jumlahKelas &&
+          data.sks
+        ) {
+          data.totalSks = data.jumlahKelas * data.sks;
+        }
+
+        // Hitung nilai PAK
+        const dosen = await tx.dosen.findUnique({
+          where: { id: dosenId },
+          select: { jabatan: true },
+        });
+        const nilaiPak = await this.getNilaiPakByKategori(
+          data.kategori,
+          existing.dosenId,
+          { ...data, jabatanFungsional: dosen?.jabatan },
+          id
+        );
+
+        const { kategori, semesterId, ...kategoriFields } = data;
+
+        // Hapus data relasi lama jika kategori berubah
+        if (existing.kategori !== kategori) {
+          const oldRelationKey = this.kategoriToRelationKey(existing.kategori);
+
+          if (oldRelationKey === 'bahanPengajaran' && existing.bahanPengajaran) {
+            // Hapus entitas spesifik untuk bahan pengajaran
+            if (existing.bahanPengajaran.bukuAjar) {
+              await tx.bukuAjar.delete({
+                where: { id: existing.bahanPengajaran.bukuAjar.id },
+              });
+            }
+            if (existing.bahanPengajaran.produkLain) {
+              await tx.produkBahanLainnya.delete({
+                where: { id: existing.bahanPengajaran.produkLain.id },
+              });
+            }
+            await tx.bahanPengajaran.delete({
+              where: { pelaksanaanId: id },
+            });
+          } else {
+            // Untuk kategori lain
+            await tx[oldRelationKey].delete({
+              where: { pelaksanaanId: id },
+            });
+          }
+        }
+
+        // Khusus kategori Bahan Pengajaran
+        if (kategori === KategoriKegiatan.BAHAN_PENGAJARAN) {
+          let bahanPengajaranData: any = { jenis: data.jenis };
+
+          // Jika jenis berubah → hapus entitas lama
+          if (
+            existing.kategori === KategoriKegiatan.BAHAN_PENGAJARAN &&
+            existing.bahanPengajaran &&
+            existing.bahanPengajaran.jenis !== data.jenis
+          ) {
+            if (existing.bahanPengajaran.bukuAjar) {
+              await tx.bukuAjar.delete({
+                where: { id: existing.bahanPengajaran.bukuAjar.id },
+              });
+            }
+            if (existing.bahanPengajaran.produkLain) {
+              await tx.produkBahanLainnya.delete({
+                where: { id: existing.bahanPengajaran.produkLain.id },
+              });
+            }
+          }
+
+          // Isi data baru
+          if (data.jenis === JenisBahanPengajaran.BUKU_AJAR) {
+            const { judul, tglTerbit, penerbit, jumlahHalaman, isbn } = data;
+            bahanPengajaranData.bukuAjar = {
+              upsert: {
+                create: { judul, tglTerbit, penerbit, jumlahHalaman, isbn },
+                update: { judul, tglTerbit, penerbit, jumlahHalaman, isbn },
+              },
+            };
+          } else {
+            const { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId } = data;
+            bahanPengajaranData.produkLain = {
+              upsert: {
+                create: { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId },
+                update: { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId },
+              },
+            };
+          }
+
+          const updated = await tx.pelaksanaanPendidikan.update({
+            where: { id },
+            data: {
+              dosenId,
+              semesterId,
+              kategori,
+              filePath: newFilePath ?? existing.filePath,
+              nilaiPak,
+              statusValidasi: StatusValidasi.PENDING,
+              catatan: null,
+              bahanPengajaran: {
+                upsert: {
+                  create: bahanPengajaranData,
+                  update: bahanPengajaranData,
+                },
+              },
+            },
+            include: {
+              bahanPengajaran: {
+                include: { bukuAjar: true, produkLain: true },
+              },
+            },
+          });
+
+          return { updated, existing };
+        }
+
+        // Untuk kategori selain Bahan Pengajaran
+        const relationKey = this.kategoriToRelationKey(kategori);
+        const updated = await tx.pelaksanaanPendidikan.update({
+          where: { id },
+          data: {
+            dosenId,
+            semesterId,
+            kategori,
+            filePath: newFilePath ?? existing.filePath,
+            nilaiPak,
+            statusValidasi: StatusValidasi.PENDING,
+            catatan: null,
+            [relationKey]: { update: kategoriFields },
+          },
+        });
+
+        return { updated, existing };
       });
 
-      if (newFilePath && existing.filePath) {
-        await deleteFileFromDisk(existing.filePath);
+      // Hapus file lama setelah transaksi berhasil
+      if (newFilePath && result.existing.filePath) {
+        await deleteFileFromDisk(result.existing.filePath);
       }
 
       return {
         success: true,
         message: 'Data berhasil diperbarui',
-        data: updated,
+        data: result.updated,
       };
+
     } catch (error) {
+      // Hapus file baru jika transaksi gagal
       if (newFilePath) {
         await deleteFileFromDisk(newFilePath);
       }
