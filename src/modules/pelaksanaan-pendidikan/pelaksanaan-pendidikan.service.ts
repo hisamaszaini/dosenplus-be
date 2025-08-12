@@ -435,61 +435,52 @@ export class PelaksanaanPendidikanService {
         // Khusus kategori Bahan Pengajaran
         if (kategori === KategoriKegiatan.BAHAN_PENGAJARAN) {
           const existingBahan = existing.bahanPengajaran;
-          const jenisBerubah = existingBahan?.jenis !== data.jenis;
+          const jenisSama = existingBahan?.jenis === data.jenis;
 
-          /* 1. Hapus data lama jika jenis berubah */
-          if (jenisBerubah) {
+          /* 1. Kalau jenis tetap, update isi saja */
+          if (jenisSama) {
+            if (data.jenis === JenisBahanPengajaran.BUKU_AJAR) {
+              const { judul, tglTerbit, penerbit, jumlahHalaman, isbn } = data;
+              await tx.bukuAjar.update({
+                where: { id: existingBahan!.bukuAjar!.id },
+                data: { judul, tglTerbit, penerbit, jumlahHalaman, isbn },
+              });
+            } else {
+              const { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId } = data;
+              await tx.produkBahanLainnya.update({
+                where: { id: existingBahan!.produkLain!.id },
+                data: { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId },
+              });
+            }
+          } else {
+            /* 2. Kalau jenis berubah maka hapus data lama, lalu buat baru */
             if (existingBahan?.bukuAjar) {
               await tx.bukuAjar.delete({ where: { id: existingBahan.bukuAjar.id } });
             }
             if (existingBahan?.produkLain) {
               await tx.produkBahanLainnya.delete({ where: { id: existingBahan.produkLain.id } });
             }
+
+            let bahanPengajaranData: any = { jenis: data.jenis };
+
+            if (data.jenis === JenisBahanPengajaran.BUKU_AJAR) {
+              const { judul, tglTerbit, penerbit, jumlahHalaman, isbn } = data;
+              bahanPengajaranData.bukuAjar = { create: { judul, tglTerbit, penerbit, jumlahHalaman, isbn } };
+            } else {
+              const { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId } = data;
+              bahanPengajaranData.produkLain = { create: { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId } };
+            }
+
+            await tx.pelaksanaanPendidikan.update({
+              where: { id },
+              data: { bahanPengajaran: { upsert: { create: bahanPengajaranData, update: { jenis: data.jenis } } } },
+            });
           }
 
-          /* 2. Siapkan payload untuk bahanPengajaran */
-          let bahanPengajaranData: any = { jenis: data.jenis };
-
-          /* 3. Isi payload untuk jenis yang baru (create) */
-          if (data.jenis === JenisBahanPengajaran.BUKU_AJAR) {
-            const { judul, tglTerbit, penerbit, jumlahHalaman, isbn } = data;
-            // selalu create baru ketika jenis baru atau pertama kali
-            bahanPengajaranData.bukuAjar = {
-              create: { judul, tglTerbit, penerbit, jumlahHalaman, isbn }
-            };
-          } else {
-            const { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId } = data;
-            bahanPengajaranData.produkLain = {
-              create: { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId }
-            };
-          }
-
-          /* 4. Upsert bahanPengajaran */
-          const updated = await tx.pelaksanaanPendidikan.update({
+          /* 3. Ambil hasil akhir */
+          const updated = await tx.pelaksanaanPendidikan.findUnique({
             where: { id },
-            data: {
-              dosenId,
-              semesterId,
-              kategori,
-              filePath: newFilePath ?? existing.filePath,
-              nilaiPak,
-              statusValidasi: StatusValidasi.PENDING,
-              catatan: null,
-              bahanPengajaran: {
-                upsert: {
-                  create: bahanPengajaranData,
-                  update: {
-                    jenis: data.jenis,
-                    ...(data.jenis === JenisBahanPengajaran.BUKU_AJAR
-                      ? { bukuAjar: bahanPengajaranData.bukuAjar }
-                      : { produkLain: bahanPengajaranData.produkLain })
-                  },
-                },
-              },
-            },
-            include: {
-              bahanPengajaran: { include: { bukuAjar: true, produkLain: true } },
-            },
+            include: { bahanPengajaran: { include: { bukuAjar: true, produkLain: true } } },
           });
 
           return { updated, existing };
