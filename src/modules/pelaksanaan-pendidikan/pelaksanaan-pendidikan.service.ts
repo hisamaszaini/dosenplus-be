@@ -51,7 +51,7 @@ export class PelaksanaanPendidikanService {
     return result._sum.totalSks || 0;
   }
 
-  private async getNilaiPakByKategori(kategori: string, dosenId: number, data: any): Promise<number> {
+  private async getNilaiPakByKategori(kategori: string, dosenId: number, data: any, id?: number): Promise<number> {
     console.log(`PelaksanaanPendidikan: ${kategori}`);
     console.log(`dosenId: ${dosenId}, semester: ${data.semesterId}`);
     // const dosen = await this.prisma.dosen.findUniqueOrThrow({
@@ -62,18 +62,47 @@ export class PelaksanaanPendidikanService {
     switch (kategori) {
       case 'PERKULIAHAN': {
         return await this.prisma.$transaction(async (tx) => {
-          // Hitung total SKS yang sudah ada semester ini
-          const totalSksSemesterIni = await this.hitungTotalSksPerkuliahan(dosenId, data.semesterId);
-          console.log(`Total SKS semester ini sudah terpakai: ${totalSksSemesterIni}`);
+          let oldSks = 0;
+          let oldSemesterId: number | null = null;
 
-          const kuotaSksSemesterIni = 10; // Kuota tiap semester
-          const sisaKuota = kuotaSksSemesterIni - totalSksSemesterIni;
+          if (id) {
+            const existing = await tx.pelaksanaanPendidikan.findUnique({
+              where: { id },
+              select: {
+                semesterId: true,
+                perkuliahan: {
+                  select: { totalSks: true },
+                },
+              },
+            });
+
+            if (existing) {
+              oldSemesterId = existing.semesterId;
+              if (existing.perkuliahan?.totalSks) {
+                oldSks = existing.perkuliahan.totalSks;
+              }
+            }
+          }
+
+          let totalSksSemesterIni = await this.hitungTotalSksPerkuliahan(
+            dosenId,
+            data.semesterId
+          );
+
+          // Jika semester sama, kurangi oldSks supaya tidak double count
+          if (oldSemesterId === data.semesterId) {
+            totalSksSemesterIni -= oldSks;
+          }
+
+          console.log(`Total SKS semester ini setelah adjustment: ${totalSksSemesterIni}`);
+
+          const kuotaNilaiMaksimalSks = 10; // Kuota tiap semester
+          const sisaKuota = kuotaNilaiMaksimalSks - totalSksSemesterIni;
           const awalCount = Math.max(0, Math.min(sisaKuota, data.totalSks));
           const lanjutCount = Math.max(0, data.totalSks - awalCount);
 
-          console.log(`Sisa kuota: ${sisaKuota}, awalCount: ${awalCount}, ${lanjutCount}`);
+          console.log(`Sisa kuota: ${sisaKuota}, awalCount: ${awalCount}, lanjutCount: ${lanjutCount}`);
 
-          // Hitung bobot berdasarkan jabatan fungsional
           let bobot: number;
           if (data.jabatanFungsional === 'Asisten Ahli') {
             bobot = awalCount * 0.5 + lanjutCount * 0.25;
@@ -227,7 +256,7 @@ export class PelaksanaanPendidikanService {
       const nilaiPak = await this.getNilaiPakByKategori(data.kategori, existing.dosenId, {
         ...data,
         jabatanFungsional: dosen?.jabatan,
-      });
+      }, id);
       console.log(`Nilai PAK: ${nilaiPak}`);
 
       const updated = await this.prisma.pelaksanaanPendidikan.update({
