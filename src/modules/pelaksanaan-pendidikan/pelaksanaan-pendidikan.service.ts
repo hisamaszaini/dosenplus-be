@@ -436,17 +436,19 @@ export class PelaksanaanPendidikanService {
         if (kategori === KategoriKegiatan.BAHAN_PENGAJARAN) {
           let bahanPengajaranData: any = { jenis: data.jenis };
 
-          // Jika jenis berubah → hapus entitas lama
+          // Hapus entitas lama jika jenis berubah
           if (
             existing.kategori === KategoriKegiatan.BAHAN_PENGAJARAN &&
             existing.bahanPengajaran &&
             existing.bahanPengajaran.jenis !== data.jenis
           ) {
+            // Hapus Buku Ajar
             if (existing.bahanPengajaran.bukuAjar) {
               await tx.bukuAjar.delete({
                 where: { id: existing.bahanPengajaran.bukuAjar.id },
               });
             }
+            // Hapus Produk Lain
             if (existing.bahanPengajaran.produkLain) {
               await tx.produkBahanLainnya.delete({
                 where: { id: existing.bahanPengajaran.produkLain.id },
@@ -454,7 +456,7 @@ export class PelaksanaanPendidikanService {
             }
           }
 
-          // Isi data baru
+          // Data baru berdasarkan jenis
           if (data.jenis === JenisBahanPengajaran.BUKU_AJAR) {
             const { judul, tglTerbit, penerbit, jumlahHalaman, isbn } = data;
             bahanPengajaranData.bukuAjar = {
@@ -473,8 +475,9 @@ export class PelaksanaanPendidikanService {
             };
           }
 
-          console.log(`Bahan Pengajaran: ${bahanPengajaranData}`);
+          console.log('Bahan Pengajaran:', bahanPengajaranData);
 
+          // Update utama dalam transaksi
           const updated = await tx.pelaksanaanPendidikan.update({
             where: { id },
             data: {
@@ -484,7 +487,7 @@ export class PelaksanaanPendidikanService {
               filePath: newFilePath ?? existing.filePath,
               nilaiPak,
               statusValidasi: StatusValidasi.PENDING,
-              catatan: 'null',
+              catatan: null,
               bahanPengajaran: {
                 upsert: {
                   create: bahanPengajaranData,
