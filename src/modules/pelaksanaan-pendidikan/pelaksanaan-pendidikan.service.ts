@@ -288,10 +288,16 @@ export class PelaksanaanPendidikanService {
       if (data.kategori === KategoriKegiatan.BAHAN_PENGAJARAN) {
         if (data.jenis === JenisBahanPengajaran.BUKU_AJAR) {
           const { judul, tglTerbit, penerbit, jumlahHalaman, isbn } = data;
-          const bahanPengajaranData = { jenis: data.jenis, bukuAjar: { create: { judul, tglTerbit, penerbit, jumlahHalaman, isbn } } };
+          bahanPengajaranData = {
+            jenis: data.jenis,
+            bukuAjar: { create: { judul, tglTerbit, penerbit, jumlahHalaman, isbn } }
+          };
         } else {
           const { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId } = data;
-          const bahanPengajaranData = { jenis: data.jenis, produkLain: { create: { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId } } };
+          bahanPengajaranData = {
+            jenis: data.jenis,
+            produkLain: { create: { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId } }
+          };
         }
 
         return {
