@@ -988,3 +988,170 @@ fakultasId: 1
 - `nilaiPak` otomatis dihitung oleh sistem.  
 - Jika file tidak diupload saat update, file lama akan tetap digunakan.  
 - `statusValidasi` akan kembali ke `PENDING` setelah update.
+
+## Create Pelaksanaan Pendidikan - BAHAN_PENGAJARAN
+
+**Endpoint**  
+```
+POST {{host}}:{{port}}/pelaksanaan-pendidikan
+```
+
+**Deskripsi**  
+Membuat record pelaksanaan pendidikan kategori **BAHAN_PENGAJARAN**.  
+File PDF **wajib** dilampirkan.
+
+---
+
+### Request
+
+**Headers**  
+```
+Content-Type: multipart/form-data
+Authorization: Bearer <accessToken>
+```
+
+**Form Data**  
+| Field          | Tipe    | Wajib | Keterangan                                    |
+|----------------|---------|-------|-----------------------------------------------|
+| file           | File    | Ya    | File PDF bukti kegiatan                       |
+| semesterId     | Integer | Ya    | ID Semester                                   |
+| kategori       | String  | Ya    | Nilai harus `BAHAN_PENGAJARAN`                 |
+| jenis          | String  | Ya    | Jenis bahan pengajaran (`BUKU_AJAR`, dsb.)   |
+| judul          | String  | Ya    | Judul bahan pengajaran                         |
+| tglTerbit      | Date    | Ya    | Tanggal terbit dalam format `YYYY-MM-DD`      |
+| penerbit       | String  | Ya    | Nama penerbit                                 |
+| jumlahHalaman  | Integer | Ya    | Jumlah halaman                               |
+| isbn           | String  | Ya    | Nomor ISBN                                   |
+
+**Contoh Body (form-data)**  
+```
+file: (upload PDF)
+semesterId: 14
+kategori: BAHAN_PENGAJARAN
+jenis: BUKU_AJAR
+judul: Pengantar Algoritma dan Pemrograman
+tglTerbit: 2025-01-15
+penerbit: Penerbit Teknologi Nusantara
+jumlahHalaman: 250
+isbn: 978-602-1234-56-7
+```
+
+---
+
+### Response
+
+**Status: 200 OK**  
+```json
+{
+  "success": true,
+  "message": "Data berhasil ditambahkan",
+  "data": {
+    "id": 29,
+    "dosenId": 5,
+    "semesterId": 14,
+    "kategori": "BAHAN_PENGAJARAN",
+    "nilaiPak": 5,
+    "filePath": "pendidikan/230dd95b-01da-42b8-9c1e-71ef035e6953.pdf",
+    "statusValidasi": "PENDING",
+    "catatan": null,
+    "createdAt": "2025-08-12T08:45:19.830Z",
+    "updatedAt": "2025-08-12T08:45:19.830Z"
+  }
+}
+```
+
+---
+
+## Update Pelaksanaan Pendidikan - BAHAN_PENGAJARAN
+
+**Endpoint**  
+```
+PATCH {{host}}:{{port}}/pelaksanaan-pendidikan/:id
+```
+
+**Deskripsi**  
+Memperbarui data pelaksanaan pendidikan kategori **BAHAN_PENGAJARAN** berdasarkan `id`.  
+File PDF **opsional** untuk diupload ulang.
+
+---
+
+### Request
+
+**Headers**  
+```
+Content-Type: multipart/form-data
+Authorization: Bearer <accessToken>
+```
+
+**Form Data**  
+| Field          | Tipe    | Wajib | Keterangan                                    |
+|----------------|---------|-------|-----------------------------------------------|
+| file           | File    | Tidak | File PDF bukti kegiatan (opsional)            |
+| semesterId     | Integer | Ya    | ID Semester                                   |
+| kategori       | String  | Ya    | Nilai harus `BAHAN_PENGAJARAN`                 |
+| jenis          | String  | Ya    | Jenis bahan pengajaran (`BUKU_AJAR`, dsb.)   |
+| judul          | String  | Ya    | Judul bahan pengajaran                         |
+| tglTerbit      | Date    | Ya    | Tanggal terbit dalam format `YYYY-MM-DD`      |
+| penerbit       | String  | Ya    | Nama penerbit                                 |
+| jumlahHalaman  | Integer | Ya    | Jumlah halaman                               |
+| isbn           | String  | Ya    | Nomor ISBN                                   |
+
+**Contoh Body (form-data)**  
+```
+file: (upload PDF, opsional)
+semesterId: 14
+kategori: BAHAN_PENGAJARAN
+jenis: BUKU_AJAR
+judul: Pengantar Algoritma dan Pemrograman
+tglTerbit: 2025-01-15
+penerbit: Penerbit Teknologi Jatim
+jumlahHalaman: 250
+isbn: 978-602-1234-56-7
+```
+
+---
+
+### Response
+
+**Status: 200 OK**  
+```json
+{
+  "success": true,
+  "message": "Data berhasil diperbarui",
+  "data": {
+    "id": 29,
+    "dosenId": 5,
+    "semesterId": 14,
+    "kategori": "BAHAN_PENGAJARAN",
+    "nilaiPak": 5,
+    "filePath": "pendidikan/230dd95b-01da-42b8-9c1e-71ef035e6953.pdf",
+    "statusValidasi": "PENDING",
+    "catatan": null,
+    "createdAt": "2025-08-12T08:45:19.830Z",
+    "updatedAt": "2025-08-12T09:43:04.351Z",
+    "bahanPengajaran": {
+      "id": 1,
+      "pelaksanaanId": 29,
+      "jenis": "BUKU_AJAR",
+      "bukuAjarId": 5,
+      "produkLainId": null,
+      "bukuAjar": {
+        "id": 5,
+        "judul": "Pengantar Algoritma dan Pemrograman",
+        "tglTerbit": "2025-01-15T00:00:00.000Z",
+        "penerbit": "Penerbit Teknologi Jatim",
+        "jumlahHalaman": 250,
+        "isbn": "978-602-1234-56-7"
+      },
+      "produkLain": null
+    }
+  }
+}
+```
+
+---
+
+**Catatan**  
+- `nilaiPak` otomatis dihitung oleh sistem.  
+- Jika file tidak diupload saat update, file lama akan tetap digunakan.  
+- `statusValidasi` akan kembali ke `PENDING` setelah update.

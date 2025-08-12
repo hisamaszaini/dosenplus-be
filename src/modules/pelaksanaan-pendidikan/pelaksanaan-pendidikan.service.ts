@@ -434,13 +434,10 @@ export class PelaksanaanPendidikanService {
 
         // Khusus kategori Bahan Pengajaran
         if (kategori === KategoriKegiatan.BAHAN_PENGAJARAN) {
-          // Ambil data lama
           const existingBahan = existing.bahanPengajaran;
-
-          // Cek apakah jenis berubah
           const jenisBerubah = existingBahan?.jenis !== data.jenis;
 
-          // Hapus data lawas hanya kalau jenis berubah
+          /* 1. Hapus data lama jika jenis berubah */
           if (jenisBerubah) {
             if (existingBahan?.bukuAjar) {
               await tx.bukuAjar.delete({ where: { id: existingBahan.bukuAjar.id } });
@@ -450,42 +447,24 @@ export class PelaksanaanPendidikanService {
             }
           }
 
-          // Bentuk payload untuk bahanPengajaran
+          /* 2. Siapkan payload untuk bahanPengajaran */
           let bahanPengajaranData: any = { jenis: data.jenis };
 
+          /* 3. Isi payload untuk jenis yang baru (create) */
           if (data.jenis === JenisBahanPengajaran.BUKU_AJAR) {
             const { judul, tglTerbit, penerbit, jumlahHalaman, isbn } = data;
-
-            if (existingBahan?.bukuAjar && !jenisBerubah) {
-              // jenis tetap BUKU_AJAR → update
-              await tx.bukuAjar.update({
-                where: { id: existingBahan.bukuAjar.id },
-                data: { judul, tglTerbit, penerbit, jumlahHalaman, isbn },
-              });
-            } else {
-              // jenis baru atau berubah → create
-              bahanPengajaranData.bukuAjar = {
-                create: { judul, tglTerbit, penerbit, jumlahHalaman, isbn },
-              };
-            }
+            // selalu create baru ketika jenis baru atau pertama kali
+            bahanPengajaranData.bukuAjar = {
+              create: { judul, tglTerbit, penerbit, jumlahHalaman, isbn }
+            };
           } else {
             const { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId } = data;
-
-            if (existingBahan?.produkLain && !jenisBerubah) {
-              // jenis tetap PRODUK_LAIN → update
-              await tx.produkBahanLainnya.update({
-                where: { id: existingBahan.produkLain.id },
-                data: { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId },
-              });
-            } else {
-              // jenis baru atau berubah → create
-              bahanPengajaranData.produkLain = {
-                create: { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId },
-              };
-            }
+            bahanPengajaranData.produkLain = {
+              create: { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId }
+            };
           }
 
-          // Update / upsert bahanPengajaran
+          /* 4. Upsert bahanPengajaran */
           const updated = await tx.pelaksanaanPendidikan.update({
             where: { id },
             data: {
@@ -499,7 +478,12 @@ export class PelaksanaanPendidikanService {
               bahanPengajaran: {
                 upsert: {
                   create: bahanPengajaranData,
-                  update: { jenis: data.jenis },
+                  update: {
+                    jenis: data.jenis,
+                    ...(data.jenis === JenisBahanPengajaran.BUKU_AJAR
+                      ? { bukuAjar: bahanPengajaranData.bukuAjar }
+                      : { produkLain: bahanPengajaranData.produkLain })
+                  },
                 },
               },
             },
