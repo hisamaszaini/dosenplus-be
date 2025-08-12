@@ -350,8 +350,15 @@ export class PelaksanaanPendidikanService {
     role: TypeUserRole,
     file?: Express.Multer.File
   ) {
+    try {
+      const data = parseAndThrow(fullUpdatePelaksanaanSchema, rawData);
+      console.log(`[UPDATE] Data setelah parse: ${JSON.stringify(data, null, 2)}`);
+    } catch (err) {
+      console.error(JSON.stringify(err.errors, null, 2));
+      throw err;
+    }
+
     const data = parseAndThrow(fullUpdatePelaksanaanSchema, rawData);
-    console.log(`[UPDATE] Data setelah parse: ${JSON.stringify(data, null, 2)}`);
 
     let newFilePath: string | undefined;
 
