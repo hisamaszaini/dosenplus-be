@@ -119,6 +119,46 @@ export class PelaksanaanPendidikanService {
       case 'BIMBINGAN_KKN_PKN_PKL':
         return data.jumlahMhs * 1
 
+
+      case 'BIMBINGAN_TUGAS_AKHIR': {
+        let nilaiPak = 0;
+        const { peran, jenis, jumlahMhs } = data;
+
+        if (peran === 'Pembimbing Utama') {
+          switch (jenis) {
+            case 'Disertasi':
+              nilaiPak = 8 * jumlahMhs;
+              break;
+            case 'Tesis':
+              nilaiPak = 3 * jumlahMhs;
+              break;
+            case 'Skripsi':
+            case 'Laporan Akhir Studi':
+              nilaiPak = 1 * jumlahMhs;
+              break;
+            default:
+              nilaiPak = 0;
+          }
+        } else {
+          switch (jenis) {
+            case 'Disertasi':
+              nilaiPak = 6 * jumlahMhs;
+              break;
+            case 'Tesis':
+              nilaiPak = 2 * jumlahMhs;
+              break;
+            case 'Skripsi':
+            case 'Laporan Akhir Studi':
+              nilaiPak = 0.5 * jumlahMhs;
+              break;
+            default:
+              nilaiPak = 0;
+          }
+        }
+
+        return nilaiPak;
+      }
+
       case 'PENGUJI_UJIAN_AKHIR':
         return data.peran === 'Ketua Penguji' ? 1 * data.jumlahMhs : 0.5 * data.jumlahMhs
 
