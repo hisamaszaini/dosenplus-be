@@ -117,10 +117,10 @@ export class PelaksanaanPendidikanService {
 
       case 'BIMBINGAN_SEMINAR':
       case 'BIMBINGAN_KKN':
-        return data.jumlahMahasiswa * 1
+        return data.jumlahMhs * 1
 
       case 'PENGUJI_UJIAN_AKHIR':
-        return data.peran === 'Ketua Penguji' ? 1 * data.jumlahMahasiswa : 0.5 * data.jumlahMahasiswa
+        return data.peran === 'Ketua Penguji' ? 1 * data.jumlahMhs : 0.5 * data.jumlahMhs
 
       case 'PEMBINA_KEGIATAN_MHS':
         return 2
