@@ -482,7 +482,7 @@ export class PelaksanaanPendidikanService {
               filePath: newFilePath ?? existing.filePath,
               nilaiPak,
               statusValidasi: StatusValidasi.PENDING,
-              catatan: null,
+              catatan: '',
               bahanPengajaran: {
                 upsert: {
                   create: bahanPengajaranData,
