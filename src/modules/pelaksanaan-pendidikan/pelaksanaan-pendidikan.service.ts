@@ -116,7 +116,7 @@ export class PelaksanaanPendidikanService {
       }
 
       case 'BIMBINGAN_SEMINAR':
-      case 'BIMBINGAN_KKN':
+      case 'BIMBINGAN_KKN_PKN_PKL':
         return data.jumlahMhs * 1
 
       case 'PENGUJI_UJIAN_AKHIR':
@@ -150,7 +150,7 @@ export class PelaksanaanPendidikanService {
       case 'BIMBING_DOSEN':
         return data.jenisBimbingan === 'Pencangkokan' ? 2 : 1
 
-      case 'DATA_SERING':
+      case 'DATA_SERING_PENCAKOKAN':
         return data.jenis === 'Datasering' ? 5 : 4
 
       case 'PENGEMBANGAN_DIRI': {
