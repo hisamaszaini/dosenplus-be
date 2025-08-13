@@ -313,16 +313,28 @@ export class PendidikanService {
     }
 
     // Sorting
-    const allowedSortFields = ['createdAt', 'updatedAt', 'nilaiPak', 'kategori', 'StatusValidasi', 'jenjang'];
+    const allowedSortFields = ['createdAt', 'updatedAt', 'nilaiPak', 'kategori', 'statusValidasi', 'jenjang'];
     const sortBy = query.sortBy && allowedSortFields.includes(query.sortBy)
       ? query.sortBy
       : 'createdAt';
     const sortOrder = query.sortOrder === 'asc' ? 'asc' : 'desc';
 
-    let orderBy: any = { [sortBy]: sortOrder };
-
-    if (sortBy === 'jenjang') {
-      orderBy = { Formal: { jenjang: sortOrder } };
+    let orderBy: any;
+    switch (sortBy) {
+      case 'jenjang':
+        orderBy = { Formal: { jenjang: sortOrder } };
+        break;
+      case 'statusValidasi':
+        orderBy = { statusValidasi: sortOrder };
+        break;
+      case 'nilaiPak':
+        orderBy = { nilaiPak: sortOrder };
+        break;
+      case 'kategori':
+        orderBy = { kategori: sortOrder };
+        break;
+      default:
+        orderBy = { [sortBy]: sortOrder };
     }
 
     const [data, total] = await this.prisma.$transaction([
