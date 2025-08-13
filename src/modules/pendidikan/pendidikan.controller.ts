@@ -231,6 +231,7 @@ export class PendidikanController {
     @Request() req,
   ) {
     const roles = req.user.roles;
+    console.log(roles);
 
     const roleArray = typeof roles === 'string'
       ? [roles]
