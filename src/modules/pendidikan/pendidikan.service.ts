@@ -12,6 +12,7 @@ import { handlePrismaError, handleUpdateError } from '@/common/utils/prisma-erro
 import { PrismaService } from '../../../prisma/prisma.service';
 import { deleteFileFromDisk, handleUpload, handleUploadAndUpdate, validateAndInjectFilePath } from '@/common/utils/dataFile';
 import { parseAndThrow } from '@/common/utils/zod-helper';
+import { hasRole } from '@/common/utils/hasRole';
 
 @Injectable()
 export class PendidikanService {
@@ -273,8 +274,7 @@ export class PendidikanService {
       sortBy?: string;
       sortOrder?: 'asc' | 'desc';
     },
-    userId: number,
-    role: TypeUserRole,
+    dosenId?: number,
   ) {
     const page = Number(query.page) || 1;
     const limit = Number(query.limit) || 10;
@@ -282,13 +282,10 @@ export class PendidikanService {
 
     const where: any = {};
 
-    const roles: string[] = Array.isArray(role) ? role : [role];
+    // const roles: string[] = Array.isArray(role) ? role : [role];
 
-    // Role-based filtering
-    if (!roles.includes(TypeUserRole.ADMIN) && !roles.includes(TypeUserRole.VALIDATOR)) {
-      where.dosenId = userId;
-    } else if (query.dosenId) {
-      where.dosenId = Number(query.dosenId);
+    if (dosenId) {
+      where.dosenId = dosenId;
     }
 
     if (query.filterType && query.filterValue) {
