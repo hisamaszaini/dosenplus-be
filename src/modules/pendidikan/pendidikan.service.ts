@@ -384,8 +384,11 @@ export class PendidikanService {
         },
       });
 
-      if (!roles.includes(TypeUserRole.ADMIN) && !roles.includes(TypeUserRole.VALIDATOR) && pendidikan.dosenId !== dosenId) {
-        throw new ForbiddenException('Anda tidak berhak mengakses data ini');
+      const roleArray = Object.values(roles);
+
+      if (!roleArray.includes(TypeUserRole.ADMIN) && !roleArray.includes(TypeUserRole.VALIDATOR)
+        && pendidikan.dosenId !== dosenId) {
+        throw new ForbiddenException('Anda tidak diizinkan mengakses data ini');
       }
 
       return { success: true, data: pendidikan };
@@ -421,7 +424,9 @@ export class PendidikanService {
     try {
       const existing = await this.prisma.pendidikan.findUniqueOrThrow({ where: { id } });
 
-      if (!roles.includes(TypeUserRole.ADMIN) && existing.dosenId !== dosenId) {
+      const roleArray = Object.values(roles);
+
+      if (!roleArray.includes(TypeUserRole.ADMIN) && existing.dosenId !== dosenId) {
         throw new ForbiddenException('Anda tidak berhak mengakses data ini');
       }
 
