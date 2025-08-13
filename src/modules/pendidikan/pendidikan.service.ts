@@ -266,6 +266,7 @@ export class PendidikanService {
       page?: number;
       limit?: number;
       search?: string;
+      status?: string;
       filterType?: string;
       filterValue?: string;
       dosenId?: number;
@@ -302,6 +303,10 @@ export class PendidikanService {
         default:
           break;
       }
+    }
+
+    if (query.status) {
+      where.statusValidasi = query.status.toUpperCase() as StatusValidasi;
     }
 
     // Search
