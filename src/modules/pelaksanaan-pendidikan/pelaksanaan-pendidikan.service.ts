@@ -4,7 +4,7 @@ import { fullPelaksanaanPendidikanSchema } from './dto/create-pelaksanaan-pendid
 import { fullUpdatePelaksanaanSchema } from './dto/update-pelaksanaan-pendidikan.dto';
 import { parseAndThrow } from '@/common/utils/zod-helper';
 import { handleCreateError, handleDeleteError, handleFindError, handleUpdateError } from '@/common/utils/prisma-error-handler';
-import { hasRole } from '@/common/utils/hasRole';
+import { hasAnyRole, hasRole } from '@/common/utils/hasRole';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { deleteFileFromDisk, handleUpload } from '@/common/utils/dataFile';
 
@@ -608,7 +608,7 @@ export class PelaksanaanPendidikanService {
         },
       });
 
-      if (!hasRole(role, TypeUserRole.ADMIN) && data.dosenId !== dosenId) {
+      if (!hasAnyRole(role, [TypeUserRole.ADMIN, TypeUserRole.VALIDATOR]) && data.dosenId !== dosenId) {
         throw new ForbiddenException('Anda tidak diizinkan mengakses data ini');
       }
 

@@ -8,11 +8,11 @@ import {
 import { KategoriPendidikan, StatusValidasi, TypeUserRole } from '@prisma/client';
 import { CreatePendidikanDto, fullPendidikanSchema, UpdateStatusValidasiDto, updateStatusValidasiSchema } from './dto/create-pendidikan.dto';
 import { fullUpdatePendidikanSchema, UpdatePendidikanDto } from './dto/update-pendidikan.dto';
-import { handlePrismaError, handleUpdateError } from '@/common/utils/prisma-error-handler';
+import { handleDeleteError, handlePrismaError, handleUpdateError } from '@/common/utils/prisma-error-handler';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { deleteFileFromDisk, handleUpload, handleUploadAndUpdate, validateAndInjectFilePath } from '@/common/utils/dataFile';
 import { parseAndThrow } from '@/common/utils/zod-helper';
-import { hasRole } from '@/common/utils/hasRole';
+import { hasAnyRole, hasRole } from '@/common/utils/hasRole';
 
 @Injectable()
 export class PendidikanService {
@@ -282,8 +282,6 @@ export class PendidikanService {
 
     const where: any = {};
 
-    // const roles: string[] = Array.isArray(role) ? role : [role];
-
     if (dosenId) {
       where.dosenId = dosenId;
     }
@@ -375,7 +373,7 @@ export class PendidikanService {
     };
   }
 
-  async findOne(id: number, userId: number, roles: TypeUserRole[]) {
+  async findOne(id: number, dosenId: number, roles: TypeUserRole[]) {
     const pendidikan = await this.prisma.pendidikan.findUnique({
       where: { id },
       include: {
@@ -389,12 +387,8 @@ export class PendidikanService {
       throw new NotFoundException('Data tidak ditemukan');
     }
 
-    if (
-      !roles.includes(TypeUserRole.ADMIN) &&
-      !roles.includes(TypeUserRole.VALIDATOR) &&
-      pendidikan.dosenId !== userId
-    ) {
-      throw new ForbiddenException('Anda tidak berhak mengakses data ini');
+    if (!hasAnyRole(roles, [TypeUserRole.ADMIN, TypeUserRole.VALIDATOR]) && pendidikan.dosenId !== dosenId) {
+      throw new ForbiddenException('Anda tidak diizinkan mengakses data ini');
     }
 
     return { success: true, data: pendidikan };
@@ -423,20 +417,22 @@ export class PendidikanService {
     }
   }
 
-  async delete(id: number, userId: number, roles: TypeUserRole) {
-    const existing = await this.prisma.pendidikan.findUnique({ where: { id } });
-    if (!existing) throw new NotFoundException('Data tidak ditemukan');
-    if (
-      !roles.includes(TypeUserRole.ADMIN) &&
-      !roles.includes(TypeUserRole.VALIDATOR) &&
-      existing.dosenId !== userId
-    ) {
-      throw new ForbiddenException('Anda tidak berhak mengakses data ini');
+  async delete(id: number, dosenId: number, roles: TypeUserRole) {
+    try {
+      const existing = await this.prisma.pendidikan.findUniqueOrThrow({ where: { id } });
+      if (!hasRole(roles, TypeUserRole.ADMIN) && existing.dosenId !== dosenId) {
+        throw new ForbiddenException('Anda tidak berhak mengakses data ini');
+      }
+
+      await this.prisma.pendidikan.delete({ where: { id } });
+
+      if (existing.filePath) {
+        await deleteFileFromDisk(existing.filePath);
+      }
+      
+      return { success: true, message: 'Data berhasil dihapus' };
+    } catch (error) {
+      handleDeleteError(error, 'Pendidikan');
     }
-
-    await this.prisma.pendidikan.delete({ where: { id } });
-    await deleteFileFromDisk(existing.filePath);
-
-    return { success: true, message: 'Data berhasil dihapus' };
   }
 }
