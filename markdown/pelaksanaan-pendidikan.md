@@ -340,17 +340,20 @@ Authorization: Bearer <accessToken>
 | fakultasId | Integer | Ya    | ID Fakultas                                                          |
 | jumlahMhs  | Integer | Ya    | Jumlah mahasiswa yang dibimbing                                      |
 
-**Contoh Body (form-data)**  
-```
-file: (upload PDF)
-semesterId: 14
-kategori: BIMBINGAN_KKN_PKN_PKL
-jenis: KKN
-prodiId: 1
-fakultasId: 1
-jumlahMhs: 20
-```
+**Form-Data:**
 
+- **file**: File bukti bimbingan KKN/PKN/PKL (wajib, format `.pdf`)
+- **data**: JSON string berisi data bimbingan. Contoh:
+  ```json
+  {
+    "semesterId": 14,
+    "kategori": "BIMBINGAN_KKN_PKN_PKL",
+    "jenis": "KKN",
+    "prodiId": 1,
+    "fakultasId": 1,
+    "jumlahMhs": 20
+  }
+  ```
 ---
 
 ### Response
