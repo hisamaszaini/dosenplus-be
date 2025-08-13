@@ -384,6 +384,8 @@ export class PendidikanService {
         },
       });
 
+      console.log(roles);
+      
       // const roleArray = Object.values(roles);
 
       // if (!roleArray.includes(TypeUserRole.ADMIN) && !roleArray.includes(TypeUserRole.VALIDATOR)
