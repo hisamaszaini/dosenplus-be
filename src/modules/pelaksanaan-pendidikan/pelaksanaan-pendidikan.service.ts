@@ -610,10 +610,10 @@ export class PelaksanaanPendidikanService {
         },
       });
 
-      const roleArray = Object.values(roles);
-      if (!roleArray.includes(TypeUserRole.ADMIN) && !roleArray.includes(TypeUserRole.VALIDATOR) && data.dosenId !== dosenId) {
-        throw new ForbiddenException('Anda tidak diizinkan mengakses data ini');
-      }
+      // const roleArray = Object.values(roles);
+      // if (!roleArray.includes(TypeUserRole.ADMIN) && !roleArray.includes(TypeUserRole.VALIDATOR) && data.dosenId !== dosenId) {
+      //   throw new ForbiddenException('Anda tidak diizinkan mengakses data ini');
+      // }
 
       return {
         success: true,
@@ -630,10 +630,10 @@ export class PelaksanaanPendidikanService {
         where: { id },
       });
 
-      const roleArray = Object.values(roles);
-      if (!roleArray.includes(TypeUserRole.ADMIN) && existing.dosenId !== dosenId) {
-        throw new ForbiddenException('Anda tidak diizinkan menghapus data ini');
-      }
+      // const roleArray = Object.values(roles);
+      // if (!roleArray.includes(TypeUserRole.ADMIN) && existing.dosenId !== dosenId) {
+      //   throw new ForbiddenException('Anda tidak diizinkan menghapus data ini');
+      // }
 
       await this.prisma.$transaction(async (tx) => {
         await tx.pelaksanaanPendidikan.delete({ where: { id } });
