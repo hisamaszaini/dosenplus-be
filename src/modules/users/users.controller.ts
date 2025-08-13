@@ -80,12 +80,12 @@ export class UsersController {
     return this.usersService.create(data, file);
   }
 
-  // @Put('dosen/update-data')
-  // @Roles(TypeUserRole.DOSEN)
-  // updatePendingData(@Req() req: any, @Body() dto: CreatePendingUpdateDto) {
-  //   const dosenId = req.user.sub;
-  //   return this.usersService.submitPendingUpdate(dosenId, dto);
-  // }
+  @Put('dosen/update-data')
+  @Roles(TypeUserRole.DOSEN)
+  updatePendingData(@Req() req: any, @Body() dto: CreatePendingUpdateDto) {
+    const dosenId = req.user.sub;
+    return this.usersService.submitPendingUpdate(dosenId, dto);
+  }
 
   @Patch('dosen/pending/:dosenId')
   @Roles(TypeUserRole.ADMIN, TypeUserRole.VALIDATOR)
