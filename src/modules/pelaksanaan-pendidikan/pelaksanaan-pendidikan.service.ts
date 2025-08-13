@@ -598,7 +598,7 @@ export class PelaksanaanPendidikanService {
     };
   }
 
-  async findOne(id: number, dosenId: number, role: TypeUserRole | TypeUserRole[]) {
+  async findOne(id: number, dosenId: number, roles: TypeUserRole | TypeUserRole[]) {
     console.log(TypeUserRole);
 
     try {
@@ -610,7 +610,7 @@ export class PelaksanaanPendidikanService {
         },
       });
 
-      if (!hasAnyRole(role, [TypeUserRole.ADMIN, TypeUserRole.VALIDATOR]) && data.dosenId !== dosenId) {
+      if (!roles.includes(TypeUserRole.ADMIN) && !roles.includes(TypeUserRole.VALIDATOR) && data.dosenId !== dosenId) {
         throw new ForbiddenException('Anda tidak diizinkan mengakses data ini');
       }
 
@@ -629,7 +629,7 @@ export class PelaksanaanPendidikanService {
         where: { id },
       });
 
-      if (!hasAnyRole(role, [TypeUserRole.ADMIN]) && existing.dosenId !== dosenId) {
+      if (!role.includes(TypeUserRole.ADMIN) && existing.dosenId !== dosenId) {
         throw new ForbiddenException('Anda tidak diizinkan menghapus data ini');
       }
 

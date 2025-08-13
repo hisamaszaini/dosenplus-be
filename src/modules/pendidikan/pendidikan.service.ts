@@ -374,8 +374,6 @@ export class PendidikanService {
   }
 
   async findOne(id: number, dosenId: number, roles: TypeUserRole | TypeUserRole[]) {
-    console.log(TypeUserRole);
-    
     try {
       const pendidikan = await this.prisma.pendidikan.findUniqueOrThrow({
         where: { id },
@@ -386,8 +384,8 @@ export class PendidikanService {
         },
       });
 
-      if (!hasAnyRole(roles, [TypeUserRole.ADMIN, TypeUserRole.VALIDATOR]) && pendidikan.dosenId !== dosenId) {
-        throw new ForbiddenException('Anda tidak diizinkan mengakses data ini');
+      if (!roles.includes(TypeUserRole.ADMIN) && !roles.includes(TypeUserRole.VALIDATOR) && pendidikan.dosenId !== dosenId) {
+        throw new ForbiddenException('Anda tidak berhak mengakses data ini');
       }
 
       return { success: true, data: pendidikan };
@@ -422,7 +420,8 @@ export class PendidikanService {
   async delete(id: number, dosenId: number, roles: TypeUserRole | TypeUserRole[]) {
     try {
       const existing = await this.prisma.pendidikan.findUniqueOrThrow({ where: { id } });
-      if (!hasAnyRole(roles, [TypeUserRole.ADMIN]) && existing.dosenId !== dosenId) {
+
+      if (!roles.includes(TypeUserRole.ADMIN) && existing.dosenId !== dosenId) {
         throw new ForbiddenException('Anda tidak berhak mengakses data ini');
       }
 
