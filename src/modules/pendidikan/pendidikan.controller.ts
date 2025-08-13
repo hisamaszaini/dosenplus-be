@@ -232,6 +232,9 @@ export class PendidikanController {
   ) {
     const roles = req.user.roles;
     console.log(roles);
+    if (roles.includes('ADMIN')) {
+      console.log('lANGSUNG: Punya role admin')
+    }
 
     const roleArray = typeof roles === 'string'
       ? [roles]
@@ -241,10 +244,10 @@ export class PendidikanController {
           ? Object.values(roles)
           : [];
 
-    if(roleArray.includes('ADMIN')){
+    if (roleArray.includes('ADMIN')) {
       console.log('Punya role admin')
     }
-    
+
     console.log(roleArray);
   }
 
