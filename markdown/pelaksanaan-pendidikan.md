@@ -785,9 +785,7 @@ Authorization: Bearer <accessToken>
     "kategori": "PEMBINA_KEGIATAN_MHS",
     "namaKegiatan": "Pembinaan UKM Robotika",
     "luaran": "Lomba Robot Nasional"
-  }
-
-```
+  }```
 
 ---
 
@@ -846,13 +844,16 @@ Authorization: Bearer <accessToken>
 | luaran       | String  | Ya    | Hasil/luaran kegiatan              |
 
 **Contoh Body (form-data)**  
-```
-file: (upload PDF, opsional)
-semesterId: 14
-kategori: PEMBINA_KEGIATAN_MHS
-namaKegiatan: Pembinaan UKM Sepak Bola
-luaran: Lomba Sepak Bola Nasional
-```
+- **file**: File bukti pembina kegiatan mahasiswa (opsional, format `.pdf`)
+- **data**: JSON string berisi data pembina kegiatan mahasiswa. Contoh:
+  ```json
+  {
+    "semesterId": 14,
+    "kategori": "PEMBINA_KEGIATAN_MHS",
+    "namaKegiatan": "Pembinaan UKM Sepak Bola",
+    "luaran": "Lomba Sepak Bola Nasional"
+  }
+  ```
 
 ---
 
@@ -918,15 +919,18 @@ Authorization: Bearer <accessToken>
 | fakultasId          | Integer | Ya    | ID Fakultas                        |
 
 **Contoh Body (form-data)**  
-```
-file: (upload PDF)
-semesterId: 14
-kategori: PENGEMBANGAN_PROGRAM
-mataKuliah: Algoritma dan Struktur Data
-programPengembangan: Pengembangan Modul Pembelajaran Interaktif
-prodiId: 1
-fakultasId: 1
-```
+
+- **file**: File bukti pengembangan program (wajib, format `.pdf`)
+- **data**: JSON string berisi data pengembangan program. Contoh:
+  ```json
+  {
+    "semesterId": 14,
+    "kategori": "PENGEMBANGAN_PROGRAM",
+    "mataKuliah": "Algoritma dan Struktur Data",
+    "programPengembangan": "Pengembangan Modul Pembelajaran Interaktif",
+    "prodiId": 1,
+    "fakultasId": 1
+  }```
 
 ---
 
@@ -987,15 +991,17 @@ Authorization: Bearer <accessToken>
 | fakultasId          | Integer | Ya    | ID Fakultas                        |
 
 **Contoh Body (form-data)**  
-```
-file: (upload PDF, opsional)
-semesterId: 14
-kategori: PENGEMBANGAN_PROGRAM
-mataKuliah: Algoritma dan Struktur Data
-programPengembangan: Pengembangan Modul Pembelajaran Interaktif dan Efektif
-prodiId: 6
-fakultasId: 1
-```
+- **file**: File bukti pengembangan program (opsional, format `.pdf`)
+- **data**: JSON string berisi data pengembangan program. Contoh:
+  ```json
+  {
+    "semesterId": 14,
+    "kategori": "PENGEMBANGAN_PROGRAM",
+    "mataKuliah": "Algoritma dan Struktur Data",
+    "programPengembangan": "Pengembangan Modul Pembelajaran Interaktif dan Efektif",
+    "prodiId": 6,
+    "fakultasId": 1
+  }```
 
 ---
 
@@ -1063,17 +1069,20 @@ Authorization: Bearer <accessToken>
 | isbn          | String  | Ya    | Nomor ISBN                                 |
 
 **Contoh Body (form-data)**  
-```
-file: (upload PDF)
-semesterId: 14
-kategori: BAHAN_PENGAJARAN
-jenis: BUKU_AJAR
-judul: Pengantar Algoritma dan Pemrograman
-tglTerbit: 2025-01-15
-penerbit: Penerbit Teknologi Nusantara
-jumlahHalaman: 250
-isbn: 978-602-1234-56-7
-```
+
+- **file**: File bukti bahan pengajaran (wajib, format `.pdf`)
+- **data**: JSON string berisi data bahan pengajaran. Contoh:
+  ```json
+  {
+    "semesterId": 14,
+    "kategori": "BAHAN_PENGAJARAN",
+    "jenis": "BUKU_AJAR",
+    "judul": "Pengantar Algoritma dan Pemrograman",
+    "tglTerbit": "2025-01-15",
+    "penerbit": "Penerbit Teknologi Nusantara",
+    "jumlahHalaman": 250,
+    "isbn": "978-602-1234-56-7"
+  }```
 
 ---
 
@@ -1136,17 +1145,20 @@ Authorization: Bearer <accessToken>
 | isbn          | String  | Ya    | Nomor ISBN                                 |
 
 **Contoh Body (form-data)**  
-```
-file: (upload PDF, opsional)
-semesterId: 14
-kategori: BAHAN_PENGAJARAN
-jenis: BUKU_AJAR
-judul: Pengantar Algoritma dan Pemrograman
-tglTerbit: 2025-01-15
-penerbit: Penerbit Teknologi Jatim
-jumlahHalaman: 250
-isbn: 978-602-1234-56-7
-```
+
+- **file**: File bukti bahan pengajaran (opsional, format `.pdf`)
+- **data**: JSON string berisi data bahan pengajaran. Contoh:
+  ```json
+  {
+    "semesterId": 14,
+    "kategori": "BAHAN_PENGAJARAN",
+    "jenis": "BUKU_AJAR",
+    "judul": "Pengantar Algoritma dan Pemrograman",
+    "tglTerbit": "2025-01-15",
+    "penerbit": "Penerbit Teknologi Jatim",
+    "jumlahHalaman": 250,
+    "isbn": "978-602-1234-56-7"
+  }```
 
 ---
 
