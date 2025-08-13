@@ -542,7 +542,7 @@ export class PelaksanaanPendidikanService {
     }
   }
 
-  async findAll(query: any, dosenId: number, role: TypeUserRole) {
+  async findAll(query: any, dosenId?: number) {
     const page = Number(query.page) || 1;
     const limit = Number(query.limit) || 10;
     const skip = (page - 1) * limit;
@@ -555,7 +555,7 @@ export class PelaksanaanPendidikanService {
 
     const where: Prisma.PelaksanaanPendidikanWhereInput = {};
 
-    if (role === TypeUserRole.DOSEN) {
+    if (dosenId) {
       where.dosenId = dosenId;
     }
 

@@ -20,9 +20,8 @@ import {
   MaxFileSizeValidator,
   FileTypeValidator,
 } from '@nestjs/common';
-import { Response } from 'express';
 import { PendidikanService } from './pendidikan.service';
-import { CreatePendidikanDto, updateStatusValidasiSchema } from './dto/create-pendidikan.dto';
+import { CreatePendidikanDto } from './dto/create-pendidikan.dto';
 import { UpdatePendidikanDto } from './dto/update-pendidikan.dto';
 import { JwtAuthGuard } from '@/modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@/modules/auth/guards/roles.guard';
@@ -202,12 +201,20 @@ export class PendidikanController {
   }
 
   @Get()
-  @Roles(TypeUserRole.DOSEN, TypeUserRole.ADMIN, TypeUserRole.VALIDATOR)
+  @Roles(TypeUserRole.ADMIN, TypeUserRole.VALIDATOR)
   async findAll(
+    @Query() query: any,
+  ) {
+    return this.pendidikanService.findAll(query);
+  }
+
+  @Get('dosen')
+  @Roles(TypeUserRole.DOSEN)
+  async findAllForDosen(
     @Query() query: any,
     @Request() req,
   ) {
-    return this.pendidikanService.findAll(query, req.user.sub, req.user.roles);
+    return this.pendidikanService.findAll(query, req.user.sub);
   }
 
   @Get('dosen/:dosenId')
@@ -215,13 +222,8 @@ export class PendidikanController {
   async findByDosen(
     @Param('dosenId', ParseIntPipe) dosenId: number,
     @Query() query: any,
-    @Request() req,
   ) {
-    return this.pendidikanService.findAll(
-      { ...query, dosenId },
-      req.user.sub,
-      req.user.roles,
-    );
+    return this.pendidikanService.findAll(query, dosenId);
   }
 
   @Get(':id')

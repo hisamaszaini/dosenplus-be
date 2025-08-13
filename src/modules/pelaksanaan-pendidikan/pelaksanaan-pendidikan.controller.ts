@@ -79,15 +79,31 @@ export class PelaksanaanPendidikanController {
   }
 
   @Get()
-  @Roles(TypeUserRole.DOSEN, TypeUserRole.ADMIN, TypeUserRole.VALIDATOR)
+  @Roles(TypeUserRole.ADMIN, TypeUserRole.VALIDATOR)
   async findAll(
+    @Query() query: any,
+  ) {
+    return this.pelaksanaanPendidikanService.findAll(query);
+  }
+
+  @Get('dosen')
+  @Roles(TypeUserRole.DOSEN)
+  async findAllForDosen(
     @Query() query: any,
     @Req() req: any,
   ) {
     const dosenId = req.user.sub;
-    const role = req.user.role;
 
-    return this.pelaksanaanPendidikanService.findAll(query, dosenId, role);
+    return this.pelaksanaanPendidikanService.findAll(query, dosenId);
+  }
+
+  @Get('dosen/:dosenId')
+  @Roles(TypeUserRole.ADMIN, TypeUserRole.VALIDATOR)
+  async findByDosen(
+    @Param('dosenId', ParseIntPipe) dosenId: number,
+    @Query() query: any,
+  ) {
+    return this.pelaksanaanPendidikanService.findAll(query, dosenId);
   }
 
   @Get(':id')
