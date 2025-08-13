@@ -106,8 +106,8 @@ model Prodi {
   kode String @unique
   nama String @unique
 
-  fakultasId Int
-  fakultas   Fakultas @relation(fields: [fakultasId], references: [id])
+  fakultasId Int?
+  fakultas   Fakultas? @relation(fields: [fakultasId], references: [id], onDelete: SetNull)
 
   dosen Dosen[]
 
@@ -133,10 +133,10 @@ model Dosen {
   nuptk           String?          @unique
   jenis_kelamin   String
   no_hp           String?          @unique
-  prodiId         Int
-  prodi           Prodi            @relation(fields: [prodiId], references: [id])
-  fakultasId      Int
-  fakultas        Fakultas         @relation(fields: [fakultasId], references: [id])
+  prodiId         Int?
+  prodi           Prodi?           @relation(fields: [prodiId], references: [id], onDelete: SetNull)
+  fakultasId      Int?
+  fakultas        Fakultas?        @relation(fields: [fakultasId], references: [id], onDelete: SetNull)
   jabatan         String
   dataKepegawaian DataKepegawaian?
 
@@ -170,10 +170,10 @@ model PendingUpdateDosen {
   nuptk         String?
   jenis_kelamin String
   no_hp         String?
-  prodiId       Int
-  prodi         Prodi    @relation(fields: [prodiId], references: [id])
-  fakultasId    Int
-  fakultas      Fakultas @relation(fields: [fakultasId], references: [id])
+  prodiId       Int?
+  prodi         Prodi?    @relation(fields: [prodiId], references: [id], onDelete: SetNull)
+  fakultasId    Int?
+  fakultas      Fakultas? @relation(fields: [fakultasId], references: [id], onDelete: SetNull)
   jabatan       String?
   fotoPath      String?
 
@@ -188,7 +188,7 @@ model PendingUpdateDosen {
   // === Metadata ===
   status     StatusValidasi @default(PENDING)
   reviewerId Int?
-  reviewer   User?          @relation(fields: [reviewerId], references: [id])
+  reviewer   User?          @relation(fields: [reviewerId], references: [id], onDelete: SetNull)
   catatan    String?
 
   createdAt DateTime @default(now())
@@ -218,7 +218,7 @@ model Pendidikan {
 
   statusValidasi StatusValidasi @default(PENDING)
   reviewerId     Int?
-  reviewer       User?          @relation(fields: [reviewerId], references: [id])
+  reviewer       User?          @relation(fields: [reviewerId], references: [id], onDelete: SetNull)
   catatan        String?
 
   createdAt DateTime @default(now())
@@ -267,9 +267,9 @@ enum SemesterStatus {
 }
 
 model Semester {
-  id           Int          @id @default(autoincrement())
-  kode         Int          @unique
-  nama         String       @unique
+  id           Int            @id @default(autoincrement())
+  kode         Int            @unique
+  nama         String         @unique
   tipe         NamaSemester
   tahunMulai   Int
   tahunSelesai Int
@@ -318,13 +318,13 @@ enum JabatanFungsional {
 model PelaksanaanPendidikan {
   id         Int              @id @default(autoincrement())
   dosenId    Int
-  semesterId Int
+  semesterId Int?
   kategori   KategoriKegiatan
   nilaiPak   Float            @default(0)
   filePath   String
 
-  dosen    Dosen    @relation(fields: [dosenId], references: [id])
-  semester Semester @relation(fields: [semesterId], references: [id])
+  dosen    Dosen     @relation(fields: [dosenId], references: [id], onDelete: Cascade)
+  semester Semester? @relation(fields: [semesterId], references: [id], onDelete: SetNull)
 
   statusValidasi StatusValidasi @default(PENDING)
   catatan        String?
@@ -354,24 +354,24 @@ model Perkuliahan {
   sks           Int
   jumlahKelas   Int
   totalSks      Int
-  prodiId       Int
-  fakultasId    Int
+  prodiId       Int?
+  fakultasId    Int?
 
   pelaksanaan PelaksanaanPendidikan @relation(fields: [pelaksanaanId], references: [id])
-  prodi       Prodi                 @relation(fields: [prodiId], references: [id])
-  fakultas    Fakultas              @relation(fields: [fakultasId], references: [id])
+  prodi       Prodi?                 @relation(fields: [prodiId], references: [id], onDelete: SetNull)
+  fakultas    Fakultas?              @relation(fields: [fakultasId], references: [id], onDelete: SetNull)
 }
 
 model BimbinganSeminar {
   id            Int @id @default(autoincrement())
   pelaksanaanId Int @unique
-  prodiId       Int
-  fakultasId    Int
+  prodiId       Int?
+  fakultasId    Int?
   jumlahMhs     Int
 
-  pelaksanaan PelaksanaanPendidikan @relation(fields: [pelaksanaanId], references: [id])
-  prodi       Prodi                 @relation(fields: [prodiId], references: [id])
-  fakultas    Fakultas              @relation(fields: [fakultasId], references: [id])
+  pelaksanaan PelaksanaanPendidikan @relation(fields: [pelaksanaanId], references: [id], onDelete: Cascade)
+  prodi       Prodi?                 @relation(fields: [prodiId], references: [id], onDelete: SetNull)
+  fakultas    Fakultas?              @relation(fields: [fakultasId], references: [id], onDelete: SetNull)
 }
 
 enum JenisKKNPKNPKL {
@@ -384,13 +384,13 @@ model BimbinganKknPknPkl {
   id            Int            @id @default(autoincrement())
   pelaksanaanId Int            @unique
   jenis         JenisKKNPKNPKL
-  prodiId       Int
-  fakultasId    Int
+  prodiId       Int?
+  fakultasId    Int?
   jumlahMhs     Int
 
-  pelaksanaan PelaksanaanPendidikan @relation(fields: [pelaksanaanId], references: [id])
-  prodi       Prodi                 @relation(fields: [prodiId], references: [id])
-  fakultas    Fakultas              @relation(fields: [fakultasId], references: [id])
+  pelaksanaan PelaksanaanPendidikan @relation(fields: [pelaksanaanId], references: [id], onDelete: Cascade)
+  prodi       Prodi?                 @relation(fields: [prodiId], references: [id], onDelete: SetNull)
+  fakultas    Fakultas?              @relation(fields: [fakultasId], references: [id], onDelete: SetNull)
 }
 
 model BimbinganTugasAkhir {
@@ -400,7 +400,7 @@ model BimbinganTugasAkhir {
   peran         String
   jumlahMhs     Int
 
-  pelaksanaan PelaksanaanPendidikan @relation(fields: [pelaksanaanId], references: [id])
+  pelaksanaan PelaksanaanPendidikan @relation(fields: [pelaksanaanId], references: [id], onDelete: Cascade)
 }
 
 model PengujiUjianAkhir {
@@ -409,7 +409,7 @@ model PengujiUjianAkhir {
   peran         String
   jumlahMhs     Int
 
-  pelaksanaan PelaksanaanPendidikan @relation(fields: [pelaksanaanId], references: [id])
+  pelaksanaan PelaksanaanPendidikan @relation(fields: [pelaksanaanId], references: [id], onDelete: Cascade)
 }
 
 model PembinaKegiatanMhs {
@@ -418,20 +418,20 @@ model PembinaKegiatanMhs {
   namaKegiatan  String
   luaran        String
 
-  pelaksanaan PelaksanaanPendidikan @relation(fields: [pelaksanaanId], references: [id])
+  pelaksanaan PelaksanaanPendidikan @relation(fields: [pelaksanaanId], references: [id], onDelete: Cascade)
 }
 
 model PengembanganProgramKuliah {
   id                  Int    @id @default(autoincrement())
   pelaksanaanId       Int    @unique
   programPengembangan String
-  prodiId             Int
-  fakultasId          Int
+  prodiId             Int?
+  fakultasId          Int?
   mataKuliah          String
 
-  pelaksanaan PelaksanaanPendidikan @relation(fields: [pelaksanaanId], references: [id])
-  prodi       Prodi                 @relation(fields: [prodiId], references: [id])
-  fakultas    Fakultas              @relation(fields: [fakultasId], references: [id])
+  pelaksanaan PelaksanaanPendidikan @relation(fields: [pelaksanaanId], references: [id], onDelete: Cascade)
+  prodi       Prodi?                 @relation(fields: [prodiId], references: [id], onDelete: SetNull)
+  fakultas    Fakultas?              @relation(fields: [fakultasId], references: [id], onDelete: SetNull)
 }
 
 enum JenisBahanPengajaran {
@@ -447,10 +447,10 @@ model BahanPengajaran {
   bukuAjarId   Int? @unique
   produkLainId Int? @unique
 
-  bukuAjar   BukuAjar?           @relation("BukuAjarToBahanPengajaran", fields: [bukuAjarId], references: [id])
-  produkLain ProdukBahanLainnya? @relation("ProdukLainToBahanPengajaran", fields: [produkLainId], references: [id])
+  bukuAjar   BukuAjar?           @relation("BukuAjarToBahanPengajaran", fields: [bukuAjarId], references: [id], onDelete: Cascade)
+  produkLain ProdukBahanLainnya? @relation("ProdukLainToBahanPengajaran", fields: [produkLainId], references: [id], onDelete: Cascade)
 
-  pelaksanaan PelaksanaanPendidikan @relation(fields: [pelaksanaanId], references: [id])
+  pelaksanaan PelaksanaanPendidikan @relation(fields: [pelaksanaanId], references: [id], onDelete: Cascade)
 }
 
 model BukuAjar {
@@ -495,20 +495,20 @@ model OrasiIlmiah {
   penyelenggara String
   tanggal       DateTime
 
-  pelaksanaan PelaksanaanPendidikan @relation(fields: [pelaksanaanId], references: [id])
+  pelaksanaan PelaksanaanPendidikan @relation(fields: [pelaksanaanId], references: [id], onDelete: Cascade)
 }
 
 model JabatanStruktural {
   id            Int    @id @default(autoincrement())
   pelaksanaanId Int    @unique
   namaJabatan   String
-  prodiId       Int
-  fakultasId    Int
+  prodiId       Int?
+  fakultasId    Int?
   afiliasi      String
 
-  pelaksanaan PelaksanaanPendidikan @relation(fields: [pelaksanaanId], references: [id])
-  prodi       Prodi                 @relation(fields: [prodiId], references: [id])
-  fakultas    Fakultas              @relation(fields: [fakultasId], references: [id])
+  pelaksanaan PelaksanaanPendidikan @relation(fields: [pelaksanaanId], references: [id], onDelete: Cascade)
+  prodi       Prodi?                 @relation(fields: [prodiId], references: [id], onDelete: SetNull)
+  fakultas    Fakultas?              @relation(fields: [fakultasId], references: [id], onDelete: SetNull)
 }
 
 enum JenisBimbingan {
@@ -519,7 +519,7 @@ enum JenisBimbingan {
 model BimbingDosen {
   id             Int               @id @default(autoincrement())
   pelaksanaanId  Int               @unique
-  prodiId        Int
+  prodiId        Int?
   tglMulai       DateTime
   tglSelesai     DateTime
   jenisBimbingan JenisBimbingan
@@ -528,8 +528,8 @@ model BimbingDosen {
   deskripsi      String?
   jumlahDsn      Int
 
-  pelaksanaan PelaksanaanPendidikan @relation(fields: [pelaksanaanId], references: [id])
-  prodi       Prodi                 @relation(fields: [prodiId], references: [id])
+  pelaksanaan PelaksanaanPendidikan @relation(fields: [pelaksanaanId], references: [id], onDelete: Cascade)
+  prodi       Prodi?                 @relation(fields: [prodiId], references: [id], onDelete: SetNull)
 }
 
 enum JenisDatasering {
@@ -545,7 +545,7 @@ model DataseringPencakokan {
   tglMulai        DateTime
   tglSelesai      DateTime
   bidangAhli      String
-  pelaksanaan     PelaksanaanPendidikan @relation(fields: [pelaksanaanId], references: [id])
+  pelaksanaan     PelaksanaanPendidikan @relation(fields: [pelaksanaanId], references: [id], onDelete: Cascade)
 }
 
 model PengembanganDiri {
@@ -558,18 +558,18 @@ model PengembanganDiri {
   penyelenggara String
   tempat        String
   lamaJam       Int //Jam
-  prodiId       Int
-  fakultasId    Int
+  prodiId       Int?
+  fakultasId    Int?
 
-  pelaksanaan PelaksanaanPendidikan @relation(fields: [pelaksanaanId], references: [id])
-  prodi       Prodi                 @relation(fields: [prodiId], references: [id])
-  fakultas    Fakultas              @relation(fields: [fakultasId], references: [id])
+  pelaksanaan PelaksanaanPendidikan @relation(fields: [pelaksanaanId], references: [id], onDelete: Cascade)
+  prodi       Prodi?                 @relation(fields: [prodiId], references: [id], onDelete: SetNull)
+  fakultas    Fakultas?              @relation(fields: [fakultasId], references: [id], onDelete: SetNull)
 }
 
 model ActivityLog {
   id         Int      @id @default(autoincrement())
   userId     Int
-  user       User     @relation(fields: [userId], references: [id])
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   targetType String
   targetId   Int
   action     String

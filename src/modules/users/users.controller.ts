@@ -186,6 +186,13 @@ export class UsersController {
     return this.usersService.findById(userId);
   }
 
+  @Put('dosen/update-data')
+  @Roles(TypeUserRole.ADMIN, TypeUserRole.DOSEN, TypeUserRole.VALIDATOR)
+  getPendingUpdateById(@Req() req: any, @Body() dto: CreatePendingUpdateDto) {
+    const dosenId = req.user.sub;
+    return this.usersService.getPendingUpdateById(dosenId);
+  }
+
   @Delete(':id')
   @Roles(TypeUserRole.ADMIN)
   @UseGuards(RolesGuard)

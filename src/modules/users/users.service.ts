@@ -144,6 +144,20 @@ export class UsersService {
         }
     }
 
+    async getPendingUpdateById(dosenId: number) {
+        try {
+            const pendingData = await this.prisma.pendingUpdateDosen.findUniqueOrThrow({
+                where: { dosenId },
+                include: {
+                    dosen: { include: { user: true } },
+                },
+            });
+            return { success: true, data: pendingData };
+        } catch (error) {
+            handleFindError(error, 'Pending Data Dosen');
+        }
+    }
+
     private async createUserWithRoles(tx: TransactionClient, dataUser: any, roles: TypeUserRole[]) {
         const hashedPassword = await hashPassword(dataUser.password);
         const user = await tx.user.create({
