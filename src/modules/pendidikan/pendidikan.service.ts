@@ -8,7 +8,7 @@ import {
 import { KategoriPendidikan, StatusValidasi, TypeUserRole } from '@prisma/client';
 import { CreatePendidikanDto, fullPendidikanSchema, UpdateStatusValidasiDto, updateStatusValidasiSchema } from './dto/create-pendidikan.dto';
 import { fullUpdatePendidikanSchema, UpdatePendidikanDto } from './dto/update-pendidikan.dto';
-import { handlePrismaError } from '@/common/utils/prisma-error-handler';
+import { handlePrismaError, handleUpdateError } from '@/common/utils/prisma-error-handler';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { deleteFileFromDisk, handleUpload, handleUploadAndUpdate, validateAndInjectFilePath } from '@/common/utils/dataFile';
 import { parseAndThrow } from '@/common/utils/zod-helper';
@@ -381,21 +381,25 @@ export class PendidikanService {
 
   async validate(id: number, rawData: UpdateStatusValidasiDto, reviewerId: number,
   ) {
-    const parsed = parseAndThrow(updateStatusValidasiSchema, rawData);
-    const { statusValidasi, catatan } = parsed;
+    try {
+      const parsed = parseAndThrow(updateStatusValidasiSchema, rawData);
+      const { statusValidasi, catatan } = parsed;
 
-    const existing = await this.prisma.pendidikan.findUnique({ where: { id } });
+      const existing = await this.prisma.pendidikan.findUnique({ where: { id } });
 
-    if (!existing) throw new NotFoundException('Data pendidikan tidak ditemukan');
+      if (!existing) throw new NotFoundException('Data pendidikan tidak ditemukan');
 
-    return this.prisma.pendidikan.update({
-      where: { id },
-      data: {
-        statusValidasi: statusValidasi,
-        reviewerId: reviewerId,
-        catatan: statusValidasi === 'REJECTED' ? catatan : catatan || null,
-      },
-    });
+      return this.prisma.pendidikan.update({
+        where: { id },
+        data: {
+          statusValidasi: statusValidasi,
+          reviewerId: reviewerId,
+          catatan: statusValidasi === 'REJECTED' ? catatan : catatan || null,
+        },
+      });
+    } catch (error) {
+      handleUpdateError(error, 'Validasi data pendidikan');
+    }
   }
 
   async delete(id: number, userId: number, roles: TypeUserRole) {
