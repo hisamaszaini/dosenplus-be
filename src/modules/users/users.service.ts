@@ -149,7 +149,7 @@ export class UsersService {
             const pendingData = await this.prisma.pendingUpdateDosen.findUniqueOrThrow({
                 where: { dosenId },
                 include: {
-                    dosen: { include: { user: true } },
+                    dosen: true,
                 },
             });
             return { success: true, data: pendingData };
