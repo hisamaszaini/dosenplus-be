@@ -342,6 +342,9 @@ export class PendidikanService {
       case 'kategori':
         orderBy = { kategori: sortOrder };
         break;
+      case 'namaDosen':
+        orderBy = { dosen: { nama: sortOrder } };
+        break;
       default:
         orderBy = { [sortBy]: sortOrder };
     }
