@@ -8,7 +8,7 @@ import {
 import { KategoriPendidikan, StatusValidasi, TypeUserRole } from '@prisma/client';
 import { CreatePendidikanDto, fullPendidikanSchema, UpdateStatusValidasiDto, updateStatusValidasiSchema } from './dto/create-pendidikan.dto';
 import { fullUpdatePendidikanSchema, UpdatePendidikanDto } from './dto/update-pendidikan.dto';
-import { handleDeleteError, handlePrismaError, handleUpdateError } from '@/common/utils/prisma-error-handler';
+import { handleDeleteError, handleFindError, handlePrismaError, handleUpdateError } from '@/common/utils/prisma-error-handler';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { deleteFileFromDisk, handleUpload, handleUploadAndUpdate, validateAndInjectFilePath } from '@/common/utils/dataFile';
 import { parseAndThrow } from '@/common/utils/zod-helper';
@@ -374,24 +374,24 @@ export class PendidikanService {
   }
 
   async findOne(id: number, dosenId: number, roles: TypeUserRole | TypeUserRole[]) {
-    const pendidikan = await this.prisma.pendidikan.findUnique({
-      where: { id },
-      include: {
-        Formal: true,
-        Diklat: true,
-        dosen: { select: { id: true, nama: true } },
-      },
-    });
+    try {
+      const pendidikan = await this.prisma.pendidikan.findUniqueOrThrow({
+        where: { id },
+        include: {
+          Formal: true,
+          Diklat: true,
+          dosen: { select: { id: true, nama: true } },
+        },
+      });
 
-    if (!pendidikan) {
-      throw new NotFoundException('Data tidak ditemukan');
+      if (!hasAnyRole(roles, [TypeUserRole.ADMIN, TypeUserRole.VALIDATOR]) && pendidikan.dosenId !== dosenId) {
+        throw new ForbiddenException('Anda tidak diizinkan mengakses data ini');
+      }
+
+      return { success: true, data: pendidikan };
+    } catch (error) {
+      handleFindError(error, "Pendidikan");
     }
-
-    if (!hasAnyRole(roles, [TypeUserRole.ADMIN, TypeUserRole.VALIDATOR]) && pendidikan.dosenId !== dosenId) {
-      throw new ForbiddenException('Anda tidak diizinkan mengakses data ini');
-    }
-
-    return { success: true, data: pendidikan };
   }
 
   async validate(id: number, rawData: UpdateStatusValidasiDto, reviewerId: number,
@@ -420,7 +420,7 @@ export class PendidikanService {
   async delete(id: number, dosenId: number, roles: TypeUserRole | TypeUserRole[]) {
     try {
       const existing = await this.prisma.pendidikan.findUniqueOrThrow({ where: { id } });
-      if (!hasRole(roles, TypeUserRole.ADMIN) && existing.dosenId !== dosenId) {
+      if (!hasAnyRole(roles, [TypeUserRole.ADMIN]) && existing.dosenId !== dosenId) {
         throw new ForbiddenException('Anda tidak berhak mengakses data ini');
       }
 
@@ -429,7 +429,7 @@ export class PendidikanService {
       if (existing.filePath) {
         await deleteFileFromDisk(existing.filePath);
       }
-      
+
       return { success: true, message: 'Data berhasil dihapus' };
     } catch (error) {
       handleDeleteError(error, 'Pendidikan');

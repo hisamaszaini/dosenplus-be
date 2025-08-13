@@ -627,7 +627,7 @@ export class PelaksanaanPendidikanService {
         where: { id },
       });
 
-      if (!hasRole(role, TypeUserRole.ADMIN) && existing.dosenId !== dosenId) {
+      if (!hasAnyRole(role, [TypeUserRole.ADMIN]) && existing.dosenId !== dosenId) {
         throw new ForbiddenException('Anda tidak diizinkan menghapus data ini');
       }
 
