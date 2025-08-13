@@ -46,7 +46,7 @@ Form-Data:
     "jumlahKelas": 3,
     "prodiId": 1,
     "fakultasId": 1
-  }```
+  }
 
 ---
 
@@ -125,7 +125,7 @@ Form-Data:
     "jumlahKelas": 3,
     "prodiId": 1,
     "fakultasId": 1
-  }```
+  }
 
 ---
 
