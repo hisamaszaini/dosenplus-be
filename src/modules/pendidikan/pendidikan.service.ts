@@ -384,14 +384,10 @@ export class PendidikanService {
         },
       });
 
-      console.log(roles);
-      
-      // const roleArray = Object.values(roles);
-
-      // if (!roleArray.includes(TypeUserRole.ADMIN) && !roleArray.includes(TypeUserRole.VALIDATOR)
-      //   && pendidikan.dosenId !== dosenId) {
-      //   throw new ForbiddenException('Anda tidak diizinkan mengakses data ini');
-      // }
+      if (!roles.includes(TypeUserRole.ADMIN) && !roles.includes(TypeUserRole.VALIDATOR)
+        && pendidikan.dosenId !== dosenId) {
+        throw new ForbiddenException('Anda tidak diizinkan mengakses data ini');
+      }
 
       return { success: true, data: pendidikan };
     } catch (error) {
