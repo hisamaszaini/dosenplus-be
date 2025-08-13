@@ -257,6 +257,7 @@ export class PelaksanaanPendidikanService {
   async create(dosenId: number, rawData: any, file: Express.Multer.File) {
     const data = parseAndThrow(fullPelaksanaanPendidikanSchema, rawData);
     console.log(`[CREATE] Data setelah parse: ${JSON.stringify(data, null, 2)}`);
+    console.log(`dosenId: ${dosenId}`);
 
     if (data.kategori === KategoriKegiatan.PERKULIAHAN) {
       data.totalSks = data.jumlahKelas * data.sks;

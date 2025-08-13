@@ -74,6 +74,7 @@ export class PelaksanaanPendidikanController {
     } catch {
       throw new BadRequestException('data tidak valid. Harus berupa JSON string.');
     }
+    console.log(dosenId);
     return this.pelaksanaanPendidikanService.create(dosenId, data, file);
   }
 

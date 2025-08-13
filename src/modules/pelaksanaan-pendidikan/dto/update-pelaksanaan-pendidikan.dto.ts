@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 export const pelaksanaanPendidikanUpdateBaseSchema = z.object({
   // id: z.coerce.number().positive({ message: 'ID wajib diisi untuk update' }),
-  // dosenId: z.coerce.number().positive({ message: 'ID Dosen diisi' }),
+  dosenId: z.coerce.number().positive({ message: 'ID Dosen diisi' }).optional(),
   semesterId: z.coerce.number().positive({ message: 'ID Semester wajib diisi' }),
   // nilaiPak: z.coerce.number().positive({ message: 'Nilai Pak wajib diisi' }),
   // filePath: z.string().min(6).optional(),
