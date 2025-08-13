@@ -413,15 +413,18 @@ Authorization: Bearer <accessToken>
 | jumlahMhs  | Integer | Ya    | Jumlah mahasiswa yang dibimbing                                      |
 
 **Contoh Body (form-data)**  
-```
-file: (upload PDF, opsional)
-semesterId: 14
-kategori: BIMBINGAN_KKN_PKN_PKL
-jenis: KKN
-prodiId: 1
-fakultasId: 1
-jumlahMhs: 19
-```
+- **file**: File bukti bimbingan KKN/PKN/PKL (opsional, format `.pdf`)
+- **data**: JSON string berisi data bimbingan. Contoh:
+  ```json
+  {
+    "semesterId": 14,
+    "kategori": "BIMBINGAN_KKN_PKN_PKL",
+    "jenis": "KKN",
+    "prodiId": 1,
+    "fakultasId": 1,
+    "jumlahMhs": 19
+  }
+  ```
 
 ---
 
@@ -486,14 +489,18 @@ Authorization: Bearer <accessToken>
 | jumlahMhs  | Integer | Ya    | Jumlah mahasiswa yang dibimbing                                     |
 
 **Contoh Body (form-data)**  
-```
-file: (upload PDF)
-semesterId: 14
-kategori: BIMBINGAN_TUGAS_AKHIR
-jenis: Disertasi
-peran: Pembimbing Utama
-jumlahMhs: 2
-```
+
+- **file**: File bukti bimbingan tugas akhir (wajib, format `.pdf`)
+- **data**: JSON string berisi data bimbingan tugas akhir. Contoh:
+  ```json
+  {
+    "semesterId": 14,
+    "kategori": "BIMBINGAN_TUGAS_AKHIR",
+    "jenis": "Disertasi",
+    "peran": "Pembimbing Utama",
+    "jumlahMhs": 2
+  }
+  ```
 
 ---
 
@@ -553,14 +560,18 @@ Authorization: Bearer <accessToken>
 | jumlahMhs  | Integer | Ya    | Jumlah mahasiswa yang dibimbing                                     |
 
 **Contoh Body (form-data)**  
-```
-file: (upload PDF, opsional)
-semesterId: 14
-kategori: BIMBINGAN_TUGAS_AKHIR
-jenis: Disertasi
-peran: Pembimbing Pendamping
-jumlahMhs: 2
-```
+- **file**: File bukti bimbingan tugas akhir (opsional, format `.pdf`)
+- **data**: JSON string berisi data bimbingan tugas akhir. Contoh:
+  ```json
+  {
+    "semesterId": 14,
+    "kategori": "BIMBINGAN_TUGAS_AKHIR",
+    "jenis": "Disertasi",
+    "peran": "Pembimbing Pendamping",
+    "jumlahMhs": 2
+  }
+  ```
+
 
 ---
 
@@ -624,14 +635,17 @@ Authorization: Bearer <accessToken>
 | jumlahMhs  | Integer | Ya    | Jumlah mahasiswa diuji                     |
 
 **Contoh Body (form-data)**  
-```
-file: (upload PDF)
-semesterId: 14
-kategori: PENGUJI_UJIAN_AKHIR
-peran: Ketua Penguji
-jumlahMhs: 1
-```
 
+- **file**: File bukti penguji ujian akhir (wajib, format `.pdf`)
+- **data**: JSON string berisi data penguji ujian akhir. Contoh:
+  ```json
+  {
+    "semesterId": 14,
+    "kategori": "PENGUJI_UJIAN_AKHIR",
+    "peran": "Ketua Penguji",
+    "jumlahMhs": 1
+  }
+  ```
 ---
 
 ### Response
@@ -689,13 +703,16 @@ Authorization: Bearer <accessToken>
 | jumlahMhs  | Integer | Ya    | Jumlah mahasiswa diuji                     |
 
 **Contoh Body (form-data)**  
-```
-file: (upload PDF, opsional)
-semesterId: 14
-kategori: PENGUJI_UJIAN_AKHIR
-peran: Anggota Penguji
-jumlahMhs: 4
-```
+- **file**: File bukti penguji ujian akhir (opsional, format `.pdf`)
+- **data**: JSON string berisi data penguji ujian akhir. Contoh:
+  ```json
+  {
+    "semesterId": 14,
+    "kategori": "PENGUJI_UJIAN_AKHIR",
+    "peran": "Anggota Penguji",
+    "jumlahMhs": 4
+  }
+  ```
 
 ---
 
