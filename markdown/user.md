@@ -399,8 +399,114 @@
 }
 ```
 
----
+### 📄 Get Data Pengajuan Update Data Dosen
 
+**Method:** `GET`  
+**URL:** `http://{{host}}:{{port}}/users/dosen/update-data`  
+**Authorization:** Bearer token (Dosen)
+
+**Response (Success):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "dosenId": 5,
+    "nama": "Dosen 3 Baru Sekali",
+    "nip": "1980111122330882",
+    "nuptk": "5566778823",
+    "jenis_kelamin": "Laki-laki",
+    "no_hp": "081234567894",
+    "prodiId": 1,
+    "fakultasId": 1,
+    "jabatan": "Lektor Kepala",
+    "fotoPath": null,
+    "npwp": "987654321012345",
+    "nama_bank": "BRIS",
+    "no_rek": "112233445566",
+    "bpjs_kesehatan": "112233",
+    "bpjs_tkerja": "445566",
+    "no_kk": "9988776655443322",
+    "status": "APPROVED",
+    "reviewerId": 5,
+    "catatan": "Data tidak valid",
+    "createdAt": "2025-08-06T08:49:21.498Z",
+    "updatedAt": "2025-08-06T09:47:54.125Z",
+    "dosen": {
+      "id": 5,
+      "nama": "Admin Tiga",
+      "nip": "1980111133333",
+      "nuptk": "2233446677",
+      "jenis_kelamin": "Laki-laki",
+      "no_hp": "081234567899",
+      "prodiId": 1,
+      "fakultasId": 1,
+      "jabatan": "Lektor Kepala",
+      "createdAt": "2025-08-06T08:24:26.390Z",
+      "updatedAt": "2025-08-11T07:22:32.134Z"
+    }
+  }
+}
+```
+
+---
+### 📄 Get Data Pengajuan Update Data Dosen by dosenId (Admin/Validator)
+
+**Method:** `GET`  
+**URL:** `http://{{host}}:{{port}}/users/dosen/update-data/:dosenId`  
+**Authorization:** Bearer token (Admin / Validator)
+
+**URL Params:**
+
+| Parameter | Type   | Description           |
+|-----------|--------|-----------------------|
+| dosenId   | number | ID dosen yang ingin dilihat pengajuan update datanya |
+
+**Response (Success):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "dosenId": 5,
+    "nama": "Dosen 3 Baru Sekali",
+    "nip": "1980111122330882",
+    "nuptk": "5566778823",
+    "jenis_kelamin": "Laki-laki",
+    "no_hp": "081234567894",
+    "prodiId": 1,
+    "fakultasId": 1,
+    "jabatan": "Lektor Kepala",
+    "fotoPath": null,
+    "npwp": "987654321012345",
+    "nama_bank": "BRIS",
+    "no_rek": "112233445566",
+    "bpjs_kesehatan": "112233",
+    "bpjs_tkerja": "445566",
+    "no_kk": "9988776655443322",
+    "status": "APPROVED",
+    "reviewerId": 5,
+    "catatan": "Data tidak valid",
+    "createdAt": "2025-08-06T08:49:21.498Z",
+    "updatedAt": "2025-08-06T09:47:54.125Z",
+    "dosen": {
+      "id": 5,
+      "nama": "Admin Tiga",
+      "nip": "1980111133333",
+      "nuptk": "2233446677",
+      "jenis_kelamin": "Laki-laki",
+      "no_hp": "081234567899",
+      "prodiId": 1,
+      "fakultasId": 1,
+      "jabatan": "Lektor Kepala",
+      "createdAt": "2025-08-06T08:24:26.390Z",
+      "updatedAt": "2025-08-11T07:22:32.134Z"
+    }
+  }
+}
+```
+
+---
 ### 🔍 Get User by ID
 
 **Method:** `GET`  
