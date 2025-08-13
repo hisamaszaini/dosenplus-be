@@ -20,28 +20,33 @@ Authorization: Bearer <accessToken>
 ```
 
 **Form Data**
-| Field        | Tipe    | Wajib | Keterangan |
-|--------------|---------|-------|------------|
-| file         | File    | Ya    | File PDF bukti kegiatan |
-| semesterId   | Integer | Ya    | ID Semester |
-| kategori     | String  | Ya    | Pilih dari enum `KategoriKegiatan` (contoh: `PERKULIAHAN`) |
-| mataKuliah   | String  | Ya    | Nama mata kuliah |
-| sks          | Integer | Ya    | Jumlah SKS |
-| jumlahKelas  | Integer | Ya    | Jumlah kelas diajar |
-| prodiId      | Integer | Ya    | ID Program Studi |
-| fakultasId   | Integer | Ya    | ID Fakultas |
+| Field       | Tipe    | Wajib | Keterangan                                                 |
+| ----------- | ------- | ----- | ---------------------------------------------------------- |
+| file        | File    | Ya    | File PDF bukti kegiatan                                    |
+| semesterId  | Integer | Ya    | ID Semester                                                |
+| kategori    | String  | Ya    | Pilih dari enum `KategoriKegiatan` (contoh: `PERKULIAHAN`) |
+| mataKuliah  | String  | Ya    | Nama mata kuliah                                           |
+| sks         | Integer | Ya    | Jumlah SKS                                                 |
+| jumlahKelas | Integer | Ya    | Jumlah kelas diajar                                        |
+| prodiId     | Integer | Ya    | ID Program Studi                                           |
+| fakultasId  | Integer | Ya    | ID Fakultas                                                |
 
 **Contoh Body (form-data)**
-```
-file: (upload PDF)
-semesterId: 11
-kategori: PERKULIAHAN
-mataKuliah: Algoritma dan Struktur Data
-sks: 3
-jumlahKelas: 3
-prodiId: 1
-fakultasId: 1
-```
+
+Form-Data:
+
+- **file**: File bukti perkuliahan (wajib, format `.pdf`)
+- **data**: JSON string berisi data perkuliahan. Contoh:
+  ```json
+  {
+    "semesterId": 11,
+    "kategori": "PERKULIAHAN",
+    "mataKuliah": "Algoritma dan Struktur Data",
+    "sks": 3,
+    "jumlahKelas": 3,
+    "prodiId": 1,
+    "fakultasId": 1
+  }```
 
 ---
 
@@ -96,28 +101,31 @@ Authorization: Bearer <accessToken>
 ```
 
 **Form Data**  
-| Field        | Tipe    | Wajib | Keterangan                                |
-|--------------|---------|-------|-------------------------------------------|
-| file         | File    | Tidak | File PDF bukti kegiatan (opsional)         |
-| semesterId   | Integer | Ya    | ID Semester                               |
-| kategori     | String  | Ya    | Pilih dari enum `KategoriKegiatan` (misal `PERKULIAHAN`) |
-| mataKuliah   | String  | Ya    | Nama mata kuliah                          |
-| sks          | Integer | Ya    | Jumlah SKS                               |
-| jumlahKelas  | Integer | Ya    | Jumlah kelas diajar                       |
-| prodiId      | Integer | Ya    | ID Program Studi                         |
-| fakultasId   | Integer | Ya    | ID Fakultas                              |
+| Field       | Tipe    | Wajib | Keterangan                                               |
+| ----------- | ------- | ----- | -------------------------------------------------------- |
+| file        | File    | Tidak | File PDF bukti kegiatan (opsional)                       |
+| semesterId  | Integer | Ya    | ID Semester                                              |
+| kategori    | String  | Ya    | Pilih dari enum `KategoriKegiatan` (misal `PERKULIAHAN`) |
+| mataKuliah  | String  | Ya    | Nama mata kuliah                                         |
+| sks         | Integer | Ya    | Jumlah SKS                                               |
+| jumlahKelas | Integer | Ya    | Jumlah kelas diajar                                      |
+| prodiId     | Integer | Ya    | ID Program Studi                                         |
+| fakultasId  | Integer | Ya    | ID Fakultas                                              |
 
-**Contoh Body (form-data)**  
-```
-file: (upload PDF, opsional)
-semesterId: 14
-kategori: PERKULIAHAN
-mataKuliah: Algoritma dan Struktur Data
-sks: 3
-jumlahKelas: 3
-prodiId: 1
-fakultasId: 1
-```
+Form-Data:
+
+- **file**: File bukti perkuliahan (opsional, format `.pdf`)
+- **data**: JSON string berisi data perkuliahan. Contoh:
+  ```json
+  {
+    "semesterId": 14,
+    "kategori": "PERKULIAHAN",
+    "mataKuliah": "Algoritma dan Struktur Data",
+    "sks": 3,
+    "jumlahKelas": 3,
+    "prodiId": 1,
+    "fakultasId": 1
+  }```
 
 ---
 
@@ -172,26 +180,28 @@ Authorization: Bearer <accessToken>
 ```
 
 **Form Data**  
-| Field        | Tipe    | Wajib | Keterangan                            |
-|--------------|---------|-------|-------------------------------------|
-| file         | File    | Ya    | File PDF bukti kegiatan              |
-| semesterId   | Integer | Ya    | ID Semester                         |
-| kategori     | String  | Ya    | Pilih dari enum `KategoriKegiatan` (contoh: `BIMBINGAN_SEMINAR`) |
-| prodiId      | Integer | Ya    | ID Program Studi                   |
-| fakultasId   | Integer | Ya    | ID Fakultas                        |
-| jumlahMhs    | Integer | Ya    | Jumlah mahasiswa yang dibimbing     |
+| Field      | Tipe    | Wajib | Keterangan                                                       |
+| ---------- | ------- | ----- | ---------------------------------------------------------------- |
+| file       | File    | Ya    | File PDF bukti kegiatan                                          |
+| semesterId | Integer | Ya    | ID Semester                                                      |
+| kategori   | String  | Ya    | Pilih dari enum `KategoriKegiatan` (contoh: `BIMBINGAN_SEMINAR`) |
+| prodiId    | Integer | Ya    | ID Program Studi                                                 |
+| fakultasId | Integer | Ya    | ID Fakultas                                                      |
+| jumlahMhs  | Integer | Ya    | Jumlah mahasiswa yang dibimbing                                  |
 
-**Contoh Body (form-data)**  
-```
-file: (upload PDF)
-semesterId: 14
-kategori: BIMBINGAN_SEMINAR
-prodiId: 1
-fakultasId: 1
-jumlahMhs: 10
-```
+Form-Data:
 
----
+- **file**: File bukti bimbingan seminar (wajib, format `.pdf`)
+- **data**: JSON string berisi data bimbingan seminar. Contoh:
+  ```json
+  {
+    "semesterId": 14,
+    "kategori": "BIMBINGAN_SEMINAR",
+    "prodiId": 1,
+    "fakultasId": 1,
+    "jumlahMhs": 10
+  }
+  ```
 
 ### Response
 
@@ -244,26 +254,28 @@ Authorization: Bearer <accessToken>
 ```
 
 **Form Data**  
-| Field        | Tipe    | Wajib | Keterangan                                |
-|--------------|---------|-------|-------------------------------------------|
-| file         | File    | Tidak | File PDF bukti kegiatan (opsional)         |
-| semesterId   | Integer | Ya    | ID Semester                               |
-| kategori     | String  | Ya    | Pilih dari enum `KategoriKegiatan` (contoh: `BIMBINGAN_SEMINAR`) |
-| prodiId      | Integer | Ya    | ID Program Studi                         |
-| fakultasId   | Integer | Ya    | ID Fakultas                              |
-| jumlahMhs    | Integer | Ya    | Jumlah mahasiswa yang dibimbing           |
+| Field      | Tipe    | Wajib | Keterangan                                                       |
+| ---------- | ------- | ----- | ---------------------------------------------------------------- |
+| file       | File    | Tidak | File PDF bukti kegiatan (opsional)                               |
+| semesterId | Integer | Ya    | ID Semester                                                      |
+| kategori   | String  | Ya    | Pilih dari enum `KategoriKegiatan` (contoh: `BIMBINGAN_SEMINAR`) |
+| prodiId    | Integer | Ya    | ID Program Studi                                                 |
+| fakultasId | Integer | Ya    | ID Fakultas                                                      |
+| jumlahMhs  | Integer | Ya    | Jumlah mahasiswa yang dibimbing                                  |
 
 **Contoh Body (form-data)**  
-```
-file: (upload PDF, opsional)
-semesterId: 14
-kategori: BIMBINGAN_SEMINAR
-prodiId: 1
-fakultasId: 1
-jumlahMhs: 8
-```
 
----
+- **file**: File bukti bimbingan seminar (wajib, format `.pdf`)
+- **data**: JSON string berisi data bimbingan seminar. Contoh:
+  ```json
+  {
+    "semesterId": 14,
+    "kategori": "BIMBINGAN_SEMINAR",
+    "prodiId": 1,
+    "fakultasId": 1,
+    "jumlahMhs": 8
+  }
+  ```
 
 ### Response
 
@@ -316,15 +328,15 @@ Authorization: Bearer <accessToken>
 ```
 
 **Form Data**  
-| Field        | Tipe    | Wajib | Keterangan                                  |
-|--------------|---------|-------|---------------------------------------------|
-| file         | File    | Ya    | File PDF bukti kegiatan                      |
-| semesterId   | Integer | Ya    | ID Semester                                 |
-| kategori     | String  | Ya    | Pilih dari enum `KategoriKegiatan` (contoh: `BIMBINGAN_KKN_PKN_PKL`) |
-| jenis        | String  | Ya    | Jenis bimbingan (`KKN`, `PKN`, atau `PKL`) |
-| prodiId      | Integer | Ya    | ID Program Studi                            |
-| fakultasId   | Integer | Ya    | ID Fakultas                                 |
-| jumlahMhs    | Integer | Ya    | Jumlah mahasiswa yang dibimbing             |
+| Field      | Tipe    | Wajib | Keterangan                                                           |
+| ---------- | ------- | ----- | -------------------------------------------------------------------- |
+| file       | File    | Ya    | File PDF bukti kegiatan                                              |
+| semesterId | Integer | Ya    | ID Semester                                                          |
+| kategori   | String  | Ya    | Pilih dari enum `KategoriKegiatan` (contoh: `BIMBINGAN_KKN_PKN_PKL`) |
+| jenis      | String  | Ya    | Jenis bimbingan (`KKN`, `PKN`, atau `PKL`)                           |
+| prodiId    | Integer | Ya    | ID Program Studi                                                     |
+| fakultasId | Integer | Ya    | ID Fakultas                                                          |
+| jumlahMhs  | Integer | Ya    | Jumlah mahasiswa yang dibimbing                                      |
 
 **Contoh Body (form-data)**  
 ```
@@ -385,15 +397,15 @@ Authorization: Bearer <accessToken>
 ```
 
 **Form Data**  
-| Field        | Tipe    | Wajib | Keterangan                                  |
-|--------------|---------|-------|---------------------------------------------|
-| file         | File    | Tidak | File PDF bukti kegiatan (opsional)           |
-| semesterId   | Integer | Ya    | ID Semester                                 |
-| kategori     | String  | Ya    | Pilih dari enum `KategoriKegiatan` (contoh: `BIMBINGAN_KKN_PKN_PKL`) |
-| jenis        | String  | Ya    | Jenis bimbingan (`KKN`, `PKN`, atau `PKL`)  |
-| prodiId      | Integer | Ya    | ID Program Studi                            |
-| fakultasId   | Integer | Ya    | ID Fakultas                                 |
-| jumlahMhs    | Integer | Ya    | Jumlah mahasiswa yang dibimbing             |
+| Field      | Tipe    | Wajib | Keterangan                                                           |
+| ---------- | ------- | ----- | -------------------------------------------------------------------- |
+| file       | File    | Tidak | File PDF bukti kegiatan (opsional)                                   |
+| semesterId | Integer | Ya    | ID Semester                                                          |
+| kategori   | String  | Ya    | Pilih dari enum `KategoriKegiatan` (contoh: `BIMBINGAN_KKN_PKN_PKL`) |
+| jenis      | String  | Ya    | Jenis bimbingan (`KKN`, `PKN`, atau `PKL`)                           |
+| prodiId    | Integer | Ya    | ID Program Studi                                                     |
+| fakultasId | Integer | Ya    | ID Fakultas                                                          |
+| jumlahMhs  | Integer | Ya    | Jumlah mahasiswa yang dibimbing                                      |
 
 **Contoh Body (form-data)**  
 ```
@@ -459,14 +471,14 @@ Authorization: Bearer <accessToken>
 ```
 
 **Form Data**  
-| Field        | Tipe    | Wajib | Keterangan                                  |
-|--------------|---------|-------|---------------------------------------------|
-| file         | File    | Ya    | File PDF bukti kegiatan                      |
-| semesterId   | Integer | Ya    | ID Semester                                 |
-| kategori     | String  | Ya    | Nilai harus `BIMBINGAN_TUGAS_AKHIR`          |
-| jenis        | String  | Ya    | Jenis tugas akhir (`Skripsi`, `Tesis`, `Disertasi`) |
-| peran        | String  | Ya    | Peran dalam bimbingan (`Pembimbing Utama`, `Pembimbing Pendamping`) |
-| jumlahMhs    | Integer | Ya    | Jumlah mahasiswa yang dibimbing             |
+| Field      | Tipe    | Wajib | Keterangan                                                          |
+| ---------- | ------- | ----- | ------------------------------------------------------------------- |
+| file       | File    | Ya    | File PDF bukti kegiatan                                             |
+| semesterId | Integer | Ya    | ID Semester                                                         |
+| kategori   | String  | Ya    | Nilai harus `BIMBINGAN_TUGAS_AKHIR`                                 |
+| jenis      | String  | Ya    | Jenis tugas akhir (`Skripsi`, `Tesis`, `Disertasi`)                 |
+| peran      | String  | Ya    | Peran dalam bimbingan (`Pembimbing Utama`, `Pembimbing Pendamping`) |
+| jumlahMhs  | Integer | Ya    | Jumlah mahasiswa yang dibimbing                                     |
 
 **Contoh Body (form-data)**  
 ```
@@ -526,14 +538,14 @@ Authorization: Bearer <accessToken>
 ```
 
 **Form Data**  
-| Field        | Tipe    | Wajib | Keterangan                                  |
-|--------------|---------|-------|---------------------------------------------|
-| file         | File    | Tidak | File PDF bukti kegiatan (opsional)           |
-| semesterId   | Integer | Ya    | ID Semester                                 |
-| kategori     | String  | Ya    | Nilai harus `BIMBINGAN_TUGAS_AKHIR`          |
-| jenis        | String  | Ya    | Jenis tugas akhir (`Skripsi`, `Tesis`, `Disertasi`) |
-| peran        | String  | Ya    | Peran dalam bimbingan (`Pembimbing Utama`, `Pembimbing Pendamping`) |
-| jumlahMhs    | Integer | Ya    | Jumlah mahasiswa yang dibimbing             |
+| Field      | Tipe    | Wajib | Keterangan                                                          |
+| ---------- | ------- | ----- | ------------------------------------------------------------------- |
+| file       | File    | Tidak | File PDF bukti kegiatan (opsional)                                  |
+| semesterId | Integer | Ya    | ID Semester                                                         |
+| kategori   | String  | Ya    | Nilai harus `BIMBINGAN_TUGAS_AKHIR`                                 |
+| jenis      | String  | Ya    | Jenis tugas akhir (`Skripsi`, `Tesis`, `Disertasi`)                 |
+| peran      | String  | Ya    | Peran dalam bimbingan (`Pembimbing Utama`, `Pembimbing Pendamping`) |
+| jumlahMhs  | Integer | Ya    | Jumlah mahasiswa yang dibimbing                                     |
 
 **Contoh Body (form-data)**  
 ```
@@ -598,13 +610,13 @@ Authorization: Bearer <accessToken>
 ```
 
 **Form Data**  
-| Field        | Tipe    | Wajib | Keterangan                                 |
-|--------------|---------|-------|--------------------------------------------|
-| file         | File    | Ya    | File PDF bukti kegiatan                     |
-| semesterId   | Integer | Ya    | ID Semester                                |
-| kategori     | String  | Ya    | Nilai harus `PENGUJI_UJIAN_AKHIR`           |
-| peran        | String  | Ya    | Peran (`Ketua Penguji`, `Anggota Penguji`) |
-| jumlahMhs    | Integer | Ya    | Jumlah mahasiswa diuji                     |
+| Field      | Tipe    | Wajib | Keterangan                                 |
+| ---------- | ------- | ----- | ------------------------------------------ |
+| file       | File    | Ya    | File PDF bukti kegiatan                    |
+| semesterId | Integer | Ya    | ID Semester                                |
+| kategori   | String  | Ya    | Nilai harus `PENGUJI_UJIAN_AKHIR`          |
+| peran      | String  | Ya    | Peran (`Ketua Penguji`, `Anggota Penguji`) |
+| jumlahMhs  | Integer | Ya    | Jumlah mahasiswa diuji                     |
 
 **Contoh Body (form-data)**  
 ```
@@ -663,13 +675,13 @@ Authorization: Bearer <accessToken>
 ```
 
 **Form Data**  
-| Field        | Tipe    | Wajib | Keterangan                                 |
-|--------------|---------|-------|--------------------------------------------|
-| file         | File    | Tidak | File PDF bukti kegiatan (opsional)          |
-| semesterId   | Integer | Ya    | ID Semester                                |
-| kategori     | String  | Ya    | Nilai harus `PENGUJI_UJIAN_AKHIR`           |
-| peran        | String  | Ya    | Peran (`Ketua Penguji`, `Anggota Penguji`) |
-| jumlahMhs    | Integer | Ya    | Jumlah mahasiswa diuji                     |
+| Field      | Tipe    | Wajib | Keterangan                                 |
+| ---------- | ------- | ----- | ------------------------------------------ |
+| file       | File    | Tidak | File PDF bukti kegiatan (opsional)         |
+| semesterId | Integer | Ya    | ID Semester                                |
+| kategori   | String  | Ya    | Nilai harus `PENGUJI_UJIAN_AKHIR`          |
+| peran      | String  | Ya    | Peran (`Ketua Penguji`, `Anggota Penguji`) |
+| jumlahMhs  | Integer | Ya    | Jumlah mahasiswa diuji                     |
 
 **Contoh Body (form-data)**  
 ```
@@ -733,13 +745,13 @@ Authorization: Bearer <accessToken>
 ```
 
 **Form Data**  
-| Field         | Tipe    | Wajib | Keterangan                               |
-|---------------|---------|-------|------------------------------------------|
-| file          | File    | Ya    | File PDF bukti kegiatan                  |
-| semesterId    | Integer | Ya    | ID Semester                              |
-| kategori      | String  | Ya    | Nilai harus `PEMBINA_KEGIATAN_MHS`        |
-| namaKegiatan  | String  | Ya    | Nama kegiatan yang dibina                 |
-| luaran        | String  | Ya    | Hasil/luaran kegiatan                     |
+| Field        | Tipe    | Wajib | Keterangan                         |
+| ------------ | ------- | ----- | ---------------------------------- |
+| file         | File    | Ya    | File PDF bukti kegiatan            |
+| semesterId   | Integer | Ya    | ID Semester                        |
+| kategori     | String  | Ya    | Nilai harus `PEMBINA_KEGIATAN_MHS` |
+| namaKegiatan | String  | Ya    | Nama kegiatan yang dibina          |
+| luaran       | String  | Ya    | Hasil/luaran kegiatan              |
 
 **Contoh Body (form-data)**  
 ```
@@ -798,13 +810,13 @@ Authorization: Bearer <accessToken>
 ```
 
 **Form Data**  
-| Field         | Tipe    | Wajib | Keterangan                               |
-|---------------|---------|-------|------------------------------------------|
-| file          | File    | Tidak | File PDF bukti kegiatan (opsional)       |
-| semesterId    | Integer | Ya    | ID Semester                              |
-| kategori      | String  | Ya    | Nilai harus `PEMBINA_KEGIATAN_MHS`        |
-| namaKegiatan  | String  | Ya    | Nama kegiatan yang dibina                 |
-| luaran        | String  | Ya    | Hasil/luaran kegiatan                     |
+| Field        | Tipe    | Wajib | Keterangan                         |
+| ------------ | ------- | ----- | ---------------------------------- |
+| file         | File    | Tidak | File PDF bukti kegiatan (opsional) |
+| semesterId   | Integer | Ya    | ID Semester                        |
+| kategori     | String  | Ya    | Nilai harus `PEMBINA_KEGIATAN_MHS` |
+| namaKegiatan | String  | Ya    | Nama kegiatan yang dibina          |
+| luaran       | String  | Ya    | Hasil/luaran kegiatan              |
 
 **Contoh Body (form-data)**  
 ```
@@ -868,15 +880,15 @@ Authorization: Bearer <accessToken>
 ```
 
 **Form Data**  
-| Field               | Tipe    | Wajib | Keterangan                                         |
-|---------------------|---------|-------|----------------------------------------------------|
-| file                | File    | Ya    | File PDF bukti kegiatan                            |
-| semesterId          | Integer | Ya    | ID Semester                                        |
-| kategori            | String  | Ya    | Nilai harus `PENGEMBANGAN_PROGRAM`                  |
-| mataKuliah          | String  | Ya    | Nama mata kuliah yang dikembangkan                 |
-| programPengembangan | String  | Ya    | Deskripsi program pengembangan                     |
-| prodiId             | Integer | Ya    | ID Program Studi                                   |
-| fakultasId          | Integer | Ya    | ID Fakultas                                        |
+| Field               | Tipe    | Wajib | Keterangan                         |
+| ------------------- | ------- | ----- | ---------------------------------- |
+| file                | File    | Ya    | File PDF bukti kegiatan            |
+| semesterId          | Integer | Ya    | ID Semester                        |
+| kategori            | String  | Ya    | Nilai harus `PENGEMBANGAN_PROGRAM` |
+| mataKuliah          | String  | Ya    | Nama mata kuliah yang dikembangkan |
+| programPengembangan | String  | Ya    | Deskripsi program pengembangan     |
+| prodiId             | Integer | Ya    | ID Program Studi                   |
+| fakultasId          | Integer | Ya    | ID Fakultas                        |
 
 **Contoh Body (form-data)**  
 ```
@@ -937,15 +949,15 @@ Authorization: Bearer <accessToken>
 ```
 
 **Form Data**  
-| Field               | Tipe    | Wajib | Keterangan                                         |
-|---------------------|---------|-------|----------------------------------------------------|
-| file                | File    | Tidak | File PDF bukti kegiatan (opsional)                 |
-| semesterId          | Integer | Ya    | ID Semester                                        |
-| kategori            | String  | Ya    | Nilai harus `PENGEMBANGAN_PROGRAM`                  |
-| mataKuliah          | String  | Ya    | Nama mata kuliah yang dikembangkan                 |
-| programPengembangan | String  | Ya    | Deskripsi program pengembangan                     |
-| prodiId             | Integer | Ya    | ID Program Studi                                   |
-| fakultasId          | Integer | Ya    | ID Fakultas                                        |
+| Field               | Tipe    | Wajib | Keterangan                         |
+| ------------------- | ------- | ----- | ---------------------------------- |
+| file                | File    | Tidak | File PDF bukti kegiatan (opsional) |
+| semesterId          | Integer | Ya    | ID Semester                        |
+| kategori            | String  | Ya    | Nilai harus `PENGEMBANGAN_PROGRAM` |
+| mataKuliah          | String  | Ya    | Nama mata kuliah yang dikembangkan |
+| programPengembangan | String  | Ya    | Deskripsi program pengembangan     |
+| prodiId             | Integer | Ya    | ID Program Studi                   |
+| fakultasId          | Integer | Ya    | ID Fakultas                        |
 
 **Contoh Body (form-data)**  
 ```
@@ -1011,17 +1023,17 @@ Authorization: Bearer <accessToken>
 ```
 
 **Form Data**  
-| Field          | Tipe    | Wajib | Keterangan                                    |
-|----------------|---------|-------|-----------------------------------------------|
-| file           | File    | Ya    | File PDF bukti kegiatan                       |
-| semesterId     | Integer | Ya    | ID Semester                                   |
-| kategori       | String  | Ya    | Nilai harus `BAHAN_PENGAJARAN`                 |
-| jenis          | String  | Ya    | Jenis bahan pengajaran (`BUKU_AJAR`, dsb.)   |
-| judul          | String  | Ya    | Judul bahan pengajaran                         |
-| tglTerbit      | Date    | Ya    | Tanggal terbit dalam format `YYYY-MM-DD`      |
-| penerbit       | String  | Ya    | Nama penerbit                                 |
-| jumlahHalaman  | Integer | Ya    | Jumlah halaman                               |
-| isbn           | String  | Ya    | Nomor ISBN                                   |
+| Field         | Tipe    | Wajib | Keterangan                                 |
+| ------------- | ------- | ----- | ------------------------------------------ |
+| file          | File    | Ya    | File PDF bukti kegiatan                    |
+| semesterId    | Integer | Ya    | ID Semester                                |
+| kategori      | String  | Ya    | Nilai harus `BAHAN_PENGAJARAN`             |
+| jenis         | String  | Ya    | Jenis bahan pengajaran (`BUKU_AJAR`, dsb.) |
+| judul         | String  | Ya    | Judul bahan pengajaran                     |
+| tglTerbit     | Date    | Ya    | Tanggal terbit dalam format `YYYY-MM-DD`   |
+| penerbit      | String  | Ya    | Nama penerbit                              |
+| jumlahHalaman | Integer | Ya    | Jumlah halaman                             |
+| isbn          | String  | Ya    | Nomor ISBN                                 |
 
 **Contoh Body (form-data)**  
 ```
@@ -1084,17 +1096,17 @@ Authorization: Bearer <accessToken>
 ```
 
 **Form Data**  
-| Field          | Tipe    | Wajib | Keterangan                                    |
-|----------------|---------|-------|-----------------------------------------------|
-| file           | File    | Tidak | File PDF bukti kegiatan (opsional)            |
-| semesterId     | Integer | Ya    | ID Semester                                   |
-| kategori       | String  | Ya    | Nilai harus `BAHAN_PENGAJARAN`                 |
-| jenis          | String  | Ya    | Jenis bahan pengajaran (`BUKU_AJAR`, dsb.)   |
-| judul          | String  | Ya    | Judul bahan pengajaran                         |
-| tglTerbit      | Date    | Ya    | Tanggal terbit dalam format `YYYY-MM-DD`      |
-| penerbit       | String  | Ya    | Nama penerbit                                 |
-| jumlahHalaman  | Integer | Ya    | Jumlah halaman                               |
-| isbn           | String  | Ya    | Nomor ISBN                                   |
+| Field         | Tipe    | Wajib | Keterangan                                 |
+| ------------- | ------- | ----- | ------------------------------------------ |
+| file          | File    | Tidak | File PDF bukti kegiatan (opsional)         |
+| semesterId    | Integer | Ya    | ID Semester                                |
+| kategori      | String  | Ya    | Nilai harus `BAHAN_PENGAJARAN`             |
+| jenis         | String  | Ya    | Jenis bahan pengajaran (`BUKU_AJAR`, dsb.) |
+| judul         | String  | Ya    | Judul bahan pengajaran                     |
+| tglTerbit     | Date    | Ya    | Tanggal terbit dalam format `YYYY-MM-DD`   |
+| penerbit      | String  | Ya    | Nama penerbit                              |
+| jumlahHalaman | Integer | Ya    | Jumlah halaman                             |
+| isbn          | String  | Ya    | Nomor ISBN                                 |
 
 **Contoh Body (form-data)**  
 ```
