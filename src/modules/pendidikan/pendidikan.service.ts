@@ -6,11 +6,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { KategoriPendidikan, StatusValidasi, TypeUserRole } from '@prisma/client';
-import { CreatePendidikanDto, fullPendidikanSchema } from './dto/create-pendidikan.dto';
+import { CreatePendidikanDto, fullPendidikanSchema, UpdateStatusValidasiDto, updateStatusValidasiSchema } from './dto/create-pendidikan.dto';
 import { fullUpdatePendidikanSchema, UpdatePendidikanDto } from './dto/update-pendidikan.dto';
 import { handlePrismaError } from '@/common/utils/prisma-error-handler';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { deleteFileFromDisk, handleUpload, handleUploadAndUpdate, validateAndInjectFilePath } from '@/common/utils/dataFile';
+import { parseAndThrow } from '@/common/utils/zod-helper';
 
 @Injectable()
 export class PendidikanService {
@@ -378,13 +379,10 @@ export class PendidikanService {
     return { success: true, data: pendidikan };
   }
 
-
-  async validate(id: number, status: StatusValidasi, catatan: string | undefined, reviewerId: number,
+  async validate(id: number, rawData: UpdateStatusValidasiDto, reviewerId: number,
   ) {
-
-    if (status === StatusValidasi.REJECTED && (!catatan || catatan.trim() === '')) {
-      throw new BadRequestException('Catatan wajib diisi jika status ditolak');
-    }
+    const parsed = parseAndThrow(updateStatusValidasiSchema, rawData);
+    const { statusValidasi, catatan } = parsed;
 
     const existing = await this.prisma.pendidikan.findUnique({ where: { id } });
 
@@ -393,9 +391,9 @@ export class PendidikanService {
     return this.prisma.pendidikan.update({
       where: { id },
       data: {
-        statusValidasi: status,
+        statusValidasi: statusValidasi,
         reviewerId: reviewerId,
-        catatan: status === 'REJECTED' ? catatan : catatan || null,
+        catatan: statusValidasi === 'REJECTED' ? catatan : catatan || null,
       },
     });
   }

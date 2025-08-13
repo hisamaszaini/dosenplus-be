@@ -197,15 +197,8 @@ export class PendidikanController {
     @Body() rawData: any,
     @Request() req,
   ) {
-    const parsed = updateStatusValidasiSchema.safeParse(rawData);
-    if (!parsed.success) {
-      throw new BadRequestException(parsed.error.format());
-    }
-
-    const { statusValidasi, catatan } = parsed.data;
     const reviewerId = req.user.sub;
-
-    return this.pendidikanService.validate(id, statusValidasi, catatan, reviewerId);
+    return this.pendidikanService.validate(id, rawData, reviewerId);
   }
 
   @Get()
