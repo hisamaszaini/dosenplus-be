@@ -610,7 +610,8 @@ export class PelaksanaanPendidikanService {
         },
       });
 
-      if (!roles.includes(TypeUserRole.ADMIN) && !roles.includes(TypeUserRole.VALIDATOR) && data.dosenId !== dosenId) {
+      const roleArray = Object.values(roles);
+      if (!roleArray.includes(TypeUserRole.ADMIN) && !roleArray.includes(TypeUserRole.VALIDATOR) && data.dosenId !== dosenId) {
         throw new ForbiddenException('Anda tidak diizinkan mengakses data ini');
       }
 
@@ -623,13 +624,14 @@ export class PelaksanaanPendidikanService {
     }
   }
 
-  async delete(id: number, dosenId: number, role: TypeUserRole | TypeUserRole[]) {
+  async delete(id: number, dosenId: number, roles: TypeUserRole | TypeUserRole[]) {
     try {
       const existing = await this.prisma.pelaksanaanPendidikan.findUniqueOrThrow({
         where: { id },
       });
 
-      if (!role.includes(TypeUserRole.ADMIN) && existing.dosenId !== dosenId) {
+      const roleArray = Object.values(roles);
+      if (!roleArray.includes(TypeUserRole.ADMIN) && existing.dosenId !== dosenId) {
         throw new ForbiddenException('Anda tidak diizinkan menghapus data ini');
       }
 
