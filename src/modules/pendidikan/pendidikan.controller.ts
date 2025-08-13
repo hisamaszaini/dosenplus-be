@@ -226,6 +226,23 @@ export class PendidikanController {
     return this.pendidikanService.findAll(query, dosenId);
   }
 
+  @Get('test')
+  async test(
+    @Request() req,
+  ) {
+    const roles = req.user.roles;
+
+    const roleArray = typeof roles === 'string'
+      ? [roles]
+      : Array.isArray(roles)
+        ? roles.map(r => typeof r === 'string' ? r : r.role?.name).filter(Boolean)
+        : roles && typeof roles === 'object'
+          ? Object.values(roles)
+          : [];
+
+    console.log(roleArray);
+  }
+
   @Get(':id')
   @Roles(TypeUserRole.DOSEN, TypeUserRole.ADMIN, TypeUserRole.VALIDATOR)
   async findOne(
