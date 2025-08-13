@@ -785,7 +785,8 @@ Authorization: Bearer <accessToken>
     "kategori": "PEMBINA_KEGIATAN_MHS",
     "namaKegiatan": "Pembinaan UKM Robotika",
     "luaran": "Lomba Robot Nasional"
-  }```
+  }
+  ```
 
 ---
 
@@ -930,7 +931,8 @@ Authorization: Bearer <accessToken>
     "programPengembangan": "Pengembangan Modul Pembelajaran Interaktif",
     "prodiId": 1,
     "fakultasId": 1
-  }```
+  }
+  ```
 
 ---
 
@@ -1001,7 +1003,8 @@ Authorization: Bearer <accessToken>
     "programPengembangan": "Pengembangan Modul Pembelajaran Interaktif dan Efektif",
     "prodiId": 6,
     "fakultasId": 1
-  }```
+  }
+  ```
 
 ---
 
@@ -1082,7 +1085,8 @@ Authorization: Bearer <accessToken>
     "penerbit": "Penerbit Teknologi Nusantara",
     "jumlahHalaman": 250,
     "isbn": "978-602-1234-56-7"
-  }```
+  }
+  ```
 
 ---
 
@@ -1158,7 +1162,8 @@ Authorization: Bearer <accessToken>
     "penerbit": "Penerbit Teknologi Jatim",
     "jumlahHalaman": 250,
     "isbn": "978-602-1234-56-7"
-  }```
+  }
+  ```
 
 ---
 
