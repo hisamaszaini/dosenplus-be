@@ -776,12 +776,17 @@ Authorization: Bearer <accessToken>
 | luaran       | String  | Ya    | Hasil/luaran kegiatan              |
 
 **Contoh Body (form-data)**  
-```
-file: (upload PDF)
-semesterId: 14
-kategori: PEMBINA_KEGIATAN_MHS
-namaKegiatan: Pembinaan UKM Robotika
-luaran: Lomba Robot Nasional
+
+- **file**: File bukti pembina kegiatan mahasiswa (wajib, format `.pdf`)
+- **data**: JSON string berisi data pembina kegiatan mahasiswa. Contoh:
+  ```json
+  {
+    "semesterId": 14,
+    "kategori": "PEMBINA_KEGIATAN_MHS",
+    "namaKegiatan": "Pembinaan UKM Robotika",
+    "luaran": "Lomba Robot Nasional"
+  }
+
 ```
 
 ---
