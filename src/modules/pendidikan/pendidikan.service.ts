@@ -374,6 +374,8 @@ export class PendidikanService {
   }
 
   async findOne(id: number, dosenId: number, roles: TypeUserRole | TypeUserRole[]) {
+    console.log(TypeUserRole);
+    
     try {
       const pendidikan = await this.prisma.pendidikan.findUniqueOrThrow({
         where: { id },
