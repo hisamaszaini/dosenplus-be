@@ -177,20 +177,28 @@ export class UsersController {
     return this.usersService.findAllValidator({ page, limit, search, sortBy, sortOrder });
   }
 
+  @Get('dosen/update-data')
+  @Roles(TypeUserRole.DOSEN)
+  getPendingUpdate(@Req() req: any) {
+    const dosenId = req.user.sub;
+    return this.usersService.getPendingUpdateById(dosenId);
+  }
+
+  @Get('dosen/update-data/:dosenId')
+  @Roles(TypeUserRole.ADMIN, TypeUserRole.VALIDATOR)
+  getPendingUpdateById(
+    @Param('dosenId', ParseIntPipe) dosenId: number
+  ) {
+    return this.usersService.getPendingUpdateById(dosenId);
+  }
+
   @Get(':id')
   @Roles(TypeUserRole.ADMIN, TypeUserRole.VALIDATOR)
   @UseGuards(RolesGuard)
   getProfileById(
-    @Param('id', ParseIntPipe) userId: number,
+    @Param('id', ParseIntPipe) userId: number
   ) {
     return this.usersService.findById(userId);
-  }
-
-  @Put('dosen/update-data')
-  @Roles(TypeUserRole.ADMIN, TypeUserRole.DOSEN, TypeUserRole.VALIDATOR)
-  getPendingUpdateById(@Req() req: any, @Body() dto: CreatePendingUpdateDto) {
-    const dosenId = req.user.sub;
-    return this.usersService.getPendingUpdateById(dosenId);
   }
 
   @Delete(':id')
