@@ -47,6 +47,7 @@ Form-Data:
     "prodiId": 1,
     "fakultasId": 1
   }
+  ```
 
 ---
 
@@ -126,6 +127,7 @@ Form-Data:
     "prodiId": 1,
     "fakultasId": 1
   }
+  ```
 
 ---
 
