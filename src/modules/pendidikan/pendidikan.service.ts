@@ -266,8 +266,8 @@ export class PendidikanService {
       page?: number;
       limit?: number;
       search?: string;
-      kategori?: string;
-      jenjang?: string;
+      filterType?: string;
+      filterValue?: string;
       dosenId?: number;
       sortBy?: string;
       sortOrder?: 'asc' | 'desc';
@@ -290,14 +290,18 @@ export class PendidikanService {
       where.dosenId = Number(query.dosenId);
     }
 
-    // Filter kategori
-    if (query.kategori) {
-      where.kategori = query.kategori;
-    }
-
-    // Filter jenjang khusus FORMAL
-    if (query.jenjang) {
-      where.Formal = { jenjang: query.jenjang };
+    if (query.filterType && query.filterValue) {
+      const { filterType, filterValue } = query;
+      switch (filterType) {
+        case 'kategori':
+          where.kategori = filterValue;
+          break;
+        case 'jenjang':
+          where.Formal = { jenjang: filterValue };
+          break;
+        default:
+          break;
+      }
     }
 
     // Search
