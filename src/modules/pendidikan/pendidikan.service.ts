@@ -12,7 +12,6 @@ import { handleDeleteError, handleFindError, handlePrismaError, handleUpdateErro
 import { PrismaService } from '../../../prisma/prisma.service';
 import { deleteFileFromDisk, handleUpload, handleUploadAndUpdate, validateAndInjectFilePath } from '@/common/utils/dataFile';
 import { parseAndThrow } from '@/common/utils/zod-helper';
-import { hasAnyRole, hasRole } from '@/common/utils/hasRole';
 
 @Injectable()
 export class PendidikanService {
@@ -375,7 +374,7 @@ export class PendidikanService {
 
   async findOne(id: number, dosenId: number, roles: TypeUserRole | TypeUserRole[]) {
     try {
-      const pendidikan = await this.prisma.pendidikan.findUniqueOrThrow({
+      const data = await this.prisma.pendidikan.findUniqueOrThrow({
         where: { id },
         include: {
           Formal: true,
@@ -385,11 +384,11 @@ export class PendidikanService {
       });
 
       if (!roles.includes(TypeUserRole.ADMIN) && !roles.includes(TypeUserRole.VALIDATOR)
-        && pendidikan.dosenId !== dosenId) {
+        && data.dosenId !== dosenId) {
         throw new ForbiddenException('Anda tidak diizinkan mengakses data ini');
       }
 
-      return { success: true, data: pendidikan };
+      return { success: true, data: data };
     } catch (error) {
       handleFindError(error, "Pendidikan");
     }
@@ -422,11 +421,9 @@ export class PendidikanService {
     try {
       const existing = await this.prisma.pendidikan.findUniqueOrThrow({ where: { id } });
 
-      // const roleArray = Object.values(roles);
-
-      // if (!roleArray.includes(TypeUserRole.ADMIN) && existing.dosenId !== dosenId) {
-      //   throw new ForbiddenException('Anda tidak berhak mengakses data ini');
-      // }
+      if (!roles.includes(TypeUserRole.ADMIN) && existing.dosenId !== dosenId) {
+        throw new ForbiddenException('Anda tidak diizinkan mengakses data ini');
+      }
 
       await this.prisma.pendidikan.delete({ where: { id } });
 
