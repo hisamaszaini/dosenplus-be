@@ -373,7 +373,7 @@ export class PendidikanService {
     };
   }
 
-  async findOne(id: number, dosenId: number, roles: TypeUserRole[]) {
+  async findOne(id: number, dosenId: number, roles: TypeUserRole | TypeUserRole[]) {
     const pendidikan = await this.prisma.pendidikan.findUnique({
       where: { id },
       include: {
@@ -417,7 +417,7 @@ export class PendidikanService {
     }
   }
 
-  async delete(id: number, dosenId: number, roles: TypeUserRole) {
+  async delete(id: number, dosenId: number, roles: TypeUserRole | TypeUserRole[]) {
     try {
       const existing = await this.prisma.pendidikan.findUniqueOrThrow({ where: { id } });
       if (!hasRole(roles, TypeUserRole.ADMIN) && existing.dosenId !== dosenId) {
