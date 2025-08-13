@@ -23,3 +23,4 @@ export function hasAnyRole(userRoles: string | string[] | any[], allowedRoles: s
 
   return result;
 }
+

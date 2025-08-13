@@ -4,7 +4,6 @@ import { fullPelaksanaanPendidikanSchema } from './dto/create-pelaksanaan-pendid
 import { fullUpdatePelaksanaanSchema } from './dto/update-pelaksanaan-pendidikan.dto';
 import { parseAndThrow } from '@/common/utils/zod-helper';
 import { handleCreateError, handleDeleteError, handleFindError, handleUpdateError } from '@/common/utils/prisma-error-handler';
-import { hasAnyRole, hasRole } from '@/common/utils/hasRole';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { deleteFileFromDisk, handleUpload } from '@/common/utils/dataFile';
 
@@ -348,7 +347,7 @@ export class PelaksanaanPendidikanService {
     id: number,
     dosenId: number,
     rawData: any,
-    role: TypeUserRole,
+    roles: TypeUserRole,
     file?: Express.Multer.File
   ) {
     const data = parseAndThrow(fullUpdatePelaksanaanSchema, rawData);
@@ -379,8 +378,8 @@ export class PelaksanaanPendidikanService {
           },
         });
 
-        if (!hasRole(role, TypeUserRole.ADMIN) && existing.dosenId !== dosenId) {
-          throw new ForbiddenException('Anda tidak berhak memperbarui data ini');
+        if (!roles.includes(TypeUserRole.ADMIN) && existing.dosenId !== dosenId) {
+          throw new ForbiddenException('Anda tidak diizinkan mengakses data ini');
         }
 
         // Hitung total SKS untuk kategori PERKULIAHAN
@@ -610,7 +609,7 @@ export class PelaksanaanPendidikanService {
         },
       });
 
-      if (!roles.includes(TypeUserRole.ADMIN) && data.dosenId !== dosenId) {
+      if (!roles.includes(TypeUserRole.ADMIN) && !roles.includes(TypeUserRole.VALIDATOR) && data.dosenId !== dosenId) {
         throw new ForbiddenException('Anda tidak diizinkan mengakses data ini');
       }
 
