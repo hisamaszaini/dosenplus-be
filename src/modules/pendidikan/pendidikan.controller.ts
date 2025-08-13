@@ -240,6 +240,10 @@ export class PendidikanController {
           ? Object.values(roles)
           : [];
 
+    if(roleArray.includes('ADMIN')){
+      console.log('Punya role admin')
+    }
+    
     console.log(roleArray);
   }
 
