@@ -164,7 +164,7 @@ export class PelaksanaanPendidikanController {
 
     @Req() req: any,
   ) {
-    const role = req.user.role;
+    const role = req.user.roles;
     return this.pelaksanaanPendidikanService.update(id, dosenId, data, role, file);
   }
 
@@ -175,7 +175,7 @@ export class PelaksanaanPendidikanController {
     @Req() req: any,
   ) {
     const dosenId = req.user.sub;
-    const role = req.user.role;
+    const role = req.user.roles;
 
     return this.pelaksanaanPendidikanService.delete(id, dosenId, role);
   }
