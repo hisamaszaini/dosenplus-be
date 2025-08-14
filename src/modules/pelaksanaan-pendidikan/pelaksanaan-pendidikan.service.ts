@@ -647,9 +647,16 @@ export class PelaksanaanPendidikanService {
         throw new ForbiddenException('Anda tidak diizinkan mengakses data ini');
       }
 
+      const removeNullData = Object.fromEntries(
+        Object.entries(data).filter(([key, value]) =>
+          value !== null &&
+          typeof value === 'object'
+        )
+      );
+
       return {
         success: true,
-        data,
+        data: removeNullData,
       };
     } catch (error) {
       console.error(error);
