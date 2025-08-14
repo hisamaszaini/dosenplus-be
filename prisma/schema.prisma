@@ -357,7 +357,7 @@ model Perkuliahan {
   prodiId       Int?
   fakultasId    Int?
 
-  pelaksanaan PelaksanaanPendidikan @relation(fields: [pelaksanaanId], references: [id])
+  pelaksanaan PelaksanaanPendidikan @relation(fields: [pelaksanaanId], references: [id], onDelete: Cascade)
   prodi       Prodi?                 @relation(fields: [prodiId], references: [id], onDelete: SetNull)
   fakultas    Fakultas?              @relation(fields: [fakultasId], references: [id], onDelete: SetNull)
 }
