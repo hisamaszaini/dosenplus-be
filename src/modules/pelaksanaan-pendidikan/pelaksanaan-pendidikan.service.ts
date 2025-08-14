@@ -626,6 +626,20 @@ export class PelaksanaanPendidikanService {
         include: {
           dosen: { select: { id: true, nama: true } },
           semester: true,
+
+          perkuliahan: true,
+          bimbinganSeminar: true,
+          bimbinganKknPknPkl: true,
+          bimbinganTugasAkhir: true,
+          pengujiUjianAkhir: true,
+          pembinaKegiatanMhs: true,
+          pengembanganProgram: true,
+          bahanPengajaran: true,
+          orasiIlmiah: true,
+          jabatanStruktural: true,
+          bimbingDosen: true,
+          dataseringPencakokan: true,
+          pengembanganDiri: true,
         },
       });
 
@@ -638,6 +652,7 @@ export class PelaksanaanPendidikanService {
         data,
       };
     } catch (error) {
+      console.error(error);
       handleFindError(error, "Pelaksanaan Pendidikan");
     }
   }
@@ -665,6 +680,7 @@ export class PelaksanaanPendidikanService {
         message: 'Data berhasil dihapus',
       };
     } catch (error) {
+      console.error(error);
       handleDeleteError(error, 'Pelaksanaan Pendidikan');
     }
   }
