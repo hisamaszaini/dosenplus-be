@@ -113,7 +113,7 @@ export class PelaksanaanPendidikanController {
     @Req() req: any,
   ) {
     const dosenId = req.user.sub;
-    const role = req.user.role;
+    const role = req.user.roles;
 
     return this.pelaksanaanPendidikanService.findOne(id, dosenId, role);
   }
@@ -138,7 +138,7 @@ export class PelaksanaanPendidikanController {
     @Req() req: any,
   ) {
     const dosenId = req.user.sub;
-    const role = req.user.role;
+    const role = req.user.roles;
     return this.pelaksanaanPendidikanService.update(id, dosenId, data, role, file);
   }
 
