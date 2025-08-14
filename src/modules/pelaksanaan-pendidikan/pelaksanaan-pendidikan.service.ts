@@ -613,7 +613,7 @@ export class PelaksanaanPendidikanService {
         total,
         totalPages: Math.ceil(total / limit),
       },
-      removeNullData,
+      data: removeNullData,
     };
   }
 
