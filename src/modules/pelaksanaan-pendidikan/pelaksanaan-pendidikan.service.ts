@@ -580,10 +580,30 @@ export class PelaksanaanPendidikanService {
         include: {
           dosen: { select: { id: true, nama: true } },
           semester: true,
+
+          // Semua relasi yang ingin di-include
           perkuliahan: true,
+          bimbinganSeminar: true,
+          bimbinganKknPknPkl: true,
+          bimbinganTugasAkhir: true,
+          pengujiUjianAkhir: true,
+          pembinaKegiatanMhs: true,
+          pengembanganProgram: true,
+          bahanPengajaran: true,
+          orasiIlmiah: true,
+          jabatanStruktural: true,
+          bimbingDosen: true,
+          dataseringPencakokan: true,
+          pengembanganDiri: true,
         },
       }),
     ]);
+
+    const removeNullData = data.map(item =>
+      Object.fromEntries(
+        Object.entries(item).filter(([_, value]) => value !== null)
+      )
+    );
 
     return {
       success: true,
@@ -593,7 +613,7 @@ export class PelaksanaanPendidikanService {
         total,
         totalPages: Math.ceil(total / limit),
       },
-      data,
+      removeNullData,
     };
   }
 
