@@ -42,11 +42,11 @@ export const CreateDosenBiodataSchema = z.object({
 
 export const CreateDataKepegawaianSchema = z.object({
   npwp: z.string().optional().nullable().transform((val) => (val?.trim() === '' ? null : val)),
-  nama_bank: z.string().optional(),
-  no_rek: z.string().optional(),
-  bpjs_kesehatan: z.string().optional(),
-  bpjs_tkerja: z.string().optional(),
-  no_kk: z.string().optional(),
+  nama_bank: z.string().optional().nullable(),
+  no_rek: z.string().optional().nullable(),
+  bpjs_kesehatan: z.string().optional().nullable(),
+  bpjs_tkerja: z.string().optional().nullable(),
+  no_kk: z.string().optional().nullable(),
 });
 
 export const CreateValidatorBiodataSchema = z.object({
