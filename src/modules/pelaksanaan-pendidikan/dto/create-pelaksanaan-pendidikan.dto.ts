@@ -123,7 +123,7 @@ export const bimbingDosenSchema = z.object({
   prodiId: z.coerce.number().int().positive({ message: "Program Studi wajib dipilih." }),
   tglMulai: z.coerce.date({ message: "Tanggal mulai wajib diisi." }),
   tglSelesai: z.coerce.date({ message: "Tanggal selesai wajib diisi." }),
-  JenisBimbingan: z.enum(JenisBimbingan),
+  jenisBimbingan: z.enum(JenisBimbingan),
   jabatan: z.enum(JabatanFungsional),
   bidangAhli: z.string().min(1, { message: "Bidang ahli wajib diisi." }),
   deskripsi: z.string().optional(),

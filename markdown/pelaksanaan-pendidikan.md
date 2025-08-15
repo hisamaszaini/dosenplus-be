@@ -1358,3 +1358,232 @@ Content-Type: multipart/form-data
   }
 }
 ```
+
+## Pelaksanaan Pendidikan - ORASI\_ILMIAH
+
+### Endpoint Create
+
+```
+POST {{host}}:{{port}}/pelaksanaan-pendidikan
+Authorization: Bearer <token>
+Content-Type: multipart/form-data
+```
+
+**Catatan**:
+
+- `file` **wajib** (format PDF)
+- Field `tingkat` harus salah satu dari enum:
+  - `LOKAL`, `DAERAH`, `NASIONAL`, `INTERNASIONAL`
+- Body dikirim dalam bentuk `multipart/form-data` dengan field berikut:
+
+```json
+{
+  "semesterId": 14,
+  "kategori": "ORASI_ILMIAH",
+  "namaKegiatan": "Orasi Ilmiah Nasional Pendidikan Teknologi",
+  "deskripsi": "Menyampaikan orasi tentang inovasi teknologi pendidikan di era digital.",
+  "tingkat": "NASIONAL",
+  "penyelenggara": "Universitas Teknologi Indonesia",
+  "tgl": "2025-09-12"
+}
+```
+
+**Response (201 - Created)**:
+
+```json
+{
+  "success": true,
+  "message": "Data berhasil ditambahkan",
+  "data": {
+    "id": 40,
+    "dosenId": 5,
+    "semesterId": 14,
+    "kategori": "ORASI_ILMIAH",
+    "nilaiPak": 5,
+    "filePath": "pendidikan/989488c6-06e4-43cb-a3df-9a45d30cd4ea.pdf",
+    "statusValidasi": "PENDING",
+    "catatan": null,
+    "createdAt": "2025-08-15T01:23:46.313Z",
+    "updatedAt": "2025-08-15T01:23:46.313Z",
+    "orasiIlmiah": {
+      "id": 2,
+      "pelaksanaanId": 40,
+      "namaKegiatan": "Orasi Ilmiah Nasional Pendidikan Teknologi",
+      "deskripsi": "Menyampaikan orasi tentang inovasi teknologi pendidikan di era digital.",
+      "tingkat": "NASIONAL",
+      "penyelenggara": "Universitas Teknologi Indonesia",
+      "tgl": "2025-09-12T00:00:00.000Z"
+    }
+  }
+}
+```
+
+### Endpoint Update
+
+```
+PATCH {{host}}:{{port}}/pelaksanaan-pendidikan/:pelaksanaanId
+Authorization: Bearer <token>
+Content-Type: multipart/form-data
+```
+
+**Catatan**:
+
+- `file` **opsional** (format PDF)
+- Field `tingkat` harus salah satu dari enum:
+  - `LOKAL`, `DAERAH`, `NASIONAL`, `INTERNASIONAL`
+
+```json
+{
+  "semesterId": 1,
+  "kategori": "ORASI_ILMIAH",
+  "namaKegiatan": "Orasi Ilmiah Nasional Pendidikan Teknologi",
+  "deskripsi": "Menyampaikan orasi tentang inovasi teknologi pendidikan di era digital.",
+  "tingkat": "DAERAH",
+  "penyelenggara": "Universitas Muhammadiyah Malang",
+  "tgl": "2025-09-12"
+}
+```
+
+**Response (200 - OK)**:
+
+```json
+{
+  "success": true,
+  "message": "Data berhasil diperbarui",
+  "data": {
+    "id": 40,
+    "dosenId": 5,
+    "semesterId": 1,
+    "kategori": "ORASI_ILMIAH",
+    "nilaiPak": 5,
+    "filePath": "pendidikan/989488c6-06e4-43cb-a3df-9a45d30cd4ea.pdf",
+    "statusValidasi": "PENDING",
+    "catatan": null,
+    "createdAt": "2025-08-15T01:23:46.313Z",
+    "updatedAt": "2025-08-15T01:24:19.824Z",
+    "orasiIlmiah": {
+      "id": 2,
+      "pelaksanaanId": 40,
+      "namaKegiatan": "Orasi Ilmiah Nasional Pendidikan Teknologi",
+      "deskripsi": "Menyampaikan orasi tentang inovasi teknologi pendidikan di era digital.",
+      "tingkat": "DAERAH",
+      "penyelenggara": "Universitas Muhammadiyah Malang",
+      "tgl": "2025-09-12T00:00:00.000Z"
+    }
+  }
+}
+```
+
+---
+
+## Pelaksanaan Pendidikan - JABATAN\_STRUKTURAL
+
+### Endpoint Create
+
+```
+POST {{host}}:{{port}}/pelaksanaan-pendidikan
+Authorization: Bearer <token>
+Content-Type: multipart/form-data
+```
+
+**Catatan**:
+
+- `file` **wajib** (format PDF)
+- Field `namaJabatan` harus salah satu dari enum:
+  - `Rektor`, `Wakil Rektor`, `Ketua Sekolah`, `Pembantu Ketua Sekolah`, `Direktur Akademi`, `Pembantu Direktur`, `Sekretaris Jurusan`
+- Body dikirim dalam bentuk `multipart/form-data` dengan field berikut:
+
+```json
+{
+  "semesterId": 1,
+  "kategori": "JABATAN_STRUKTURAL",
+  "namaJabatan": "Rektor",
+  "prodiId": 1,
+  "fakultasId": 1,
+  "afiliasi": "Universitas Muhammadiyah Ponorogo"
+}
+```
+
+**Response (201 - Created)**:
+
+```json
+{
+  "success": true,
+  "message": "Data berhasil ditambahkan",
+  "data": {
+    "id": 41,
+    "dosenId": 5,
+    "semesterId": 1,
+    "kategori": "JABATAN_STRUKTURAL",
+    "nilaiPak": 6,
+    "filePath": "pendidikan/fa3fff6a-05bb-4f86-ae6b-59aa503ffcd0.pdf",
+    "statusValidasi": "PENDING",
+    "catatan": null,
+    "createdAt": "2025-08-15T01:37:29.458Z",
+    "updatedAt": "2025-08-15T01:37:29.458Z",
+    "jabatanStruktural": {
+      "id": 1,
+      "pelaksanaanId": 41,
+      "namaJabatan": "Rektor",
+      "prodiId": 1,
+      "fakultasId": 1,
+      "afiliasi": "Universitas Muhammadiyah Ponorogo"
+    }
+  }
+}
+```
+
+### Endpoint Update
+
+```
+PATCH {{host}}:{{port}}/pelaksanaan-pendidikan/:pelaksanaanId
+Authorization: Bearer <token>
+Content-Type: multipart/form-data
+```
+
+**Catatan**:
+
+- `file` **opsional** (format PDF)
+- Field `namaJabatan` harus salah satu dari enum:
+  - `Rektor`, `Wakil Rektor`, `Ketua Sekolah`, `Pembantu Ketua Sekolah`, `Direktur Akademi`, `Pembantu Direktur`, `Sekretaris Jurusan`
+
+```json
+{
+  "semesterId": 14,
+  "kategori": "JABATAN_STRUKTURAL",
+  "namaJabatan": "Wakil Rektor",
+  "prodiId": 1,
+  "fakultasId": 1,
+  "afiliasi": "Universitas Muhammadiyah Ponorogo"
+}
+```
+
+**Response (200 - OK)**:
+
+```json
+{
+  "success": true,
+  "message": "Data berhasil diperbarui",
+  "data": {
+    "id": 41,
+    "dosenId": 5,
+    "semesterId": 14,
+    "kategori": "JABATAN_STRUKTURAL",
+    "nilaiPak": 5,
+    "filePath": "pendidikan/fa3fff6a-05bb-4f86-ae6b-59aa503ffcd0.pdf",
+    "statusValidasi": "PENDING",
+    "catatan": null,
+    "createdAt": "2025-08-15T01:37:29.458Z",
+    "updatedAt": "2025-08-15T01:39:57.397Z",
+    "jabatanStruktural": {
+      "id": 1,
+      "pelaksanaanId": 41,
+      "namaJabatan": "Wakil Rektor",
+      "prodiId": 1,
+      "fakultasId": 1,
+      "afiliasi": "Universitas Muhammadiyah Ponorogo"
+    }
+  }
+}
+```
+
