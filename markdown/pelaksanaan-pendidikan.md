@@ -56,20 +56,30 @@ Form-Data:
 **Status: 200 OK**
 ```json
 {
-  "success": true,
-  "message": "Data berhasil ditambahkan",
-  "data": {
-    "id": 20,
-    "dosenId": 5,
-    "semesterId": 11,
-    "kategori": "PERKULIAHAN",
-    "nilaiPak": 5,
-    "filePath": "pendidikan/ea8ecfd4-5407-4214-b2c0-ed45e3b2644c.pdf",
-    "statusValidasi": "PENDING",
-    "catatan": null,
-    "createdAt": "2025-08-11T14:41:17.254Z",
-    "updatedAt": "2025-08-11T14:41:17.254Z"
-  }
+    "success": true,
+    "message": "Data berhasil ditambahkan",
+    "data": {
+        "id": 45,
+        "dosenId": 5,
+        "semesterId": 11,
+        "kategori": "PERKULIAHAN",
+        "nilaiPak": 4.5,
+        "filePath": "pendidikan/c0cb60c6-9853-48b7-af94-51b776025a07.pdf",
+        "statusValidasi": "PENDING",
+        "catatan": null,
+        "createdAt": "2025-08-15T02:12:48.249Z",
+        "updatedAt": "2025-08-15T02:12:48.249Z",
+        "perkuliahan": {
+            "id": 10,
+            "pelaksanaanId": 45,
+            "mataKuliah": "Algoritma dan Struktur Data",
+            "sks": 3,
+            "jumlahKelas": 3,
+            "totalSks": 9,
+            "prodiId": 1,
+            "fakultasId": 1
+        }
+    }
 }
 ```
 
@@ -136,20 +146,30 @@ Form-Data:
 **Status: 200 OK**  
 ```json
 {
-  "success": true,
-  "message": "Data berhasil diperbarui",
-  "data": {
-    "id": 21,
-    "dosenId": 5,
-    "semesterId": 14,
-    "kategori": "PERKULIAHAN",
-    "nilaiPak": 9,
-    "filePath": "pendidikan/0b72f79e-e4c0-4a2d-8fb3-f3584c863994.pdf",
-    "statusValidasi": "PENDING",
-    "catatan": null,
-    "createdAt": "2025-08-12T03:45:14.867Z",
-    "updatedAt": "2025-08-12T03:55:43.988Z"
-  }
+    "success": true,
+    "message": "Data berhasil diperbarui",
+    "data": {
+        "id": 45,
+        "dosenId": 5,
+        "semesterId": 14,
+        "kategori": "PERKULIAHAN",
+        "nilaiPak": 5,
+        "filePath": "pendidikan/c0cb60c6-9853-48b7-af94-51b776025a07.pdf",
+        "statusValidasi": "PENDING",
+        "catatan": null,
+        "createdAt": "2025-08-15T02:12:48.249Z",
+        "updatedAt": "2025-08-15T02:13:23.358Z",
+        "perkuliahan": {
+            "id": 10,
+            "pelaksanaanId": 45,
+            "mataKuliah": "Algoritma dan Struktur Data",
+            "sks": 3,
+            "jumlahKelas": 3,
+            "totalSks": 9,
+            "prodiId": 1,
+            "fakultasId": 1
+        }
+    }
 }
 ```
 
@@ -210,20 +230,27 @@ Form-Data:
 **Status: 200 OK**  
 ```json
 {
-  "success": true,
-  "message": "Data berhasil ditambahkan",
-  "data": {
-    "id": 22,
-    "dosenId": 5,
-    "semesterId": 14,
-    "kategori": "BIMBINGAN_SEMINAR",
-    "nilaiPak": 10,
-    "filePath": "pendidikan/8a97c6a1-5fe9-4a73-aea7-149e8528071f.pdf",
-    "statusValidasi": "PENDING",
-    "catatan": null,
-    "createdAt": "2025-08-12T04:22:00.670Z",
-    "updatedAt": "2025-08-12T04:22:00.670Z"
-  }
+    "success": true,
+    "message": "Data berhasil ditambahkan",
+    "data": {
+        "id": 46,
+        "dosenId": 5,
+        "semesterId": 14,
+        "kategori": "BIMBINGAN_SEMINAR",
+        "nilaiPak": 10,
+        "filePath": "pendidikan/67003db5-e63f-45ce-a8c4-962c0c983097.pdf",
+        "statusValidasi": "PENDING",
+        "catatan": null,
+        "createdAt": "2025-08-15T02:14:16.582Z",
+        "updatedAt": "2025-08-15T02:14:16.582Z",
+        "bimbinganSeminar": {
+            "id": 3,
+            "pelaksanaanId": 46,
+            "prodiId": 1,
+            "fakultasId": 1,
+            "jumlahMhs": 10
+        }
+    }
 }
 ```
 
@@ -284,20 +311,27 @@ Authorization: Bearer <accessToken>
 **Status: 200 OK**  
 ```json
 {
-  "success": true,
-  "message": "Data berhasil diperbarui",
-  "data": {
-    "id": 22,
-    "dosenId": 5,
-    "semesterId": 14,
-    "kategori": "BIMBINGAN_SEMINAR",
-    "nilaiPak": 8,
-    "filePath": "pendidikan/8a97c6a1-5fe9-4a73-aea7-149e8528071f.pdf",
-    "statusValidasi": "PENDING",
-    "catatan": null,
-    "createdAt": "2025-08-12T04:22:00.670Z",
-    "updatedAt": "2025-08-12T04:24:30.729Z"
-  }
+    "success": true,
+    "message": "Data berhasil diperbarui",
+    "data": {
+        "id": 46,
+        "dosenId": 5,
+        "semesterId": 14,
+        "kategori": "BIMBINGAN_SEMINAR",
+        "nilaiPak": 8,
+        "filePath": "pendidikan/67003db5-e63f-45ce-a8c4-962c0c983097.pdf",
+        "statusValidasi": "PENDING",
+        "catatan": null,
+        "createdAt": "2025-08-15T02:14:16.582Z",
+        "updatedAt": "2025-08-15T02:14:59.309Z",
+        "bimbinganSeminar": {
+            "id": 3,
+            "pelaksanaanId": 46,
+            "prodiId": 1,
+            "fakultasId": 1,
+            "jumlahMhs": 8
+        }
+    }
 }
 ```
 
@@ -361,20 +395,28 @@ Authorization: Bearer <accessToken>
 **Status: 200 OK**  
 ```json
 {
-  "success": true,
-  "message": "Data berhasil ditambahkan",
-  "data": {
-    "id": 23,
-    "dosenId": 5,
-    "semesterId": 14,
-    "kategori": "BIMBINGAN_KKN_PKN_PKL",
-    "nilaiPak": 20,
-    "filePath": "pendidikan/6e5a7c8f-f91f-49b4-a77d-29f2a3785eb6.pdf",
-    "statusValidasi": "PENDING",
-    "catatan": null,
-    "createdAt": "2025-08-12T04:27:54.692Z",
-    "updatedAt": "2025-08-12T04:27:54.692Z"
-  }
+    "success": true,
+    "message": "Data berhasil ditambahkan",
+    "data": {
+        "id": 47,
+        "dosenId": 5,
+        "semesterId": 14,
+        "kategori": "BIMBINGAN_KKN_PKN_PKL",
+        "nilaiPak": 20,
+        "filePath": "pendidikan/d88f61c1-d99d-4ea1-92a0-3998a6294ebf.pdf",
+        "statusValidasi": "PENDING",
+        "catatan": null,
+        "createdAt": "2025-08-15T02:18:09.873Z",
+        "updatedAt": "2025-08-15T02:18:09.873Z",
+        "bimbinganKknPknPkl": {
+            "id": 3,
+            "pelaksanaanId": 47,
+            "jenis": "KKN",
+            "prodiId": 1,
+            "fakultasId": 1,
+            "jumlahMhs": 20
+        }
+    }
 }
 ```
 
@@ -433,20 +475,28 @@ Authorization: Bearer <accessToken>
 **Status: 200 OK**  
 ```json
 {
-  "success": true,
-  "message": "Data berhasil diperbarui",
-  "data": {
-    "id": 23,
-    "dosenId": 5,
-    "semesterId": 14,
-    "kategori": "BIMBINGAN_KKN_PKN_PKL",
-    "nilaiPak": 19,
-    "filePath": "pendidikan/6e5a7c8f-f91f-49b4-a77d-29f2a3785eb6.pdf",
-    "statusValidasi": "PENDING",
-    "catatan": null,
-    "createdAt": "2025-08-12T04:27:54.692Z",
-    "updatedAt": "2025-08-12T04:32:53.456Z"
-  }
+    "success": true,
+    "message": "Data berhasil diperbarui",
+    "data": {
+        "id": 47,
+        "dosenId": 5,
+        "semesterId": 14,
+        "kategori": "BIMBINGAN_KKN_PKN_PKL",
+        "nilaiPak": 19,
+        "filePath": "pendidikan/d88f61c1-d99d-4ea1-92a0-3998a6294ebf.pdf",
+        "statusValidasi": "PENDING",
+        "catatan": null,
+        "createdAt": "2025-08-15T02:18:09.873Z",
+        "updatedAt": "2025-08-15T02:18:52.280Z",
+        "bimbinganKknPknPkl": {
+            "id": 3,
+            "pelaksanaanId": 47,
+            "jenis": "KKN",
+            "prodiId": 1,
+            "fakultasId": 1,
+            "jumlahMhs": 19
+        }
+    }
 }
 ```
 
@@ -509,20 +559,27 @@ Authorization: Bearer <accessToken>
 **Status: 200 OK**  
 ```json
 {
-  "success": true,
-  "message": "Data berhasil ditambahkan",
-  "data": {
-    "id": 24,
-    "dosenId": 5,
-    "semesterId": 14,
-    "kategori": "BIMBINGAN_TUGAS_AKHIR",
-    "nilaiPak": 16,
-    "filePath": "pendidikan/1630c83c-810f-4046-ba5a-fe02021384b8.pdf",
-    "statusValidasi": "PENDING",
-    "catatan": null,
-    "createdAt": "2025-08-12T07:46:02.613Z",
-    "updatedAt": "2025-08-12T07:46:02.613Z"
-  }
+    "success": true,
+    "message": "Data berhasil ditambahkan",
+    "data": {
+        "id": 48,
+        "dosenId": 5,
+        "semesterId": 14,
+        "kategori": "BIMBINGAN_TUGAS_AKHIR",
+        "nilaiPak": 16,
+        "filePath": "pendidikan/6efa7c8a-ebdd-4032-a6a0-2934ba4a4fb9.pdf",
+        "statusValidasi": "PENDING",
+        "catatan": null,
+        "createdAt": "2025-08-15T02:20:53.707Z",
+        "updatedAt": "2025-08-15T02:20:53.707Z",
+        "bimbinganTugasAkhir": {
+            "id": 3,
+            "pelaksanaanId": 48,
+            "jenis": "Disertasi",
+            "peran": "Pembimbing Utama",
+            "jumlahMhs": 2
+        }
+    }
 }
 ```
 
@@ -580,20 +637,27 @@ Authorization: Bearer <accessToken>
 **Status: 200 OK**  
 ```json
 {
-  "success": true,
-  "message": "Data berhasil diperbarui",
-  "data": {
-    "id": 24,
-    "dosenId": 5,
-    "semesterId": 14,
-    "kategori": "BIMBINGAN_TUGAS_AKHIR",
-    "nilaiPak": 12,
-    "filePath": "pendidikan/1630c83c-810f-4046-ba5a-fe02021384b8.pdf",
-    "statusValidasi": "PENDING",
-    "catatan": null,
-    "createdAt": "2025-08-12T07:46:02.613Z",
-    "updatedAt": "2025-08-12T07:47:59.506Z"
-  }
+    "success": true,
+    "message": "Data berhasil diperbarui",
+    "data": {
+        "id": 24,
+        "dosenId": 5,
+        "semesterId": 14,
+        "kategori": "BIMBINGAN_TUGAS_AKHIR",
+        "nilaiPak": 12,
+        "filePath": "pendidikan/1630c83c-810f-4046-ba5a-fe02021384b8.pdf",
+        "statusValidasi": "PENDING",
+        "catatan": null,
+        "createdAt": "2025-08-12T07:46:02.613Z",
+        "updatedAt": "2025-08-15T02:21:26.561Z",
+        "bimbinganTugasAkhir": {
+            "id": 1,
+            "pelaksanaanId": 24,
+            "jenis": "Disertasi",
+            "peran": "Pembimbing Pendamping",
+            "jumlahMhs": 2
+        }
+    }
 }
 ```
 
@@ -653,20 +717,26 @@ Authorization: Bearer <accessToken>
 **Status: 200 OK**  
 ```json
 {
-  "success": true,
-  "message": "Data berhasil ditambahkan",
-  "data": {
-    "id": 25,
-    "dosenId": 5,
-    "semesterId": 14,
-    "kategori": "PENGUJI_UJIAN_AKHIR",
-    "nilaiPak": 1,
-    "filePath": "pendidikan/e0625fe2-a77f-4264-93ca-101d723aedbd.pdf",
-    "statusValidasi": "PENDING",
-    "catatan": null,
-    "createdAt": "2025-08-12T07:52:12.072Z",
-    "updatedAt": "2025-08-12T07:52:12.072Z"
-  }
+    "success": true,
+    "message": "Data berhasil ditambahkan",
+    "data": {
+        "id": 49,
+        "dosenId": 5,
+        "semesterId": 14,
+        "kategori": "PENGUJI_UJIAN_AKHIR",
+        "nilaiPak": 1,
+        "filePath": "pendidikan/b7e46cea-8485-411e-99c8-6f474c3210be.pdf",
+        "statusValidasi": "PENDING",
+        "catatan": null,
+        "createdAt": "2025-08-15T02:22:07.853Z",
+        "updatedAt": "2025-08-15T02:22:07.853Z",
+        "pengujiUjianAkhir": {
+            "id": 2,
+            "pelaksanaanId": 49,
+            "peran": "Ketua Penguji",
+            "jumlahMhs": 1
+        }
+    }
 }
 ```
 
@@ -721,20 +791,26 @@ Authorization: Bearer <accessToken>
 **Status: 200 OK**  
 ```json
 {
-  "success": true,
-  "message": "Data berhasil diperbarui",
-  "data": {
-    "id": 25,
-    "dosenId": 5,
-    "semesterId": 14,
-    "kategori": "PENGUJI_UJIAN_AKHIR",
-    "nilaiPak": 2,
-    "filePath": "pendidikan/e0625fe2-a77f-4264-93ca-101d723aedbd.pdf",
-    "statusValidasi": "PENDING",
-    "catatan": null,
-    "createdAt": "2025-08-12T07:52:12.072Z",
-    "updatedAt": "2025-08-12T07:54:23.326Z"
-  }
+    "success": true,
+    "message": "Data berhasil diperbarui",
+    "data": {
+        "id": 49,
+        "dosenId": 5,
+        "semesterId": 14,
+        "kategori": "PENGUJI_UJIAN_AKHIR",
+        "nilaiPak": 2,
+        "filePath": "pendidikan/b7e46cea-8485-411e-99c8-6f474c3210be.pdf",
+        "statusValidasi": "PENDING",
+        "catatan": null,
+        "createdAt": "2025-08-15T02:22:07.853Z",
+        "updatedAt": "2025-08-15T02:22:23.809Z",
+        "pengujiUjianAkhir": {
+            "id": 2,
+            "pelaksanaanId": 49,
+            "peran": "Anggota Penguji",
+            "jumlahMhs": 4
+        }
+    }
 }
 ```
 
@@ -795,20 +871,26 @@ Authorization: Bearer <accessToken>
 **Status: 200 OK**  
 ```json
 {
-  "success": true,
-  "message": "Data berhasil ditambahkan",
-  "data": {
-    "id": 26,
-    "dosenId": 5,
-    "semesterId": 14,
-    "kategori": "PEMBINA_KEGIATAN_MHS",
-    "nilaiPak": 2,
-    "filePath": "pendidikan/512954fa-609d-40ef-8b54-15ed18576b90.pdf",
-    "statusValidasi": "PENDING",
-    "catatan": null,
-    "createdAt": "2025-08-12T07:58:30.348Z",
-    "updatedAt": "2025-08-12T07:58:30.348Z"
-  }
+    "success": true,
+    "message": "Data berhasil ditambahkan",
+    "data": {
+        "id": 50,
+        "dosenId": 5,
+        "semesterId": 14,
+        "kategori": "PEMBINA_KEGIATAN_MHS",
+        "nilaiPak": 2,
+        "filePath": "pendidikan/93b91993-9e81-409b-b1be-cd59000b7c81.pdf",
+        "statusValidasi": "PENDING",
+        "catatan": null,
+        "createdAt": "2025-08-15T02:23:20.991Z",
+        "updatedAt": "2025-08-15T02:23:20.991Z",
+        "pembinaKegiatanMhs": {
+            "id": 2,
+            "pelaksanaanId": 50,
+            "namaKegiatan": "Pembinaan UKM Robotika",
+            "luaran": "Lomba Robot Nasional"
+        }
+    }
 }
 ```
 
@@ -863,20 +945,26 @@ Authorization: Bearer <accessToken>
 **Status: 200 OK**  
 ```json
 {
-  "success": true,
-  "message": "Data berhasil diperbarui",
-  "data": {
-    "id": 26,
-    "dosenId": 5,
-    "semesterId": 14,
-    "kategori": "PEMBINA_KEGIATAN_MHS",
-    "nilaiPak": 2,
-    "filePath": "pendidikan/512954fa-609d-40ef-8b54-15ed18576b90.pdf",
-    "statusValidasi": "PENDING",
-    "catatan": null,
-    "createdAt": "2025-08-12T07:58:30.348Z",
-    "updatedAt": "2025-08-12T08:00:00.971Z"
-  }
+    "success": true,
+    "message": "Data berhasil diperbarui",
+    "data": {
+        "id": 50,
+        "dosenId": 5,
+        "semesterId": 14,
+        "kategori": "PEMBINA_KEGIATAN_MHS",
+        "nilaiPak": 2,
+        "filePath": "pendidikan/93b91993-9e81-409b-b1be-cd59000b7c81.pdf",
+        "statusValidasi": "PENDING",
+        "catatan": null,
+        "createdAt": "2025-08-15T02:23:20.991Z",
+        "updatedAt": "2025-08-15T02:23:42.917Z",
+        "pembinaKegiatanMhs": {
+            "id": 2,
+            "pelaksanaanId": 50,
+            "namaKegiatan": "Pembinaan UKM Sepak Bola",
+            "luaran": "Lomba Sepak Bola Nasional"
+        }
+    }
 }
 ```
 
@@ -941,20 +1029,28 @@ Authorization: Bearer <accessToken>
 **Status: 200 OK**  
 ```json
 {
-  "success": true,
-  "message": "Data berhasil ditambahkan",
-  "data": {
-    "id": 27,
-    "dosenId": 5,
-    "semesterId": 14,
-    "kategori": "PENGEMBANGAN_PROGRAM",
-    "nilaiPak": 2,
-    "filePath": "pendidikan/16ba1187-9144-46b0-8eae-5f1c23bd7199.pdf",
-    "statusValidasi": "PENDING",
-    "catatan": null,
-    "createdAt": "2025-08-12T08:05:11.483Z",
-    "updatedAt": "2025-08-12T08:05:11.483Z"
-  }
+    "success": true,
+    "message": "Data berhasil ditambahkan",
+    "data": {
+        "id": 51,
+        "dosenId": 5,
+        "semesterId": 14,
+        "kategori": "PENGEMBANGAN_PROGRAM",
+        "nilaiPak": 2,
+        "filePath": "pendidikan/3b5d6d88-e5db-479e-8da0-43e3c2107a33.pdf",
+        "statusValidasi": "PENDING",
+        "catatan": null,
+        "createdAt": "2025-08-15T02:24:42.472Z",
+        "updatedAt": "2025-08-15T02:24:42.472Z",
+        "pengembanganProgram": {
+            "id": 2,
+            "pelaksanaanId": 51,
+            "programPengembangan": "Pengembangan Modul Pembelajaran Interaktif",
+            "prodiId": 1,
+            "fakultasId": 1,
+            "mataKuliah": "Algoritma dan Struktur Data"
+        }
+    }
 }
 ```
 
@@ -1013,20 +1109,28 @@ Authorization: Bearer <accessToken>
 **Status: 200 OK**  
 ```json
 {
-  "success": true,
-  "message": "Data berhasil diperbarui",
-  "data": {
-    "id": 27,
-    "dosenId": 5,
-    "semesterId": 14,
-    "kategori": "PENGEMBANGAN_PROGRAM",
-    "nilaiPak": 2,
-    "filePath": "pendidikan/16ba1187-9144-46b0-8eae-5f1c23bd7199.pdf",
-    "statusValidasi": "PENDING",
-    "catatan": null,
-    "createdAt": "2025-08-12T08:05:11.483Z",
-    "updatedAt": "2025-08-12T08:07:04.324Z"
-  }
+    "success": true,
+    "message": "Data berhasil diperbarui",
+    "data": {
+        "id": 51,
+        "dosenId": 5,
+        "semesterId": 14,
+        "kategori": "PENGEMBANGAN_PROGRAM",
+        "nilaiPak": 2,
+        "filePath": "pendidikan/3b5d6d88-e5db-479e-8da0-43e3c2107a33.pdf",
+        "statusValidasi": "PENDING",
+        "catatan": null,
+        "createdAt": "2025-08-15T02:24:42.472Z",
+        "updatedAt": "2025-08-15T02:25:03.806Z",
+        "pengembanganProgram": {
+            "id": 2,
+            "pelaksanaanId": 51,
+            "programPengembangan": "Pengembangan Modul Pembelajaran Interaktif dan Efektif",
+            "prodiId": 6,
+            "fakultasId": 1,
+            "mataKuliah": "Algoritma dan Struktur Data"
+        }
+    }
 }
 ```
 
@@ -1714,18 +1818,17 @@ Content-Type: multipart/form-data
       "jumlahDsn": 5
     }
   }
-}```
-
----
+}
+```
 
 ## Pelaksanaan Pendidikan - DATA_SERING_PENCAKOKAN
 
 ### Endpoint Create
-```
 
+```
 POST {{host}}:{{port}}/pelaksanaan-pendidikan Authorization: Bearer  Content-Type: multipart/form-data
 
-````
+```
 
 **Catatan**:
 
