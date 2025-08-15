@@ -39,8 +39,8 @@ export class UsersService {
         const errors: Record<string, string> = {};
 
         const OR: Prisma.UserWhereInput[] = [];
-        if (email) OR.push({ email });
-        if (username) OR.push({ username });
+        if (email) OR.push({ email: { equals: email, mode: 'insensitive' } });
+        if (username) OR.push({ username: { equals: username, mode: 'insensitive' } });
 
         if (OR.length === 0) return;
 
