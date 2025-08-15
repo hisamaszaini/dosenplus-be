@@ -312,6 +312,14 @@ export class PelaksanaanPendidikanService {
               nilaiPak,
               bahanPengajaran: { create: bahanPengajaranData }
             },
+            include: {
+              bahanPengajaran: {
+                include: {
+                  bukuAjar: true,
+                  produkLain: true
+                }
+              }
+            }
           }),
         };
       }
@@ -541,7 +549,17 @@ export class PelaksanaanPendidikanService {
     }
   }
 
-  async findAll(query: any, dosenId?: number) {
+  async findAll(query: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    status?: string;
+    dosenId?: number;
+    sortBy?: string;
+    sortOrder?: string;
+    kategori?: string;
+    semesterId?: number;
+  }, dosenId?: number) {
     const page = Number(query.page) || 1;
     const limit = Number(query.limit) || 10;
     const skip = (page - 1) * limit;
@@ -550,7 +568,13 @@ export class PelaksanaanPendidikanService {
     const semesterId = query.semesterId ? Number(query.semesterId) : undefined;
 
     const sortField = query.sortBy || 'createdAt';
-    const sortOrder = query.order === 'asc' ? 'asc' : 'desc';
+    const sortOrder = query.sortOrder === 'asc' ? 'asc' : 'desc';
+
+    // Sorting
+    const allowedSortFields = ['createdAt', 'updatedAt', 'nilaiPak', 'kategori', 'statusValidasi', 'jenjang'];
+    const sortBy = query.sortBy && allowedSortFields.includes(query.sortBy)
+      ? query.sortBy
+      : 'createdAt';
 
     const where: Prisma.PelaksanaanPendidikanWhereInput = {};
 
@@ -581,7 +605,6 @@ export class PelaksanaanPendidikanService {
           dosen: { select: { id: true, nama: true } },
           semester: true,
 
-          // Semua relasi yang ingin di-include
           perkuliahan: true,
           bimbinganSeminar: true,
           bimbinganKknPknPkl: true,
@@ -634,7 +657,12 @@ export class PelaksanaanPendidikanService {
           pengujiUjianAkhir: true,
           pembinaKegiatanMhs: true,
           pengembanganProgram: true,
-          bahanPengajaran: true,
+          bahanPengajaran: {
+            include: {
+              bukuAjar: true,
+              produkLain: true
+            }
+          },
           orasiIlmiah: true,
           jabatanStruktural: true,
           bimbingDosen: true,

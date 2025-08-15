@@ -358,20 +358,20 @@ model Perkuliahan {
   fakultasId    Int?
 
   pelaksanaan PelaksanaanPendidikan @relation(fields: [pelaksanaanId], references: [id], onDelete: Cascade)
-  prodi       Prodi?                 @relation(fields: [prodiId], references: [id], onDelete: SetNull)
-  fakultas    Fakultas?              @relation(fields: [fakultasId], references: [id], onDelete: SetNull)
+  prodi       Prodi?                @relation(fields: [prodiId], references: [id], onDelete: SetNull)
+  fakultas    Fakultas?             @relation(fields: [fakultasId], references: [id], onDelete: SetNull)
 }
 
 model BimbinganSeminar {
-  id            Int @id @default(autoincrement())
-  pelaksanaanId Int @unique
+  id            Int  @id @default(autoincrement())
+  pelaksanaanId Int  @unique
   prodiId       Int?
   fakultasId    Int?
   jumlahMhs     Int
 
   pelaksanaan PelaksanaanPendidikan @relation(fields: [pelaksanaanId], references: [id], onDelete: Cascade)
-  prodi       Prodi?                 @relation(fields: [prodiId], references: [id], onDelete: SetNull)
-  fakultas    Fakultas?              @relation(fields: [fakultasId], references: [id], onDelete: SetNull)
+  prodi       Prodi?                @relation(fields: [prodiId], references: [id], onDelete: SetNull)
+  fakultas    Fakultas?             @relation(fields: [fakultasId], references: [id], onDelete: SetNull)
 }
 
 enum JenisKKNPKNPKL {
@@ -389,8 +389,8 @@ model BimbinganKknPknPkl {
   jumlahMhs     Int
 
   pelaksanaan PelaksanaanPendidikan @relation(fields: [pelaksanaanId], references: [id], onDelete: Cascade)
-  prodi       Prodi?                 @relation(fields: [prodiId], references: [id], onDelete: SetNull)
-  fakultas    Fakultas?              @relation(fields: [fakultasId], references: [id], onDelete: SetNull)
+  prodi       Prodi?                @relation(fields: [prodiId], references: [id], onDelete: SetNull)
+  fakultas    Fakultas?             @relation(fields: [fakultasId], references: [id], onDelete: SetNull)
 }
 
 model BimbinganTugasAkhir {
@@ -430,8 +430,8 @@ model PengembanganProgramKuliah {
   mataKuliah          String
 
   pelaksanaan PelaksanaanPendidikan @relation(fields: [pelaksanaanId], references: [id], onDelete: Cascade)
-  prodi       Prodi?                 @relation(fields: [prodiId], references: [id], onDelete: SetNull)
-  fakultas    Fakultas?              @relation(fields: [fakultasId], references: [id], onDelete: SetNull)
+  prodi       Prodi?                @relation(fields: [prodiId], references: [id], onDelete: SetNull)
+  fakultas    Fakultas?             @relation(fields: [fakultasId], references: [id], onDelete: SetNull)
 }
 
 enum JenisBahanPengajaran {
@@ -470,11 +470,11 @@ model ProdukBahanLainnya {
   judul         String
   jumlahHalaman Int
   mataKuliah    String
-  prodiId       Int
-  fakultasId    Int
+  prodiId       Int?
+  fakultasId    Int?
 
-  prodi    Prodi    @relation(fields: [prodiId], references: [id])
-  fakultas Fakultas @relation(fields: [fakultasId], references: [id])
+  prodi    Prodi?    @relation(fields: [prodiId], references: [id], onDelete: SetNull)
+  fakultas Fakultas? @relation(fields: [fakultasId], references: [id], onDelete: SetNull)
 
   bahanPengajaran BahanPengajaran? @relation("ProdukLainToBahanPengajaran")
 }
@@ -507,8 +507,8 @@ model JabatanStruktural {
   afiliasi      String
 
   pelaksanaan PelaksanaanPendidikan @relation(fields: [pelaksanaanId], references: [id], onDelete: Cascade)
-  prodi       Prodi?                 @relation(fields: [prodiId], references: [id], onDelete: SetNull)
-  fakultas    Fakultas?              @relation(fields: [fakultasId], references: [id], onDelete: SetNull)
+  prodi       Prodi?                @relation(fields: [prodiId], references: [id], onDelete: SetNull)
+  fakultas    Fakultas?             @relation(fields: [fakultasId], references: [id], onDelete: SetNull)
 }
 
 enum JenisBimbingan {
@@ -529,7 +529,7 @@ model BimbingDosen {
   jumlahDsn      Int
 
   pelaksanaan PelaksanaanPendidikan @relation(fields: [pelaksanaanId], references: [id], onDelete: Cascade)
-  prodi       Prodi?                 @relation(fields: [prodiId], references: [id], onDelete: SetNull)
+  prodi       Prodi?                @relation(fields: [prodiId], references: [id], onDelete: SetNull)
 }
 
 enum JenisDatasering {
@@ -562,8 +562,8 @@ model PengembanganDiri {
   fakultasId    Int?
 
   pelaksanaan PelaksanaanPendidikan @relation(fields: [pelaksanaanId], references: [id], onDelete: Cascade)
-  prodi       Prodi?                 @relation(fields: [prodiId], references: [id], onDelete: SetNull)
-  fakultas    Fakultas?              @relation(fields: [fakultasId], references: [id], onDelete: SetNull)
+  prodi       Prodi?                @relation(fields: [prodiId], references: [id], onDelete: SetNull)
+  fakultas    Fakultas?             @relation(fields: [fakultasId], references: [id], onDelete: SetNull)
 }
 
 model ActivityLog {
