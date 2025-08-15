@@ -1587,3 +1587,373 @@ Content-Type: multipart/form-data
 }
 ```
 
+## Pelaksanaan Pendidikan - BIMBING_DOSEN
+
+### Endpoint Create
+
+```
+POST {{host}}:{{port}}/pelaksanaan-pendidikan
+Authorization: Bearer <token>
+Content-Type: multipart/form-data
+```
+
+**Catatan**:
+
+- `file` **wajib** (format PDF)
+- Field `jenisBimbingan` harus salah satu dari enum:
+  - `REGULER`, `PENCAKOKAN`
+- Field `jabatan` harus salah satu dari enum:
+  - `ASISTEN_AHLI`, `LEKTOR`, `LEKTOR_KEPALA`, `GURU_BESAR`
+
+```json
+{
+  "semesterId": 1,
+  "kategori": "BIMBING_DOSEN",
+  "prodiId": 1,
+  "tglMulai": "2025-08-01",
+  "tglSelesai": "2025-08-15",
+  "jenisBimbingan": "REGULER",
+  "jabatan": "LEKTOR",
+  "bidangAhli": "Teknologi Pendidikan",
+  "deskripsi": "Bimbingan rutin dosen dalam pengembangan kurikulum digital",
+  "jumlahDsn": 3
+}
+```
+
+**Response (201 - Created)**:
+
+```json
+{
+  "success": true,
+  "message": "Data berhasil ditambahkan",
+  "data": {
+    "id": 42,
+    "dosenId": 5,
+    "semesterId": 1,
+    "kategori": "BIMBING_DOSEN",
+    "nilaiPak": 1,
+    "filePath": "pendidikan/f0674a64-7c1c-41d7-91f3-8fa358be8e10.pdf",
+    "statusValidasi": "PENDING",
+    "catatan": null,
+    "createdAt": "2025-08-15T01:53:28.723Z",
+    "updatedAt": "2025-08-15T01:53:28.723Z",
+    "bimbingDosen": {
+      "id": 1,
+      "pelaksanaanId": 42,
+      "prodiId": 1,
+      "tglMulai": "2025-08-01T00:00:00.000Z",
+      "tglSelesai": "2025-08-15T00:00:00.000Z",
+      "jenisBimbingan": "REGULER",
+      "jabatan": "LEKTOR",
+      "bidangAhli": "Teknologi Pendidikan",
+      "deskripsi": "Bimbingan rutin dosen dalam pengembangan kurikulum digital",
+      "jumlahDsn": 3
+    }
+  }
+}
+```
+
+### Endpoint Update
+
+```
+PATCH {{host}}:{{port}}/pelaksanaan-pendidikan/:pelaksanaanId
+Authorization: Bearer <token>
+Content-Type: multipart/form-data
+```
+
+**Catatan**:
+
+- `file` **opsional** (format PDF)
+- Field `jenisBimbingan` harus salah satu dari enum:
+  - `REGULER`, `PENCAKOKAN`
+- Field `jabatan` harus salah satu dari enum:
+  - `ASISTEN_AHLI`, `LEKTOR`, `LEKTOR_KEPALA`, `GURU_BESAR`
+
+```json
+{
+  "semesterId": 1,
+  "kategori": "BIMBING_DOSEN",
+  "prodiId": 1,
+  "tglMulai": "2025-08-01",
+  "tglSelesai": "2025-08-15",
+  "jenisBimbingan": "REGULER",
+  "jabatan": "LEKTOR",
+  "bidangAhli": "Teknologi Masa Depan",
+  "deskripsi": "Bimbingan rutin dosen dalam pengembangan kurikulum digital",
+  "jumlahDsn": 5
+}
+```
+
+**Response (200 - OK)**:
+
+```json
+{
+  "success": true,
+  "message": "Data berhasil diperbarui",
+  "data": {
+    "id": 42,
+    "dosenId": 5,
+    "semesterId": 1,
+    "kategori": "BIMBING_DOSEN",
+    "nilaiPak": 1,
+    "filePath": "pendidikan/f0674a64-7c1c-41d7-91f3-8fa358be8e10.pdf",
+    "statusValidasi": "PENDING",
+    "catatan": null,
+    "createdAt": "2025-08-15T01:53:28.723Z",
+    "updatedAt": "2025-08-15T01:55:29.753Z",
+    "bimbingDosen": {
+      "id": 1,
+      "pelaksanaanId": 42,
+      "prodiId": 1,
+      "tglMulai": "2025-08-01T00:00:00.000Z",
+      "tglSelesai": "2025-08-15T00:00:00.000Z",
+      "jenisBimbingan": "REGULER",
+      "jabatan": "LEKTOR",
+      "bidangAhli": "Teknologi Masa Depan",
+      "deskripsi": "Bimbingan rutin dosen dalam pengembangan kurikulum digital",
+      "jumlahDsn": 5
+    }
+  }
+}```
+
+---
+
+## Pelaksanaan Pendidikan - DATA_SERING_PENCAKOKAN
+
+### Endpoint Create
+```
+
+POST {{host}}:{{port}}/pelaksanaan-pendidikan Authorization: Bearer  Content-Type: multipart/form-data
+
+````
+
+**Catatan**:
+
+- `file` **wajib** (format PDF)
+- Field `jenis` harus salah satu dari enum:
+  - `DATASERING`, `PENCAKOKAN`
+
+```json
+{
+  "semesterId": 1,
+  "kategori": "DATA_SERING_PENCAKOKAN",
+  "perguruanTinggi": "Universitas Teknologi Indonesia",
+  "jenis": "PENCAKOKAN",
+  "tglMulai": "2025-08-01",
+  "tglSelesai": "2025-08-15",
+  "bidangAhli": "Teknologi Pendidikan"
+}
+````
+
+**Response (201 - Created)**:
+
+```json
+{
+  "success": true,
+  "message": "Data berhasil ditambahkan",
+  "data": {
+    "id": 43,
+    "dosenId": 5,
+    "semesterId": 1,
+    "kategori": "DATA_SERING_PENCAKOKAN",
+    "nilaiPak": 4,
+    "filePath": "pendidikan/756c1ede-660d-48c9-95dd-d47d77bc692f.pdf",
+    "statusValidasi": "PENDING",
+    "catatan": null,
+    "createdAt": "2025-08-15T01:57:58.553Z",
+    "updatedAt": "2025-08-15T01:57:58.553Z",
+    "dataseringPencakokan": {
+      "id": 1,
+      "pelaksanaanId": 43,
+      "perguruanTinggi": "Universitas Teknologi Indonesia",
+      "jenis": "PENCAKOKAN",
+      "tglMulai": "2025-08-01T00:00:00.000Z",
+      "tglSelesai": "2025-08-15T00:00:00.000Z",
+      "bidangAhli": "Teknologi Pendidikan"
+    }
+  }
+}
+```
+
+### Endpoint Update
+
+```
+PATCH {{host}}:{{port}}/pelaksanaan-pendidikan/:pelaksanaanId
+Authorization: Bearer <token>
+Content-Type: multipart/form-data
+```
+
+**Catatan**:
+
+- `file` **opsional** (format PDF)
+- Field `jenis` harus salah satu dari enum:
+  - `DATASERING`, `PENCAKOKAN`
+
+```json
+{
+  "semesterId": 1,
+  "kategori": "DATA_SERING_PENCAKOKAN",
+  "perguruanTinggi": "Universitas Teknologi Indonesia",
+  "jenis": "DATASERING",
+  "tglMulai": "2025-08-01",
+  "tglSelesai": "2025-08-15",
+  "bidangAhli": "Teknologi Pendidikan"
+}
+```
+
+**Response (200 - OK)**:
+
+```json
+{
+  "success": true,
+  "message": "Data berhasil diperbarui",
+  "data": {
+    "id": 43,
+    "dosenId": 5,
+    "semesterId": 1,
+    "kategori": "DATA_SERING_PENCAKOKAN",
+    "nilaiPak": 4,
+    "filePath": "pendidikan/756c1ede-660d-48c9-95dd-d47d77bc692f.pdf",
+    "statusValidasi": "PENDING",
+    "catatan": null,
+    "createdAt": "2025-08-15T01:57:58.553Z",
+    "updatedAt": "2025-08-15T02:00:17.625Z",
+    "dataseringPencakokan": {
+      "id": 1,
+      "pelaksanaanId": 43,
+      "perguruanTinggi": "Universitas Teknologi Indonesia",
+      "jenis": "DATASERING",
+      "tglMulai": "2025-08-01T00:00:00.000Z",
+      "tglSelesai": "2025-08-15T00:00:00.000Z",
+      "bidangAhli": "Teknologi Pendidikan"
+    }
+  }
+}
+
+```
+## Pelaksanaan Pendidikan - PENGEMBANGAN\_DIRI
+
+### Endpoint Create
+
+```
+POST {{host}}:{{port}}/pelaksanaan-pendidikan
+Authorization: Bearer <token>
+Content-Type: multipart/form-data
+```
+
+**Catatan**:
+
+- `file` **wajib** (format PDF)
+
+```json
+{
+  "semesterId": 1,
+  "kategori": "PENGEMBANGAN_DIRI",
+  "namaKegiatan": "Workshop Inovasi Pendidikan Digital",
+  "deskripsi": "Pelatihan intensif mengenai implementasi teknologi digital dalam pendidikan.",
+  "tglMulai": "2025-08-01",
+  "tglSelesai": "2025-08-03",
+  "penyelenggara": "Universitas Muhammadiyah Indonesia",
+  "tempat": "Gedung A, Universitas Muhammadiyah Indonesia",
+  "lamaJam": 12,
+  "prodiId": 1,
+  "fakultasId": 1
+}
+```
+
+**Response (201 - Created)**:
+
+```json
+{
+  "success": true,
+  "message": "Data berhasil ditambahkan",
+  "data": {
+    "id": 44,
+    "dosenId": 5,
+    "semesterId": 1,
+    "kategori": "PENGEMBANGAN_DIRI",
+    "nilaiPak": 0.5,
+    "filePath": "pendidikan/da0384ee-931e-4197-b0ba-c56b7581538c.pdf",
+    "statusValidasi": "PENDING",
+    "catatan": null,
+    "createdAt": "2025-08-15T02:05:50.072Z",
+    "updatedAt": "2025-08-15T02:05:50.072Z",
+    "pengembanganDiri": {
+      "id": 1,
+      "pelaksanaanId": 44,
+      "namaKegiatan": "Workshop Inovasi Pendidikan Digital",
+      "deskripsi": "Pelatihan intensif mengenai implementasi teknologi digital dalam pendidikan.",
+      "tglMulai": "2025-08-01T00:00:00.000Z",
+      "tglSelesai": "2025-08-03T00:00:00.000Z",
+      "penyelenggara": "Universitas Muhammadiyah Indonesia",
+      "tempat": "Gedung A, Universitas Muhammadiyah Indonesia",
+      "lamaJam": 12,
+      "prodiId": 1,
+      "fakultasId": 1
+    }
+  }
+}
+```
+
+### Endpoint Update
+
+```
+PATCH {{host}}:{{port}}/pelaksanaan-pendidikan/:pelaksanaanId
+Authorization: Bearer <token>
+Content-Type: multipart/form-data
+```
+
+**Catatan**:
+
+- `file` **opsional** (format PDF)
+
+```json
+{
+  "semesterId": 1,
+  "kategori": "PENGEMBANGAN_DIRI",
+  "namaKegiatan": "Workshop Mikrotik",
+  "deskripsi": "Pelatihan intensif mengenai implementasi Mikrotik.",
+  "tglMulai": "2025-08-01",
+  "tglSelesai": "2025-08-03",
+  "penyelenggara": "Universitas Muhammadiyah Indonesia",
+  "tempat": "Gedung A, Universitas Muhammadiyah Indonesia",
+  "lamaJam": 12,
+  "prodiId": 1,
+  "fakultasId": 1
+}
+```
+
+**Response (200 - OK)**:
+
+```json
+{
+  "success": true,
+  "message": "Data berhasil diperbarui",
+  "data": {
+    "id": 44,
+    "dosenId": 5,
+    "semesterId": 1,
+    "kategori": "PENGEMBANGAN_DIRI",
+    "nilaiPak": 0.5,
+    "filePath": "pendidikan/da0384ee-931e-4197-b0ba-c56b7581538c.pdf",
+    "statusValidasi": "PENDING",
+    "catatan": null,
+    "createdAt": "2025-08-15T02:05:50.072Z",
+    "updatedAt": "2025-08-15T02:08:52.775Z",
+    "pengembanganDiri": {
+      "id": 1,
+      "pelaksanaanId": 44,
+      "namaKegiatan": "Workshop Mikrotik",
+      "deskripsi": "Pelatihan intensif mengenai implementasi Mikrotik.",
+      "tglMulai": "2025-08-01T00:00:00.000Z",
+      "tglSelesai": "2025-08-03T00:00:00.000Z",
+      "penyelenggara": "Universitas Muhammadiyah Indonesia",
+      "tempat": "Gedung A, Universitas Muhammadiyah Indonesia",
+      "lamaJam": 12,
+      "prodiId": 1,
+      "fakultasId": 1
+    }
+  }
+}
+
+```
