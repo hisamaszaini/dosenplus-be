@@ -1045,7 +1045,7 @@ POST {{host}}:{{port}}/pelaksanaan-pendidikan
 ```
 
 **Deskripsi**  
-Membuat record pelaksanaan pendidikan kategori **BAHAN_PENGAJARAN**.  
+Membuat record pelaksanaan pendidikan kategori **BAHAN_PENGAJARAN** dengan jenis **PRODUK_LAIN**.  
 File PDF **wajib** dilampirkan.
 
 ---
@@ -1059,32 +1059,34 @@ Authorization: Bearer <accessToken>
 ```
 
 **Form Data**  
-| Field         | Tipe    | Wajib | Keterangan                                 |
-| ------------- | ------- | ----- | ------------------------------------------ |
-| file          | File    | Ya    | File PDF bukti kegiatan                    |
-| semesterId    | Integer | Ya    | ID Semester                                |
-| kategori      | String  | Ya    | Nilai harus `BAHAN_PENGAJARAN`             |
-| jenis         | String  | Ya    | Jenis bahan pengajaran (`BUKU_AJAR`, dsb.) |
-| judul         | String  | Ya    | Judul bahan pengajaran                     |
-| tglTerbit     | Date    | Ya    | Tanggal terbit dalam format `YYYY-MM-DD`   |
-| penerbit      | String  | Ya    | Nama penerbit                              |
-| jumlahHalaman | Integer | Ya    | Jumlah halaman                             |
-| isbn          | String  | Ya    | Nomor ISBN                                 |
+| Field         | Tipe    | Wajib | Keterangan                                                                 |
+| ------------- | ------- | ----- | -------------------------------------------------------------------------- |
+| file          | File    | Ya    | File PDF bukti kegiatan                                                    |
+| semesterId    | Integer | Ya    | ID Semester                                                                |
+| kategori      | String  | Ya    | Nilai harus `BAHAN_PENGAJARAN`                                             |
+| jenis         | String  | Ya    | Harus diisi `PRODUK_LAIN`                                                  |
+| jenisProduk   | String  | Ya    | Pilihan: `Diktat`, `Modul`, `Petunjuk praktikum`, `Model`, `Alat bantu`, `Audio visual`, `Naskah tutorial`, `Job sheet praktikum` |
+| judul         | String  | Ya    | Judul produk                                                               |
+| jumlahHalaman | Integer | Ya    | Jumlah halaman                                                             |
+| mataKuliah    | String  | Ya    | Nama mata kuliah terkait                                                   |
+| prodiId       | Integer | Ya    | ID program studi                                                           |
+| fakultasId    | Integer | Ya    | ID fakultas                                                                |
 
 **Contoh Body (form-data)**  
 
-- **file**: File bukti bahan pengajaran (wajib, format `.pdf`)
-- **data**: JSON string berisi data bahan pengajaran. Contoh:
+- **file**: File bukti (wajib, format `.pdf`)  
+- **data**: JSON string berisi data. Contoh:
   ```json
   {
     "semesterId": 14,
     "kategori": "BAHAN_PENGAJARAN",
-    "jenis": "BUKU_AJAR",
-    "judul": "Pengantar Algoritma dan Pemrograman",
-    "tglTerbit": "2025-01-15",
-    "penerbit": "Penerbit Teknologi Nusantara",
-    "jumlahHalaman": 250,
-    "isbn": "978-602-1234-56-7"
+    "jenis": "PRODUK_LAIN",
+    "jenisProduk": "Modul",
+    "judul": "Modul Praktikum Basis Data",
+    "jumlahHalaman": 80,
+    "mataKuliah": "Basis Data",
+    "prodiId": 1,
+    "fakultasId": 1
   }
   ```
 
@@ -1095,37 +1097,37 @@ Authorization: Bearer <accessToken>
 **Status: 200 OK**  
 ```json
 {
-    "success": true,
-    "message": "Data berhasil ditambahkan",
-    "data": {
-        "id": 37,
-        "dosenId": 5,
-        "semesterId": 14,
-        "kategori": "BAHAN_PENGAJARAN",
-        "nilaiPak": 5,
-        "filePath": "pendidikan/6e583ca9-f706-446c-9e08-2ae4b568387a.pdf",
-        "statusValidasi": "PENDING",
-        "catatan": null,
-        "createdAt": "2025-08-15T00:48:34.146Z",
-        "updatedAt": "2025-08-15T00:48:34.146Z",
-        "bahanPengajaran": {
-            "id": 3,
-            "pelaksanaanId": 37,
-            "jenis": "PRODUK_LAIN",
-            "bukuAjarId": null,
-            "produkLainId": 4,
-            "bukuAjar": null,
-            "produkLain": {
-                "id": 4,
-                "jenisProduk": "Modul",
-                "judul": "Modul Praktikum Basis Data",
-                "jumlahHalaman": 80,
-                "mataKuliah": "Basis Data",
-                "prodiId": 1,
-                "fakultasId": 1
-            }
-        }
+  "success": true,
+  "message": "Data berhasil ditambahkan",
+  "data": {
+    "id": 37,
+    "dosenId": 5,
+    "semesterId": 14,
+    "kategori": "BAHAN_PENGAJARAN",
+    "nilaiPak": 5,
+    "filePath": "pendidikan/6e583ca9-f706-446c-9e08-2ae4b568387a.pdf",
+    "statusValidasi": "PENDING",
+    "catatan": null,
+    "createdAt": "2025-08-15T00:48:34.146Z",
+    "updatedAt": "2025-08-15T00:48:34.146Z",
+    "bahanPengajaran": {
+      "id": 3,
+      "pelaksanaanId": 37,
+      "jenis": "PRODUK_LAIN",
+      "bukuAjarId": null,
+      "produkLainId": 4,
+      "bukuAjar": null,
+      "produkLain": {
+        "id": 4,
+        "jenisProduk": "Modul",
+        "judul": "Modul Praktikum Basis Data",
+        "jumlahHalaman": 80,
+        "mataKuliah": "Basis Data",
+        "prodiId": 1,
+        "fakultasId": 1
+      }
     }
+  }
 }
 ```
 
@@ -1139,8 +1141,8 @@ PATCH {{host}}:{{port}}/pelaksanaan-pendidikan/:id
 ```
 
 **Deskripsi**  
-Memperbarui data pelaksanaan pendidikan kategori **BAHAN_PENGAJARAN** berdasarkan `id`.  
-File PDF **opsional** untuk diupload ulang.
+Memperbarui data kategori **PRODUK_LAIN** berdasarkan `id`.  
+File PDF **opsional**.
 
 ---
 
@@ -1153,22 +1155,23 @@ Authorization: Bearer <accessToken>
 ```
 
 **Form Data**  
-| Field         | Tipe    | Wajib | Keterangan                                 |
-| ------------- | ------- | ----- | ------------------------------------------ |
-| file          | File    | Tidak | File PDF bukti kegiatan (opsional)         |
-| semesterId    | Integer | Ya    | ID Semester                                |
-| kategori      | String  | Ya    | Nilai harus `BAHAN_PENGAJARAN`             |
-| jenis         | String  | Ya    | Jenis bahan pengajaran (`BUKU_AJAR`, `PRODUK_LAIN`.) |
-| judul         | String  | Ya    | Judul bahan pengajaran                     |
-| tglTerbit     | Date    | Ya    | Tanggal terbit dalam format `YYYY-MM-DD`   |
-| penerbit      | String  | Ya    | Nama penerbit                              |
-| jumlahHalaman | Integer | Ya    | Jumlah halaman                             |
-| isbn          | String  | Ya    | Nomor ISBN                                 |
+| Field         | Tipe    | Wajib | Keterangan                                                                 |
+| ------------- | ------- | ----- | -------------------------------------------------------------------------- |
+| file          | File    | Tidak | File PDF bukti kegiatan (opsional)                                         |
+| semesterId    | Integer | Ya    | ID Semester                                                                |
+| kategori      | String  | Ya    | Nilai harus `BAHAN_PENGAJARAN`                                             |
+| jenis         | String  | Ya    | Harus diisi `PRODUK_LAIN`                                                  |
+| jenisProduk   | String  | Ya    | Pilihan: `Diktat`, `Modul`, `Petunjuk praktikum`, `Model`, `Alat bantu`, `Audio visual`, `Naskah tutorial`, `Job sheet praktikum` |
+| judul         | String  | Ya    | Judul produk                                                               |
+| jumlahHalaman | Integer | Ya    | Jumlah halaman                                                             |
+| mataKuliah    | String  | Ya    | Nama mata kuliah terkait                                                   |
+| prodiId       | Integer | Ya    | ID program studi                                                           |
+| fakultasId    | Integer | Ya    | ID fakultas                                                                |
 
 **Contoh Body (form-data)**  
 
-- **file**: File bukti bahan pengajaran (opsional, format `.pdf`)
-- **data**: JSON string berisi data bahan pengajaran. Contoh:
+- **file**: File bukti (opsional, format `.pdf`)  
+- **data**: JSON string berisi data. Contoh:
   ```json
   {
     "semesterId": 14,
@@ -1190,46 +1193,47 @@ Authorization: Bearer <accessToken>
 **Status: 200 OK**  
 ```json
 {
-    "success": true,
-    "message": "Data berhasil diperbarui",
-    "data": {
-        "id": 37,
-        "dosenId": 5,
-        "semesterId": 14,
-        "kategori": "BAHAN_PENGAJARAN",
-        "nilaiPak": 5,
-        "filePath": "pendidikan/6e583ca9-f706-446c-9e08-2ae4b568387a.pdf",
-        "statusValidasi": "PENDING",
-        "catatan": null,
-        "createdAt": "2025-08-15T00:48:34.146Z",
-        "updatedAt": "2025-08-15T00:48:34.146Z",
-        "bahanPengajaran": {
-            "id": 3,
-            "pelaksanaanId": 37,
-            "jenis": "PRODUK_LAIN",
-            "bukuAjarId": null,
-            "produkLainId": 4,
-            "bukuAjar": null,
-            "produkLain": {
-                "id": 4,
-                "jenisProduk": "Modul",
-                "judul": "Modul Praktikum Pemrograman Web Lanjut",
-                "jumlahHalaman": 80,
-                "mataKuliah": "Pemrograman Web Lanjut",
-                "prodiId": 1,
-                "fakultasId": 1
-            }
-        }
+  "success": true,
+  "message": "Data berhasil diperbarui",
+  "data": {
+    "id": 37,
+    "dosenId": 5,
+    "semesterId": 14,
+    "kategori": "BAHAN_PENGAJARAN",
+    "nilaiPak": 5,
+    "filePath": "pendidikan/6e583ca9-f706-446c-9e08-2ae4b568387a.pdf",
+    "statusValidasi": "PENDING",
+    "catatan": null,
+    "createdAt": "2025-08-15T00:48:34.146Z",
+    "updatedAt": "2025-08-15T00:48:34.146Z",
+    "bahanPengajaran": {
+      "id": 3,
+      "pelaksanaanId": 37,
+      "jenis": "PRODUK_LAIN",
+      "bukuAjarId": null,
+      "produkLainId": 4,
+      "bukuAjar": null,
+      "produkLain": {
+        "id": 4,
+        "jenisProduk": "Modul",
+        "judul": "Modul Praktikum Pemrograman Web Lanjut",
+        "jumlahHalaman": 80,
+        "mataKuliah": "Pemrograman Web Lanjut",
+        "prodiId": 1,
+        "fakultasId": 1
+      }
     }
+  }
 }
 ```
 
 ---
 
 **Catatan**  
-- `nilaiPak` otomatis dihitung oleh sistem.  
-- Jika file tidak diupload saat update, file lama akan tetap digunakan.  
-- `statusValidasi` akan kembali ke `PENDING` setelah update.
+- `jenisProduk` wajib sesuai salah satu dari daftar enum.  
+- `nilaiPak` dihitung otomatis.  
+- File lama akan digunakan jika tidak ada unggahan baru.  
+- Status validasi akan kembali ke `PENDING` setelah update.
 
 ## Pelaksanaan Pendidikan - Bahan Pengajaran (Kategori: BUKU_AJAR)
 

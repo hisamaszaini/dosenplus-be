@@ -344,6 +344,10 @@ export class PelaksanaanPendidikanService {
         }),
       };
     } catch (error) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('UPDATE PelaksanaanPendidikan FAILED:', error);
+      }
+      
       if (relativePath) {
         await deleteFileFromDisk(relativePath);
       }
