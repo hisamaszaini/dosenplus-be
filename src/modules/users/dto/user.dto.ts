@@ -31,29 +31,29 @@ export const LoginSchema = z.object({
 
 export const CreateDosenBiodataSchema = z.object({
   nama: z.string().nonempty('Nama wajib diisi'),
-  nip: z.string().optional().nullable().transform(val => val?.trim() === '' ? null : val),
-  nuptk: z.string().optional().nullable().transform(val => val?.trim() === '' ? null : val),
+  nip: z.string().nullable().transform(val => val?.trim() === '' ? null : val),
+  nuptk: z.string().nullable().transform(val => val?.trim() === '' ? null : val),
   jenis_kelamin: z.string().refine((val): val is 'Laki-laki' | 'Perempuan' => val === 'Laki-laki' || val === 'Perempuan', { message: 'Jenis kelamin wajib dipilih' }),
-  no_hp: z.string().optional().nullable().transform(val => val?.trim() === '' ? null : val),
+  no_hp: z.string().nullable().transform(val => val?.trim() === '' ? null : val),
   prodiId: z.preprocess(val => { const num = Number(val); return isNaN(num) || num <= 0 ? undefined : num }, z.number().int().refine(val => val > 0, { message: 'Program studi wajib dipilih' })),
   fakultasId: z.preprocess(val => { const num = Number(val); return isNaN(num) || num <= 0 ? undefined : num }, z.number().int().refine(val => val > 0, { message: 'Fakultas wajib dipilih' })),
   jabatan: z.string().refine((val): val is 'Asisten Ahli' | 'Lektor' | 'Lektor Kepala' | 'Guru Besar' => ['Asisten Ahli', 'Lektor', 'Lektor Kepala', 'Guru Besar'].includes(val), { message: 'Jabatan wajib dipilih' }),
 });
 
 export const CreateDataKepegawaianSchema = z.object({
-  npwp: z.string().optional().nullable().transform((val) => (val?.trim() === '' ? null : val)),
-  nama_bank: z.string().optional().nullable(),
-  no_rek: z.string().optional().nullable(),
-  bpjs_kesehatan: z.string().optional().nullable(),
-  bpjs_tkerja: z.string().optional().nullable(),
-  no_kk: z.string().optional().nullable(),
+  npwp: z.string().nullable().transform(val => val?.trim() === '' ? null : val),
+  nama_bank: z.string().nullable().transform(val => val?.trim() === '' ? null : val),
+  no_rek: z.string().nullable().transform(val => val?.trim() === '' ? null : val),
+  bpjs_kesehatan: z.string().nullable().transform(val => val?.trim() === '' ? null : val),
+  bpjs_tkerja: z.string().nullable().transform(val => val?.trim() === '' ? null : val),
+  no_kk: z.string().nullable().transform(val => val?.trim() === '' ? null : val),
 });
 
 export const CreateValidatorBiodataSchema = z.object({
   nama: z.string().nonempty('Nama wajib diisi'),
-  nip: z.string().optional().nullable().transform((val) => (val?.trim() === '' ? null : val)),
+  nip: z.string().nullable().transform(val => val?.trim() === '' ? null : val),
   jenis_kelamin: z.string().refine((val): val is 'Laki-laki' | 'Perempuan' => val === 'Laki-laki' || val === 'Perempuan', { message: 'Jenis kelamin wajib dipilih' }),
-  no_hp: z.string().optional().nullable().transform((val) => (val?.trim() === '' ? null : val)),
+  no_hp: z.string().nullable().transform(val => val?.trim() === '' ? null : val),
 });
 
 export const UserStatusEnum = Object.values(USER_STATUSES) as [string, ...string[]];
