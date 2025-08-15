@@ -31,10 +31,10 @@ export const LoginSchema = z.object({
 
 export const CreateDosenBiodataSchema = z.object({
   nama: z.string().nonempty('Nama wajib diisi'),
-  nip: z.string().nullable().transform(val => val?.trim() === '' ? null : val),
-  nuptk: z.string().nullable().transform(val => val?.trim() === '' ? null : val),
+  nip: z.string().nullable().optional().transform(val => val?.trim() === '' ? null : val),
+  nuptk: z.string().nullable().optional().transform(val => val?.trim() === '' ? null : val),
   jenis_kelamin: z.string().refine((val): val is 'Laki-laki' | 'Perempuan' => val === 'Laki-laki' || val === 'Perempuan', { message: 'Jenis kelamin wajib dipilih' }),
-  no_hp: z.string().nullable().transform(val => val?.trim() === '' ? null : val),
+  no_hp: z.string().nullable().optional().transform(val => val?.trim() === '' ? null : val),
   prodiId: z.preprocess(val => { const num = Number(val); return isNaN(num) || num <= 0 ? undefined : num }, z.number().int().refine(val => val > 0, { message: 'Program studi wajib dipilih' })),
   fakultasId: z.preprocess(val => { const num = Number(val); return isNaN(num) || num <= 0 ? undefined : num }, z.number().int().refine(val => val > 0, { message: 'Fakultas wajib dipilih' })),
   jabatan: z.string().refine((val): val is 'Asisten Ahli' | 'Lektor' | 'Lektor Kepala' | 'Guru Besar' => ['Asisten Ahli', 'Lektor', 'Lektor Kepala', 'Guru Besar'].includes(val), { message: 'Jabatan wajib dipilih' }),
