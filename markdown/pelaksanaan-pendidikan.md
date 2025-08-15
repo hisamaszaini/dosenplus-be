@@ -1037,7 +1037,7 @@ Authorization: Bearer <accessToken>
 - Jika file tidak diupload saat update, file lama akan tetap digunakan.  
 - `statusValidasi` akan kembali ke `PENDING` setelah update.
 
-## Create Pelaksanaan Pendidikan - BAHAN_PENGAJARAN
+## Create Pelaksanaan Pendidikan - BAHAN_PENGAJARAN (Kategori: PRODUK_LAIN)
 
 **Endpoint**  
 ```
@@ -1095,26 +1095,43 @@ Authorization: Bearer <accessToken>
 **Status: 200 OK**  
 ```json
 {
-  "success": true,
-  "message": "Data berhasil ditambahkan",
-  "data": {
-    "id": 29,
-    "dosenId": 5,
-    "semesterId": 14,
-    "kategori": "BAHAN_PENGAJARAN",
-    "nilaiPak": 5,
-    "filePath": "pendidikan/230dd95b-01da-42b8-9c1e-71ef035e6953.pdf",
-    "statusValidasi": "PENDING",
-    "catatan": null,
-    "createdAt": "2025-08-12T08:45:19.830Z",
-    "updatedAt": "2025-08-12T08:45:19.830Z"
-  }
+    "success": true,
+    "message": "Data berhasil ditambahkan",
+    "data": {
+        "id": 37,
+        "dosenId": 5,
+        "semesterId": 14,
+        "kategori": "BAHAN_PENGAJARAN",
+        "nilaiPak": 5,
+        "filePath": "pendidikan/6e583ca9-f706-446c-9e08-2ae4b568387a.pdf",
+        "statusValidasi": "PENDING",
+        "catatan": null,
+        "createdAt": "2025-08-15T00:48:34.146Z",
+        "updatedAt": "2025-08-15T00:48:34.146Z",
+        "bahanPengajaran": {
+            "id": 3,
+            "pelaksanaanId": 37,
+            "jenis": "PRODUK_LAIN",
+            "bukuAjarId": null,
+            "produkLainId": 4,
+            "bukuAjar": null,
+            "produkLain": {
+                "id": 4,
+                "jenisProduk": "Modul",
+                "judul": "Modul Praktikum Basis Data",
+                "jumlahHalaman": 80,
+                "mataKuliah": "Basis Data",
+                "prodiId": 1,
+                "fakultasId": 1
+            }
+        }
+    }
 }
 ```
 
 ---
 
-## Update Pelaksanaan Pendidikan - BAHAN_PENGAJARAN
+## Update Pelaksanaan Pendidikan - BAHAN_PENGAJARAN (Kategori: PRODUK_LAIN)
 
 **Endpoint**  
 ```
@@ -1141,7 +1158,7 @@ Authorization: Bearer <accessToken>
 | file          | File    | Tidak | File PDF bukti kegiatan (opsional)         |
 | semesterId    | Integer | Ya    | ID Semester                                |
 | kategori      | String  | Ya    | Nilai harus `BAHAN_PENGAJARAN`             |
-| jenis         | String  | Ya    | Jenis bahan pengajaran (`BUKU_AJAR`, dsb.) |
+| jenis         | String  | Ya    | Jenis bahan pengajaran (`BUKU_AJAR`, `PRODUK_LAIN`.) |
 | judul         | String  | Ya    | Judul bahan pengajaran                     |
 | tglTerbit     | Date    | Ya    | Tanggal terbit dalam format `YYYY-MM-DD`   |
 | penerbit      | String  | Ya    | Nama penerbit                              |
@@ -1156,12 +1173,13 @@ Authorization: Bearer <accessToken>
   {
     "semesterId": 14,
     "kategori": "BAHAN_PENGAJARAN",
-    "jenis": "BUKU_AJAR",
-    "judul": "Pengantar Algoritma dan Pemrograman",
-    "tglTerbit": "2025-01-15",
-    "penerbit": "Penerbit Teknologi Jatim",
-    "jumlahHalaman": 250,
-    "isbn": "978-602-1234-56-7"
+    "jenis": "PRODUK_LAIN",
+    "jenisProduk": "Modul",
+    "judul": "Modul Praktikum Pemrograman Web Lanjut",
+    "jumlahHalaman": 80,
+    "mataKuliah": "Pemrograman Web Lanjut",
+    "prodiId": 1,
+    "fakultasId": 1
   }
   ```
 
@@ -1172,30 +1190,100 @@ Authorization: Bearer <accessToken>
 **Status: 200 OK**  
 ```json
 {
+    "success": true,
+    "message": "Data berhasil diperbarui",
+    "data": {
+        "id": 37,
+        "dosenId": 5,
+        "semesterId": 14,
+        "kategori": "BAHAN_PENGAJARAN",
+        "nilaiPak": 5,
+        "filePath": "pendidikan/6e583ca9-f706-446c-9e08-2ae4b568387a.pdf",
+        "statusValidasi": "PENDING",
+        "catatan": null,
+        "createdAt": "2025-08-15T00:48:34.146Z",
+        "updatedAt": "2025-08-15T00:48:34.146Z",
+        "bahanPengajaran": {
+            "id": 3,
+            "pelaksanaanId": 37,
+            "jenis": "PRODUK_LAIN",
+            "bukuAjarId": null,
+            "produkLainId": 4,
+            "bukuAjar": null,
+            "produkLain": {
+                "id": 4,
+                "jenisProduk": "Modul",
+                "judul": "Modul Praktikum Pemrograman Web Lanjut",
+                "jumlahHalaman": 80,
+                "mataKuliah": "Pemrograman Web Lanjut",
+                "prodiId": 1,
+                "fakultasId": 1
+            }
+        }
+    }
+}
+```
+
+---
+
+**Catatan**  
+- `nilaiPak` otomatis dihitung oleh sistem.  
+- Jika file tidak diupload saat update, file lama akan tetap digunakan.  
+- `statusValidasi` akan kembali ke `PENDING` setelah update.
+
+## Pelaksanaan Pendidikan - Bahan Pengajaran (Kategori: BUKU_AJAR)
+
+### Endpoint Create
+```
+POST {{host}}:{{port}}/pelaksanaan-pendidikan
+Authorization: Bearer <token>
+Content-Type: multipart/form-data
+```
+
+**Catatan**:  
+- `file` **wajib** (format PDF)  
+- Body dikirim dalam bentuk `multipart/form-data` dengan field berikut:
+
+```json
+{
+  "semesterId": 14,
+  "kategori": "BAHAN_PENGAJARAN",
+  "jenis": "BUKU_AJAR",
+  "judul": "Pengantar Algoritma dan Pemrograman",
+  "tglTerbit": "2025-01-15",
+  "penerbit": "Penerbit Teknologi Nusantara",
+  "jumlahHalaman": 250,
+  "isbn": "978-602-1234-56-7"
+}
+```
+
+**Response (201 - Created)**:
+```json
+{
   "success": true,
-  "message": "Data berhasil diperbarui",
+  "message": "Data berhasil ditambahkan",
   "data": {
-    "id": 29,
+    "id": 38,
     "dosenId": 5,
     "semesterId": 14,
     "kategori": "BAHAN_PENGAJARAN",
     "nilaiPak": 5,
-    "filePath": "pendidikan/230dd95b-01da-42b8-9c1e-71ef035e6953.pdf",
+    "filePath": "pendidikan/beaafaf8-6072-4616-920b-09081e65e05a.pdf",
     "statusValidasi": "PENDING",
     "catatan": null,
-    "createdAt": "2025-08-12T08:45:19.830Z",
-    "updatedAt": "2025-08-12T09:43:04.351Z",
+    "createdAt": "2025-08-15T00:54:01.002Z",
+    "updatedAt": "2025-08-15T00:54:01.002Z",
     "bahanPengajaran": {
-      "id": 1,
-      "pelaksanaanId": 29,
+      "id": 4,
+      "pelaksanaanId": 38,
       "jenis": "BUKU_AJAR",
-      "bukuAjarId": 5,
+      "bukuAjarId": 6,
       "produkLainId": null,
       "bukuAjar": {
-        "id": 5,
+        "id": 6,
         "judul": "Pengantar Algoritma dan Pemrograman",
         "tglTerbit": "2025-01-15T00:00:00.000Z",
-        "penerbit": "Penerbit Teknologi Jatim",
+        "penerbit": "Penerbit Teknologi Nusantara",
         "jumlahHalaman": 250,
         "isbn": "978-602-1234-56-7"
       },
@@ -1207,7 +1295,62 @@ Authorization: Bearer <accessToken>
 
 ---
 
-**Catatan**  
-- `nilaiPak` otomatis dihitung oleh sistem.  
-- Jika file tidak diupload saat update, file lama akan tetap digunakan.  
-- `statusValidasi` akan kembali ke `PENDING` setelah update.
+### Endpoint Update
+```
+PATCH {{host}}:{{port}}/pelaksanaan-pendidikan/:pelaksanaanId
+Authorization: Bearer <token>
+Content-Type: multipart/form-data
+```
+
+**Catatan**:  
+- `file` **opsional** (format PDF)  
+- Body dikirim dalam bentuk `multipart/form-data` dengan field berikut:
+
+```json
+{
+  "semesterId": 14,
+  "kategori": "BAHAN_PENGAJARAN",
+  "jenis": "BUKU_AJAR",
+  "judul": "Pengantar Algoritma dan Pemrograman",
+  "tglTerbit": "2025-01-15",
+  "penerbit": "Penerbit Teknologi Indonesia",
+  "jumlahHalaman": 250,
+  "isbn": "978-602-1234-56-7"
+}
+```
+
+**Response (200 - OK)**:
+```json
+{
+  "success": true,
+  "message": "Data berhasil diperbarui",
+  "data": {
+    "id": 38,
+    "dosenId": 5,
+    "semesterId": 14,
+    "kategori": "BAHAN_PENGAJARAN",
+    "nilaiPak": 5,
+    "filePath": "pendidikan/beaafaf8-6072-4616-920b-09081e65e05a.pdf",
+    "statusValidasi": "PENDING",
+    "catatan": null,
+    "createdAt": "2025-08-15T00:54:01.002Z",
+    "updatedAt": "2025-08-15T00:54:01.002Z",
+    "bahanPengajaran": {
+      "id": 4,
+      "pelaksanaanId": 38,
+      "jenis": "BUKU_AJAR",
+      "bukuAjarId": 6,
+      "produkLainId": null,
+      "bukuAjar": {
+        "id": 6,
+        "judul": "Pengantar Algoritma dan Pemrograman",
+        "tglTerbit": "2025-01-15T00:00:00.000Z",
+        "penerbit": "Penerbit Teknologi Indonesia",
+        "jumlahHalaman": 250,
+        "isbn": "978-602-1234-56-7"
+      },
+      "produkLain": null
+    }
+  }
+}
+```
