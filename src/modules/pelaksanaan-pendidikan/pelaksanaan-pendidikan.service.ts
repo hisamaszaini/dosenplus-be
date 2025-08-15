@@ -341,13 +341,16 @@ export class PelaksanaanPendidikanService {
               create: kategoriFields,
             },
           },
+          include: {
+            [relationKey]: true,
+          }
         }),
       };
     } catch (error) {
       if (process.env.NODE_ENV !== 'production') {
         console.error('UPDATE PelaksanaanPendidikan FAILED:', error);
       }
-      
+
       if (relativePath) {
         await deleteFileFromDisk(relativePath);
       }
@@ -524,6 +527,9 @@ export class PelaksanaanPendidikanService {
             catatan: null,
             [relationKey]: { update: kategoriFields },
           },
+          include: {
+            [relationKey]: true,
+          }
         });
 
         return { updated, existing };
