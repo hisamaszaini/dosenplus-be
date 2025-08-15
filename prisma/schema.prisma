@@ -493,7 +493,7 @@ model OrasiIlmiah {
   deskripsi     String?
   tingkat       Tingkat
   penyelenggara String
-  tanggal       DateTime
+  tgl           DateTime
 
   pelaksanaan PelaksanaanPendidikan @relation(fields: [pelaksanaanId], references: [id], onDelete: Cascade)
 }
