@@ -6,6 +6,7 @@ import { parseAndThrow } from '@/common/utils/zod-helper';
 import { handleCreateError, handleDeleteError, handleFindError, handleUpdateError } from '@/common/utils/prisma-error-handler';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { deleteFileFromDisk, handleUpload } from '@/common/utils/dataFile';
+import { cleanRelasi } from '@/common/utils/cleanRelasi';
 
 @Injectable()
 export class PelaksanaanPendidikanService {
@@ -685,16 +686,11 @@ export class PelaksanaanPendidikanService {
         throw new ForbiddenException('Anda tidak diizinkan mengakses data ini');
       }
 
-      const removeNullData = Object.fromEntries(
-        Object.entries(data).filter(([key, value]) =>
-          value !== null &&
-          typeof value === 'object'
-        )
-      );
+      const cleanData = cleanRelasi(data);
 
       return {
         success: true,
-        data: removeNullData,
+        data: cleanData,
       };
     } catch (error) {
       console.error(error);

@@ -674,7 +674,7 @@ export class UsersService {
 
         const take = Number(limit) || 10;
 
-        const allowedSortFields = ['nama', 'email', 'status', 'createdAt'];
+        const allowedSortFields = ['name', 'email', 'status', 'createdAt'];
         const safeSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'createdAt';
         const safeSortOrder: 'asc' | 'desc' = sortOrder === 'asc' ? 'asc' : 'desc';
 
