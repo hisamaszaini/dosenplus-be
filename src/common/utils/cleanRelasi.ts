@@ -1,4 +1,4 @@
-function cleanRelasi(data: any, parentKeys: string[] = []): any {
+export function cleanRelasi(data: any, parentKeys: string[] = []): any {
   return Object.fromEntries(
     Object.entries(data)
       .map(([key, value]) => {
