@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, HttpCode, HttpStatus, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator, Req, ParseIntPipe, Query, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, HttpCode, HttpStatus, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator, Req, ParseIntPipe, Query, BadRequestException, Request } from '@nestjs/common';
 import { PelaksanaanPendidikanService } from './pelaksanaan-pendidikan.service';
 import { JwtAuthGuard } from '@/modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@/modules/auth/guards/roles.guard';
@@ -166,6 +166,17 @@ export class PelaksanaanPendidikanController {
   ) {
     const role = req.user.roles;
     return this.pelaksanaanPendidikanService.update(id, dosenId, data, role, file);
+  }
+
+  @Patch(':id/validasi')
+  @Roles(TypeUserRole.ADMIN, TypeUserRole.VALIDATOR)
+  async validatePendidikan(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() rawData: any,
+    @Request() req,
+  ) {
+    const reviewerId = req.user.sub;
+    return this.pelaksanaanPendidikanService.validate(id, rawData, reviewerId);
   }
 
   @Delete(':id')

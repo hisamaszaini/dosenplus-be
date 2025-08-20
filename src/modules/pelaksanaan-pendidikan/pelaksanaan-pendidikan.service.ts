@@ -1,6 +1,6 @@
 import { BadRequestException, ForbiddenException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { JenisBahanPengajaran, KategoriKegiatan, Prisma, Role, StatusValidasi, TypeUserRole } from '@prisma/client';
-import { fullPelaksanaanPendidikanSchema } from './dto/create-pelaksanaan-pendidikan.dto';
+import { fullPelaksanaanPendidikanSchema, UpdateStatusValidasiDto, updateStatusValidasiSchema } from './dto/create-pelaksanaan-pendidikan.dto';
 import { fullUpdatePelaksanaanSchema } from './dto/update-pelaksanaan-pendidikan.dto';
 import { parseAndThrow } from '@/common/utils/zod-helper';
 import { handleCreateError, handleDeleteError, handleFindError, handleUpdateError } from '@/common/utils/prisma-error-handler';
@@ -695,6 +695,29 @@ export class PelaksanaanPendidikanService {
     } catch (error) {
       console.error(error);
       handleFindError(error, "Pelaksanaan Pendidikan");
+    }
+  }
+
+  async validate(id: number, rawData: UpdateStatusValidasiDto, reviewerId: number,
+  ) {
+    try {
+      const parsed = parseAndThrow(updateStatusValidasiSchema, rawData);
+      const { statusValidasi, catatan } = parsed;
+
+      const existing = await this.prisma.pendidikan.findUnique({ where: { id } });
+
+      if (!existing) throw new NotFoundException('Data pendidikan tidak ditemukan');
+
+      return this.prisma.pendidikan.update({
+        where: { id },
+        data: {
+          statusValidasi: statusValidasi,
+          reviewerId: reviewerId,
+          catatan: statusValidasi === 'REJECTED' ? catatan : catatan || null,
+        },
+      });
+    } catch (error) {
+      handleUpdateError(error, 'Validasi data pendidikan');
     }
   }
 

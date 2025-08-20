@@ -1,4 +1,4 @@
-import { JabatanFungsional, JenisBahanPengajaran, JenisBimbingan, JenisDatasering, JenisKKNPKNPKL, KategoriKegiatan, Tingkat } from '@prisma/client';
+import { JabatanFungsional, JenisBahanPengajaran, JenisBimbingan, JenisDatasering, JenisKKNPKNPKL, KategoriKegiatan, StatusValidasi, Tingkat } from '@prisma/client';
 import { file, z } from 'zod'
 
 const fileSchema = z
@@ -168,6 +168,25 @@ export const createPelaksanaanPendidikanDtoSchema = z.discriminatedUnion('katego
   pengembanganDiriSchema
 ]);
 
+
+export const updateStatusValidasiSchema = z.object({
+  statusValidasi: z.nativeEnum(StatusValidasi),
+  catatan: z
+    .string()
+    .max(255)
+    .trim()
+    .optional()
+}).superRefine((val, ctx) => {
+  if (val.statusValidasi === 'REJECTED' && (!val.catatan || val.catatan.trim() === '')) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['catatan'],
+      message: 'Catatan wajib diisi jika status ditolak',
+    });
+  }
+});
+
+
 export type CreatePelaksanaanPendidikanDto = z.infer<typeof createPelaksanaanPendidikanDtoSchema>;
 
 export const fullPelaksanaanPendidikanSchema = z.intersection(
@@ -176,3 +195,4 @@ export const fullPelaksanaanPendidikanSchema = z.intersection(
 );
 
 export type CreatePelaksanaanPendidikanFullDto = z.infer<typeof fullPelaksanaanPendidikanSchema>;
+export type UpdateStatusValidasiDto = z.infer<typeof updateStatusValidasiSchema>;

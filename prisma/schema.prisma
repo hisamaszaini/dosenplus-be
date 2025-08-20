@@ -38,24 +38,25 @@ enum StatusValidasi {
 }
 
 model User {
-  id                   Int                  @id @default(autoincrement())
-  email                String               @unique
-  username             String               @unique
-  name                 String
-  password             String
-  status               UserStatus           @default(ACTIVE)
-  fotoPath             String?
-  hashedRefreshToken   String?
-  passwordResetToken   String?
-  passwordResetExpires DateTime?
-  createdAt            DateTime             @default(now())
-  updatedAt            DateTime             @updatedAt
-  dosen                Dosen?
-  validator            Validator?
-  userRoles            UserRole[]
-  ActivityLog          ActivityLog[]
-  Pendidikan           Pendidikan[]
-  PendingUpdateDosen   PendingUpdateDosen[]
+  id                    Int                     @id @default(autoincrement())
+  email                 String                  @unique
+  username              String                  @unique
+  name                  String
+  password              String
+  status                UserStatus              @default(ACTIVE)
+  fotoPath              String?
+  hashedRefreshToken    String?
+  passwordResetToken    String?
+  passwordResetExpires  DateTime?
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  dosen                 Dosen?
+  validator             Validator?
+  userRoles             UserRole[]
+  ActivityLog           ActivityLog[]
+  Pendidikan            Pendidikan[]
+  PendingUpdateDosen    PendingUpdateDosen[]
+  PelaksanaanPendidikan PelaksanaanPendidikan[]
 }
 
 model Role {
@@ -327,6 +328,8 @@ model PelaksanaanPendidikan {
   semester Semester? @relation(fields: [semesterId], references: [id], onDelete: SetNull)
 
   statusValidasi StatusValidasi @default(PENDING)
+  reviewerId     Int?
+  reviewer       User?          @relation(fields: [reviewerId], references: [id], onDelete: SetNull)
   catatan        String?
 
   perkuliahan          Perkuliahan?
