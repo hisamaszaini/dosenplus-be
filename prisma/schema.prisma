@@ -57,6 +57,8 @@ model User {
   Pendidikan            Pendidikan[]
   PendingUpdateDosen    PendingUpdateDosen[]
   PelaksanaanPendidikan PelaksanaanPendidikan[]
+  Penelitian            Penelitian[]
+  Pengabdian            Pengabdian[]
 }
 
 model Role {
@@ -147,6 +149,8 @@ model Dosen {
   pendidikan            Pendidikan[]
   pelaksanaanPendidikan PelaksanaanPendidikan[]
   PendingUpdateDosen    PendingUpdateDosen?
+  Penelitian            Penelitian[]
+  Pengabdian            Pengabdian[]
 }
 
 model DataKepegawaian {
@@ -279,6 +283,8 @@ model Semester {
   createdAt             DateTime                @default(now())
   updatedAt             DateTime                @updatedAt
   PelaksanaanPendidikan PelaksanaanPendidikan[]
+  Penelitian            Penelitian[]
+  Pengabdian            Pengabdian[]
 
   @@index([tipe])
   @@index([tahunMulai, tahunSelesai])
@@ -568,6 +574,158 @@ model PengembanganDiri {
   prodi       Prodi?                @relation(fields: [prodiId], references: [id], onDelete: SetNull)
   fakultas    Fakultas?             @relation(fields: [fakultasId], references: [id], onDelete: SetNull)
 }
+
+enum KategoriPenelitian {
+  KARYA_ILMIAH
+  DISEMINASI
+  PENELITIAN_TIDAK_DIPUBLIKASIKAN
+  TERJEMAHAN_BUKU
+  EDITING_BUKU
+  PATEN_HAKI
+  TEKNOLOGI_NON_PATEN
+  SENI_NON_HKI
+}
+
+model Penelitian {
+  id         Int                @id @default(autoincrement())
+  dosenId    Int
+  semesterId Int?
+  kategori   KategoriPenelitian
+  nilaiPak   Float              @default(0)
+  filePath   String
+
+  dosen    Dosen     @relation(fields: [dosenId], references: [id], onDelete: Cascade)
+  semester Semester? @relation(fields: [semesterId], references: [id], onDelete: SetNull)
+
+  statusValidasi StatusValidasi @default(PENDING)
+  reviewerId     Int?
+  reviewer       User?          @relation(fields: [reviewerId], references: [id], onDelete: SetNull)
+  catatan        String?
+}
+
+model KaryaIlmiah {
+  id            Int     @id @default(autoincrement())
+  jenisKategori String
+  jenisProduk   String?
+
+  //Umum
+  judul     String
+  tglTerbit DateTime
+  penerbit  String
+  isbn      String
+
+  //bookcapter
+  judulTerkait String?
+
+  //Jurnal
+  jenisJurnal   String
+  penulisKe     Int
+  corespondensi Boolean
+  jumlahHalaman String
+  link          String
+}
+
+model PenelitianDiseminasi {
+  id            Int     @id @default(autoincrement())
+  jenisKategori String
+  jenisProduk   String?
+
+  judul         String
+  judulArtikel  String
+  penulisKe     Int
+  corespondensi Boolean
+  tglTerbit     DateTime
+  penerbit      String
+  isbn          String
+  issn          String
+  eissn         String
+  link          String
+}
+
+model PenelitianTidakDipublikasi {
+  id            Int      @id @default(autoincrement())
+  namaPerpus    String
+  penulisKe     String
+  corespondensi Boolean
+  judulArtikel  String
+  tglTerbit     DateTime
+  penerbit      String
+  isbn          String
+  issn          String
+  eissn         String
+  link          String
+}
+
+model MenerjemahkanBuku {
+  id         Int      @id @default(autoincrement())
+  judulKarya String
+  tglTerbit  DateTime
+  penerbit   String
+  isbn       String
+}
+
+model EditingBuku {
+  id         Int      @id @default(autoincrement())
+  judulKarya String
+  tglTerbit  DateTime
+  penerbit   String
+  isbn       String
+}
+
+model KaryaPatenHki {
+  id            Int      @id @default(autoincrement())
+  jenisKegiatan String
+  judulKarya    String
+  tglTerbit     DateTime
+  link          String
+}
+
+model KaryaNonPaten {
+  id            Int      @id @default(autoincrement())
+  jenisKegiatan String
+  judulKarya    String
+  tglTerbit     DateTime
+  link          String
+}
+
+model SeniNonHki {
+  id            Int      @id @default(autoincrement())
+  jenisKegiatan String
+  judulKarya    String
+  tglTerbit     DateTime
+  link          String
+}
+
+enum KategoriPengabdian {
+  JABATAN_PIMPINAN
+  PENGEMBANGAN_DIMANFAATKAN
+  PENYULUHAN_SATU_SEMESTER
+  PENYULUNGAN_KURANG_SATU_SEMESTER
+  PENYULUHAN_NON_SEMESTER
+  PELAYANAN_MASYARAKAT
+  KARYA_PENGABDIAN_TIDAKPUBLIS
+  KARYA_PENGABDIAN_DIPULIKASI
+  PENGELOLA_JURNAL
+}
+
+model Pengabdian {
+  id         Int                @id @default(autoincrement())
+  dosenId    Int
+  semesterId Int?
+  kategori   KategoriPengabdian
+  nilaiPak   Float              @default(0)
+  filePath   String
+
+  dosen    Dosen     @relation(fields: [dosenId], references: [id], onDelete: Cascade)
+  semester Semester? @relation(fields: [semesterId], references: [id], onDelete: SetNull)
+
+  statusValidasi StatusValidasi @default(PENDING)
+  reviewerId     Int?
+  reviewer       User?          @relation(fields: [reviewerId], references: [id], onDelete: SetNull)
+  catatan        String?
+}
+
+
 
 model ActivityLog {
   id         Int      @id @default(autoincrement())

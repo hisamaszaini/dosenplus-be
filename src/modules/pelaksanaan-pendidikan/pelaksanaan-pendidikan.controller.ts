@@ -62,7 +62,7 @@ export class PelaksanaanPendidikanController {
     )
     file: Express.Multer.File,
 
-    @Body('data') dataRaw: any,
+    @Body('data') dataRaw: UpdatePelaksanaanPendidikanDto,
     @Req() req: any
   ) {
     let data: CreatePelaksanaanPendidikanDto;
@@ -134,7 +134,7 @@ export class PelaksanaanPendidikanController {
     )
     file: Express.Multer.File,
 
-    @Body('data', new ParseJsonStringPipe) data: any,
+    @Body('data', new ParseJsonStringPipe) data: UpdatePelaksanaanPendidikanDto,
     @Req() req: any,
   ) {
     const dosenId = req.user.sub;

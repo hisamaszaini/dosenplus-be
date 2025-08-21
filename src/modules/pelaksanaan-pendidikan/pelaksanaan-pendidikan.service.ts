@@ -704,11 +704,11 @@ export class PelaksanaanPendidikanService {
       const parsed = parseAndThrow(updateStatusValidasiSchema, rawData);
       const { statusValidasi, catatan } = parsed;
 
-      const existing = await this.prisma.pendidikan.findUnique({ where: { id } });
+      const existing = await this.prisma.pelaksanaanPendidikan.findUnique({ where: { id } });
 
       if (!existing) throw new NotFoundException('Data pendidikan tidak ditemukan');
 
-      return this.prisma.pendidikan.update({
+      return this.prisma.pelaksanaanPendidikan.update({
         where: { id },
         data: {
           statusValidasi: statusValidasi,
