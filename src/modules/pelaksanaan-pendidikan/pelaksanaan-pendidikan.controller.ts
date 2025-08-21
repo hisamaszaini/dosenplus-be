@@ -118,28 +118,15 @@ export class PelaksanaanPendidikanController {
     return this.pelaksanaanPendidikanService.findOne(id, dosenId, role);
   }
 
-  @Patch(':id')
-  @Roles(TypeUserRole.DOSEN, TypeUserRole.ADMIN)
-  @UseInterceptors(FileInterceptor('file'))
-  async update(
+  @Patch(':id/validasi')
+  @Roles(TypeUserRole.ADMIN, TypeUserRole.VALIDATOR)
+  async validatePendidikan(
     @Param('id', ParseIntPipe) id: number,
-    @UploadedFile(
-      new ParseFilePipe({
-        validators: [
-          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
-          new FileTypeValidator({ fileType: 'application/pdf' }),
-        ],
-        fileIsRequired: false,
-      }),
-    )
-    file: Express.Multer.File,
-
-    @Body('data', new ParseJsonStringPipe) data: UpdatePelaksanaanPendidikanDto,
-    @Req() req: any,
+    @Body() rawData: any,
+    @Request() req,
   ) {
-    const dosenId = req.user.sub;
-    const role = req.user.roles;
-    return this.pelaksanaanPendidikanService.update(id, dosenId, data, role, file);
+    const reviewerId = req.user.sub;
+    return this.pelaksanaanPendidikanService.validate(id, rawData, reviewerId);
   }
 
   @Patch('admin/:dosenId/:id')
@@ -168,15 +155,28 @@ export class PelaksanaanPendidikanController {
     return this.pelaksanaanPendidikanService.update(id, dosenId, data, role, file);
   }
 
-  @Patch(':id/validasi')
-  @Roles(TypeUserRole.ADMIN, TypeUserRole.VALIDATOR)
-  async validatePendidikan(
+  @Patch(':id')
+  @Roles(TypeUserRole.DOSEN, TypeUserRole.ADMIN)
+  @UseInterceptors(FileInterceptor('file'))
+  async update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() rawData: any,
-    @Request() req,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
+          new FileTypeValidator({ fileType: 'application/pdf' }),
+        ],
+        fileIsRequired: false,
+      }),
+    )
+    file: Express.Multer.File,
+
+    @Body('data', new ParseJsonStringPipe) data: UpdatePelaksanaanPendidikanDto,
+    @Req() req: any,
   ) {
-    const reviewerId = req.user.sub;
-    return this.pelaksanaanPendidikanService.validate(id, rawData, reviewerId);
+    const dosenId = req.user.sub;
+    const role = req.user.roles;
+    return this.pelaksanaanPendidikanService.update(id, dosenId, data, role, file);
   }
 
   @Delete(':id')
