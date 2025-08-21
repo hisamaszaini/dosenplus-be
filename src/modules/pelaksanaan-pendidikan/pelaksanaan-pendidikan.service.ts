@@ -593,6 +593,10 @@ export class PelaksanaanPendidikanService {
       where.dosenId = dosenId;
     }
 
+    if (query.status) {
+      where.statusValidasi = query.status.toUpperCase() as StatusValidasi;
+    }
+
     if (kategori) {
       if (kategori && Object.values(KategoriKegiatan).includes(kategori as KategoriKegiatan)) {
         where.kategori = kategori as KategoriKegiatan;

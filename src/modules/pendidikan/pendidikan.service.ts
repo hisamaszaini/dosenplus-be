@@ -300,7 +300,6 @@ export class PendidikanService {
     }
 
     if (query.status) {
-      console.log(query.status);
       where.statusValidasi = query.status.toUpperCase() as StatusValidasi;
     }
 
