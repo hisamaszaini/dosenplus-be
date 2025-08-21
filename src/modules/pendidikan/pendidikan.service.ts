@@ -167,6 +167,9 @@ export class PendidikanService {
             where: { id },
             data: {
               ...baseUpdate,
+              statusValidasi: 'PENDING',
+              reviewerId: null,
+              catatan: null,
               Formal: {
                 upsert: {
                   update: {
@@ -207,6 +210,9 @@ export class PendidikanService {
             where: { id },
             data: {
               ...baseUpdate,
+              statusValidasi: 'PENDING',
+              reviewerId: null,
+              catatan: null,
               Diklat: {
                 upsert: {
                   update: {
