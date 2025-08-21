@@ -593,6 +593,13 @@ export class PelaksanaanPendidikanService {
       where.dosenId = dosenId;
     }
 
+    if (query.search) {
+      const search = query.search.toLowerCase();
+      where.OR = [
+        { dosen: { nama: { contains: search, mode: 'insensitive' } } },
+      ];
+    }
+
     if (query.status) {
       where.statusValidasi = query.status.toUpperCase() as StatusValidasi;
     }
