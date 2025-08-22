@@ -615,7 +615,7 @@ model KaryaIlmiah {
   jenisJurnal   String?
   penulisKe     Int?
   corespondensi Boolean?
-  jumlahHalaman String?
+  jumlahHalaman Int?
   link          String?
 
   penelitian Penelitian @relation(fields: [penelitianId], references: [id], onDelete: Cascade)
