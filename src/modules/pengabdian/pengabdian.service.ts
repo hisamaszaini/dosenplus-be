@@ -30,6 +30,9 @@ export class PengabdianService {
   }
 
   private getNilaiPak(kategori: string, tingkat?: string, jenisKegiatan?: string): number {
+
+    console.log(`Kategori: ${kategori} Tingkat: ${tingkat} jenisKegiatan: ${jenisKegiatan}`)
+
     let nilaiPak = 0;
 
     switch (kategori) {
