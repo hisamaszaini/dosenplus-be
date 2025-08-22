@@ -98,10 +98,10 @@ model Fakultas {
   BimbinganSeminar          BimbinganSeminar[]
   BimbinganKknPknPkl        BimbinganKknPknPkl[]
   PengembanganProgramKuliah PengembanganProgramKuliah[]
-  ProdukBahanLainnya        ProdukBahanLainnya[]
   JabatanStruktural         JabatanStruktural[]
   PengembanganDiri          PengembanganDiri[]
   PendingUpdateDosen        PendingUpdateDosen[]
+  BahanPengajaran           BahanPengajaran[]
 }
 
 model Prodi {
@@ -121,11 +121,11 @@ model Prodi {
   BimbinganSeminar          BimbinganSeminar[]
   BimbinganKknPknPkl        BimbinganKknPknPkl[]
   PengembanganProgramKuliah PengembanganProgramKuliah[]
-  ProdukBahanLainnya        ProdukBahanLainnya[]
   JabatanStruktural         JabatanStruktural[]
   BimbingDosen              BimbingDosen[]
   PengembanganDiri          PengembanganDiri[]
   PendingUpdateDosen        PendingUpdateDosen[]
+  BahanPengajaran           BahanPengajaran[]
 }
 
 model Dosen {
@@ -453,39 +453,20 @@ model BahanPengajaran {
   pelaksanaanId Int                  @unique
   jenis         JenisBahanPengajaran
 
-  bukuAjarId   Int? @unique
-  produkLainId Int? @unique
-
-  bukuAjar   BukuAjar?           @relation("BukuAjarToBahanPengajaran", fields: [bukuAjarId], references: [id], onDelete: Cascade)
-  produkLain ProdukBahanLainnya? @relation("ProdukLainToBahanPengajaran", fields: [produkLainId], references: [id], onDelete: Cascade)
-
-  pelaksanaan PelaksanaanPendidikan @relation(fields: [pelaksanaanId], references: [id], onDelete: Cascade)
-}
-
-model BukuAjar {
-  id            Int      @id @default(autoincrement())
-  judul         String
-  tglTerbit     DateTime
-  penerbit      String
-  jumlahHalaman Int
+  judul         String?
+  jumlahHalaman Int?
+  mataKuliah    String?
+  penerbit      String?
+  tglTerbit     DateTime?
   isbn          String?
-
-  bahanPengajaran BahanPengajaran? @relation("BukuAjarToBahanPengajaran")
-}
-
-model ProdukBahanLainnya {
-  id            Int    @id @default(autoincrement())
-  jenisProduk   String
-  judul         String
-  jumlahHalaman Int
-  mataKuliah    String
+  jenisProduk   String?
   prodiId       Int?
   fakultasId    Int?
 
   prodi    Prodi?    @relation(fields: [prodiId], references: [id], onDelete: SetNull)
   fakultas Fakultas? @relation(fields: [fakultasId], references: [id], onDelete: SetNull)
 
-  bahanPengajaran BahanPengajaran? @relation("ProdukLainToBahanPengajaran")
+  pelaksanaan PelaksanaanPendidikan @relation(fields: [pelaksanaanId], references: [id], onDelete: Cascade)
 }
 
 enum Tingkat {
@@ -579,7 +560,7 @@ enum KategoriPenelitian {
   KARYA_ILMIAH
   DISEMINASI
   PENELITIAN_TIDAK_DIPUBLIKASIKAN
-  TERJEMAHAN_BUKU
+  MENERJEMAHKAN_BUKU
   EDITING_BUKU
   PATEN_HAKI
   TEKNOLOGI_NON_PATEN
@@ -601,10 +582,23 @@ model Penelitian {
   reviewerId     Int?
   reviewer       User?          @relation(fields: [reviewerId], references: [id], onDelete: SetNull)
   catatan        String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  karyaIlmiah                KaryaIlmiah?
+  penelitianDiseminasi       PenelitianDiseminasi?
+  penelitianTidakDipublikasi PenelitianTidakDipublikasi?
+  menerjemahkanBuku          MenerjemahkanBuku?
+  editingBuku                EditingBuku?
+  karyaPatenHki              KaryaPatenHki?
+  karyaNonPaten              KaryaNonPaten?
+  seniNonHki                 SeniNonHki?
 }
 
 model KaryaIlmiah {
   id            Int     @id @default(autoincrement())
+  penelitianId  Int     @unique
   jenisKategori String
   jenisProduk   String?
 
@@ -618,15 +612,19 @@ model KaryaIlmiah {
   judulTerkait String?
 
   //Jurnal
-  jenisJurnal   String
-  penulisKe     Int
-  corespondensi Boolean
-  jumlahHalaman String
-  link          String
+  jenisJurnal   String?
+  penulisKe     Int?
+  corespondensi Boolean?
+  jumlahHalaman String?
+  link          String?
+
+  penelitian Penelitian @relation(fields: [penelitianId], references: [id], onDelete: Cascade)
 }
 
 model PenelitianDiseminasi {
-  id            Int     @id @default(autoincrement())
+  id           Int @id @default(autoincrement())
+  penelitianId Int @unique
+
   jenisKategori String
   jenisProduk   String?
 
@@ -636,14 +634,18 @@ model PenelitianDiseminasi {
   corespondensi Boolean
   tglTerbit     DateTime
   penerbit      String
-  isbn          String
-  issn          String
-  eissn         String
-  link          String
+  isbn          String?
+  issn          String?
+  eissn         String?
+  link          String?
+
+  penelitian Penelitian @relation(fields: [penelitianId], references: [id], onDelete: Cascade)
 }
 
 model PenelitianTidakDipublikasi {
-  id            Int      @id @default(autoincrement())
+  id           Int @id @default(autoincrement())
+  penelitianId Int @unique
+
   namaPerpus    String
   penulisKe     String
   corespondensi Boolean
@@ -654,62 +656,84 @@ model PenelitianTidakDipublikasi {
   issn          String
   eissn         String
   link          String
+
+  penelitian Penelitian @relation(fields: [penelitianId], references: [id], onDelete: Cascade)
 }
 
 model MenerjemahkanBuku {
-  id         Int      @id @default(autoincrement())
+  id           Int @id @default(autoincrement())
+  penelitianId Int @unique
+
   judulKarya String
   tglTerbit  DateTime
   penerbit   String
   isbn       String
+
+  penelitian Penelitian @relation(fields: [penelitianId], references: [id], onDelete: Cascade)
 }
 
 model EditingBuku {
-  id         Int      @id @default(autoincrement())
+  id           Int @id @default(autoincrement())
+  penelitianId Int @unique
+
   judulKarya String
   tglTerbit  DateTime
   penerbit   String
   isbn       String
+
+  penelitian Penelitian @relation(fields: [penelitianId], references: [id], onDelete: Cascade)
 }
 
 model KaryaPatenHki {
-  id            Int      @id @default(autoincrement())
+  id           Int @id @default(autoincrement())
+  penelitianId Int @unique
+
   jenisKegiatan String
   judulKarya    String
   tglTerbit     DateTime
   link          String
+
+  penelitian Penelitian @relation(fields: [penelitianId], references: [id], onDelete: Cascade)
 }
 
 model KaryaNonPaten {
-  id            Int      @id @default(autoincrement())
+  id           Int @id @default(autoincrement())
+  penelitianId Int @unique
+
   jenisKegiatan String
   judulKarya    String
   tglTerbit     DateTime
   link          String
+
+  penelitian Penelitian @relation(fields: [penelitianId], references: [id], onDelete: Cascade)
 }
 
 model SeniNonHki {
-  id            Int      @id @default(autoincrement())
+  id           Int @id @default(autoincrement())
+  penelitianId Int @unique
+
   jenisKegiatan String
   judulKarya    String
   tglTerbit     DateTime
   link          String
+
+  penelitian Penelitian @relation(fields: [penelitianId], references: [id], onDelete: Cascade)
 }
 
 enum KategoriPengabdian {
   JABATAN_PIMPINAN
   PENGEMBANGAN_DIMANFAATKAN
   PENYULUHAN_SATU_SEMESTER
-  PENYULUNGAN_KURANG_SATU_SEMESTER
-  PENYULUHAN_NON_SEMESTER
+  PENYULUHAN_KURANG_SATU_SEMESTER
   PELAYANAN_MASYARAKAT
   KARYA_PENGABDIAN_TIDAKPUBLIS
-  KARYA_PENGABDIAN_DIPULIKASI
+  KARYA_PENGABDIAN_DIPUBLIKASI
   PENGELOLA_JURNAL
 }
 
 model Pengabdian {
-  id         Int                @id @default(autoincrement())
+  id Int @id @default(autoincrement())
+
   dosenId    Int
   semesterId Int?
   kategori   KategoriPengabdian
@@ -723,9 +747,132 @@ model Pengabdian {
   reviewerId     Int?
   reviewer       User?          @relation(fields: [reviewerId], references: [id], onDelete: SetNull)
   catatan        String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  jabatanPimpinan              JabatanPimpinan?
+  pengembanganDimanfaatkan     PengembanganDimanfaatkan?
+  penyuluhanSatuSemester       PenyuluhanSatuSemester?
+  penyuluhanKurangSatuSemester PenyuluhanKurangSatuSemester?
+  pelayananMasyarakat          PelayananMasyarakat?
+  karyaPengabdianTidakPublis   KaryaPengabdianTidakPublis?
+  karyaPengabdianDipublis      KaryaPengabdianDipublis?
+  pengelolaJurnal              PengelolaJurnal?
 }
 
+model JabatanPimpinan {
+  id           Int @id @default(autoincrement())
+  pengabdianId Int @unique
 
+  namaJabatan String
+  instansi    String
+  tmt         DateTime
+  lokasi      String
+  noSk        String
+
+  pengabdian Pengabdian @relation(fields: [pengabdianId], references: [id], onDelete: Cascade)
+}
+
+model PengembanganDimanfaatkan {
+  id           Int @id @default(autoincrement())
+  pengabdianId Int @unique
+
+  namaKegiatan String
+  afiliasi     String
+  lokasi       String
+  lamaKegiatan String
+  jumlahDana   String
+  noSk         String
+
+  pengabdian Pengabdian @relation(fields: [pengabdianId], references: [id], onDelete: Cascade)
+}
+
+model PenyuluhanSatuSemester {
+  id           Int @id @default(autoincrement())
+  pengabdianId Int @unique
+
+  judulMakalah  String
+  namaPertemuan String
+  tingkat       String
+  penyelenggara String
+  tglMulai      DateTime
+
+  pengabdian Pengabdian @relation(fields: [pengabdianId], references: [id], onDelete: Cascade)
+}
+
+model PenyuluhanKurangSatuSemester {
+  id           Int @id @default(autoincrement())
+  pengabdianId Int @unique
+
+  judulMakalah  String
+  namaPertemuan String
+  tingkat       String
+  penyelenggara String
+  tglMulai      DateTime
+
+  pengabdian Pengabdian @relation(fields: [pengabdianId], references: [id], onDelete: Cascade)
+}
+
+model PelayananMasyarakat {
+  id           Int @id @default(autoincrement())
+  pengabdianId Int @unique
+
+  namaKegiatan  String
+  jenisKegiatan String
+  afiliasi      String
+  lokasi        String
+  lamaKegiatan  String
+  jumlahDana    String
+  noSk          String
+
+  pengabdian Pengabdian @relation(fields: [pengabdianId], references: [id], onDelete: Cascade)
+}
+
+model KaryaPengabdianTidakPublis {
+  id           Int @id @default(autoincrement())
+  pengabdianId Int @unique
+
+  judulKarya      String
+  mitra           String
+  jumlahDana      String
+  afiliasi        String
+  tglPelaksanaan  DateTime
+  lamaPelaksanaan String
+
+  pengabdian Pengabdian @relation(fields: [pengabdianId], references: [id], onDelete: Cascade)
+}
+
+model KaryaPengabdianDipublis {
+  id           Int @id @default(autoincrement())
+  pengabdianId Int @unique
+
+  judulKarya      String
+  mitra           String
+  jumlahDana      String
+  afiliasi        String
+  tglPelaksanaan  DateTime
+  lamaPelaksanaan String
+  namaJurnal      String
+  tglTerbit       DateTime
+  isbn            String?
+  issn            String?
+  eissn           String?
+
+  pengabdian Pengabdian @relation(fields: [pengabdianId], references: [id], onDelete: Cascade)
+}
+
+model PengelolaJurnal {
+  id           Int @id @default(autoincrement())
+  pengabdianId Int @unique
+
+  namaJabatan String
+  namaJurnal  String
+  tingkat     String
+  noSk        String
+
+  pengabdian Pengabdian @relation(fields: [pengabdianId], references: [id], onDelete: Cascade)
+}
 
 model ActivityLog {
   id         Int      @id @default(autoincrement())
