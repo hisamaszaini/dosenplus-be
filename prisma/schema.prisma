@@ -652,10 +652,10 @@ model PenelitianTidakDipublikasi {
   judulArtikel  String
   tglTerbit     DateTime
   penerbit      String
-  isbn          String
-  issn          String
-  eissn         String
-  link          String
+  isbn          String?
+  issn          String?
+  eissn         String?
+  link          String?
 
   penelitian Penelitian @relation(fields: [penelitianId], references: [id], onDelete: Cascade)
 }
@@ -667,7 +667,7 @@ model MenerjemahkanBuku {
   judulKarya String
   tglTerbit  DateTime
   penerbit   String
-  isbn       String
+  isbn       String?
 
   penelitian Penelitian @relation(fields: [penelitianId], references: [id], onDelete: Cascade)
 }
@@ -679,7 +679,7 @@ model EditingBuku {
   judulKarya String
   tglTerbit  DateTime
   penerbit   String
-  isbn       String
+  isbn       String?
 
   penelitian Penelitian @relation(fields: [penelitianId], references: [id], onDelete: Cascade)
 }
@@ -691,7 +691,7 @@ model KaryaPatenHki {
   jenisKegiatan String
   judulKarya    String
   tglTerbit     DateTime
-  link          String
+  link          String?
 
   penelitian Penelitian @relation(fields: [penelitianId], references: [id], onDelete: Cascade)
 }
@@ -703,7 +703,7 @@ model KaryaNonPaten {
   jenisKegiatan String
   judulKarya    String
   tglTerbit     DateTime
-  link          String
+  link          String?
 
   penelitian Penelitian @relation(fields: [penelitianId], references: [id], onDelete: Cascade)
 }
@@ -715,7 +715,7 @@ model SeniNonHki {
   jenisKegiatan String
   judulKarya    String
   tglTerbit     DateTime
-  link          String
+  link          String?
 
   penelitian Penelitian @relation(fields: [penelitianId], references: [id], onDelete: Cascade)
 }
