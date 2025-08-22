@@ -29,7 +29,7 @@ export class PenelitianService {
     return map[kategori];
   }
 
-  private getNilaiPak(kategori: string, jenisProduk?: string, jenisKegiatan?: string): number {
+  private getNilaiPak(kategori: string, jenisKategori?: string, jenisProduk?: string, jenisKegiatan?: string): number {
     let nilaiPak = 0;
 
     switch (kategori) {
@@ -80,7 +80,7 @@ export class PenelitianService {
 
       case 'DISEMINASI': {
 
-        switch (jenisKegiatan) {
+        switch (jenisKategori) {
           // Prosiding dipublikasikan
           case 'PROSIDING_DIPUBLIKASIKAN':
             switch (jenisProduk) {
@@ -212,13 +212,13 @@ export class PenelitianService {
 
       let nilaiPak = 0;
 
-      if ('jenisProduk' in data || 'jenisKegiatan' in data) {
-        nilaiPak = this.getNilaiPak(
-          data.kategori,
-          'jenisProduk' in data ? data.jenisProduk : undefined,
-          'jenisKegiatan' in data ? data.jenisKegiatan : undefined
-        );
-      }
+      nilaiPak = this.getNilaiPak(
+        data.kategori,
+        "jenisKategori" in data && typeof data.jenisKategori === "string" ? data.jenisKategori : undefined,
+        "jenisProduk" in data && typeof data.jenisProduk === "string" ? data.jenisProduk : undefined,
+        "jenisKegiatan" in data && typeof data.jenisKegiatan === "string" ? data.jenisKegiatan : undefined
+      );
+
       console.log(`Nilai PAK: ${nilaiPak}`);
 
       const { kategori, semesterId, ...kategoriFields } = data;
