@@ -217,7 +217,7 @@ model Pendidikan {
   dosen   Dosen @relation(fields: [dosenId], references: [id])
 
   kategori KategoriPendidikan
-  nilaiPak Int
+  nilaiPak Float              @default(0)
 
   filePath String
 
@@ -647,7 +647,7 @@ model PenelitianTidakDipublikasi {
   penelitianId Int @unique
 
   namaPerpus    String
-  penulisKe     String
+  penulisKe     Int
   corespondensi Boolean
   judulArtikel  String
   tglTerbit     DateTime
@@ -691,7 +691,7 @@ model KaryaPatenHki {
   jenisKegiatan String
   judulKarya    String
   tglTerbit     DateTime
-  link          String?
+  link          String
 
   penelitian Penelitian @relation(fields: [penelitianId], references: [id], onDelete: Cascade)
 }
@@ -703,7 +703,7 @@ model KaryaNonPaten {
   jenisKegiatan String
   judulKarya    String
   tglTerbit     DateTime
-  link          String?
+  link          String
 
   penelitian Penelitian @relation(fields: [penelitianId], references: [id], onDelete: Cascade)
 }
@@ -782,7 +782,7 @@ model PengembanganDimanfaatkan {
   afiliasi     String
   lokasi       String
   lamaKegiatan String
-  jumlahDana   String
+  jumlahDana   Decimal @default(0.00) @db.Decimal(12, 2)
   noSk         String
 
   pengabdian Pengabdian @relation(fields: [pengabdianId], references: [id], onDelete: Cascade)
@@ -823,7 +823,7 @@ model PelayananMasyarakat {
   afiliasi      String
   lokasi        String
   lamaKegiatan  String
-  jumlahDana    String
+  jumlahDana    Decimal @default(0.00) @db.Decimal(12, 2)
   noSk          String
 
   pengabdian Pengabdian @relation(fields: [pengabdianId], references: [id], onDelete: Cascade)
@@ -835,7 +835,7 @@ model KaryaPengabdianTidakPublis {
 
   judulKarya      String
   mitra           String
-  jumlahDana      String
+  jumlahDana      Decimal  @default(0.00) @db.Decimal(12, 2)
   afiliasi        String
   tglPelaksanaan  DateTime
   lamaPelaksanaan String
@@ -849,7 +849,7 @@ model KaryaPengabdianDipublis {
 
   judulKarya      String
   mitra           String
-  jumlahDana      String
+  jumlahDana      Decimal  @default(0.00) @db.Decimal(12, 2)
   afiliasi        String
   tglPelaksanaan  DateTime
   lamaPelaksanaan String
