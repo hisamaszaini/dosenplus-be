@@ -284,47 +284,6 @@ export class PelaksanaanPendidikanService {
 
       const { kategori, semesterId, ...kategoriFields } = data;
 
-      // Khusus Kategori Bahan Pengajaran
-      let bahanPengajaranData;
-      if (data.kategori === KategoriKegiatan.BAHAN_PENGAJARAN) {
-        if (data.jenis === JenisBahanPengajaran.BUKU_AJAR) {
-          const { judul, tglTerbit, penerbit, jumlahHalaman, isbn } = data;
-          bahanPengajaranData = {
-            jenis: data.jenis,
-            bukuAjar: { create: { judul, tglTerbit, penerbit, jumlahHalaman, isbn } }
-          };
-        } else {
-          const { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId } = data;
-          bahanPengajaranData = {
-            jenis: data.jenis,
-            produkLain: { create: { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId } }
-          };
-        }
-
-        return {
-          success: true,
-          message: 'Data berhasil ditambahkan',
-          data: await this.prisma.pelaksanaanPendidikan.create({
-            data: {
-              dosenId,
-              semesterId,
-              kategori,
-              filePath: relativePath,
-              nilaiPak,
-              bahanPengajaran: { create: bahanPengajaranData }
-            },
-            include: {
-              bahanPengajaran: {
-                include: {
-                  bukuAjar: true,
-                  produkLain: true
-                }
-              }
-            }
-          }),
-        };
-      }
-
       // Kategori lain
       const relationKey = this.kategoriToRelationKey(data.kategori);
 
@@ -384,14 +343,6 @@ export class PelaksanaanPendidikanService {
       const result = await this.prisma.$transaction(async (tx) => {
         const existing = await tx.pelaksanaanPendidikan.findUniqueOrThrow({
           where: { id },
-          include: {
-            bahanPengajaran: {
-              include: {
-                bukuAjar: true,
-                produkLain: true,
-              },
-            },
-          },
         });
 
         if (!roles.includes(TypeUserRole.ADMIN) && existing.dosenId !== dosenId) {
@@ -421,107 +372,12 @@ export class PelaksanaanPendidikanService {
 
         const { kategori, semesterId, ...kategoriFields } = data;
 
-        // Hapus data relasi lama jika kategori berubah
-        if (existing.kategori !== kategori) {
-          const oldRelationKey = this.kategoriToRelationKey(existing.kategori);
-
-          if (oldRelationKey === 'bahanPengajaran' && existing.bahanPengajaran) {
-            // Hapus entitas spesifik untuk bahan pengajaran
-            if (existing.bahanPengajaran.bukuAjar) {
-              await tx.bukuAjar.delete({
-                where: { id: existing.bahanPengajaran.bukuAjar.id },
-              });
-            }
-            if (existing.bahanPengajaran.produkLain) {
-              await tx.produkBahanLainnya.delete({
-                where: { id: existing.bahanPengajaran.produkLain.id },
-              });
-            }
-            await tx.bahanPengajaran.delete({
-              where: { pelaksanaanId: id },
-            });
-          } else {
-            // Untuk kategori lain
-            await tx[oldRelationKey].delete({
-              where: { pelaksanaanId: id },
-            });
-          }
-        }
-
-        // Khusus kategori Bahan Pengajaran
-        if (kategori === KategoriKegiatan.BAHAN_PENGAJARAN) {
-          const existingBahan = existing.bahanPengajaran;
-          const jenisSama = existingBahan?.jenis === data.jenis;
-
-          /* 1. Update isi saja kalau jenis sama */
-          if (jenisSama) {
-            if (data.jenis === JenisBahanPengajaran.BUKU_AJAR) {
-              const { judul, tglTerbit, penerbit, jumlahHalaman, isbn } = data;
-              await tx.bukuAjar.update({
-                where: { id: existingBahan!.bukuAjar!.id },
-                data: { judul, tglTerbit, penerbit, jumlahHalaman, isbn },
-              });
-            } else {
-              const { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId } = data;
-              await tx.produkBahanLainnya.update({
-                where: { id: existingBahan!.produkLain!.id },
-                data: { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId },
-              });
-            }
-          } else {
-            /* 2. Jika jenis berubah maka hapus data lama, buat baru, lalu connect */
-            if (existingBahan?.bukuAjar) {
-              await tx.bukuAjar.delete({ where: { id: existingBahan.bukuAjar.id } });
-            }
-            if (existingBahan?.produkLain) {
-              await tx.produkBahanLainnya.delete({ where: { id: existingBahan.produkLain.id } });
-            }
-
-            let newRelasi: any = {};
-            if (data.jenis === JenisBahanPengajaran.BUKU_AJAR) {
-              const { judul, tglTerbit, penerbit, jumlahHalaman, isbn } = data;
-              newRelasi = {
-                bukuAjar: { create: { judul, tglTerbit, penerbit, jumlahHalaman, isbn } },
-                produkLain: { disconnect: true },
-              };
-            } else {
-              const { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId } = data;
-              newRelasi = {
-                produkLain: { create: { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId } },
-                bukuAjar: { disconnect: true },
-              };
-            }
-
-            /* update relasi secara eksplisit */
-            await tx.pelaksanaanPendidikan.update({
-              where: { id },
-              data: {
-                bahanPengajaran: {
-                  update: {
-                    jenis: data.jenis,
-                    ...newRelasi,
-                  },
-                },
-              },
-            });
-          }
-
-          const updated = await tx.pelaksanaanPendidikan.findUnique({
-            where: { id },
-            include: { bahanPengajaran: { include: { bukuAjar: true, produkLain: true } } },
-          });
-
-          return { updated, existing };
-        }
-
-        // Untuk kategori lain
         const relationKey = this.kategoriToRelationKey(kategori);
         const updated = await tx.pelaksanaanPendidikan.update({
           where: { id },
           data: {
             dosenId,
             semesterId,
-            kategori,
             filePath: newFilePath ?? existing.filePath,
             nilaiPak,
             statusValidasi: StatusValidasi.PENDING,
@@ -597,6 +453,7 @@ export class PelaksanaanPendidikanService {
       const search = query.search.toLowerCase();
       where.OR = [
         { dosen: { nama: { contains: search, mode: 'insensitive' } } },
+        { perkuliahan: { mataKuliah: { contains: search, mode: 'insensitive' } } },
       ];
     }
 
@@ -679,12 +536,7 @@ export class PelaksanaanPendidikanService {
           pengujiUjianAkhir: true,
           pembinaKegiatanMhs: true,
           pengembanganProgram: true,
-          bahanPengajaran: {
-            include: {
-              bukuAjar: true,
-              produkLain: true
-            }
-          },
+          bahanPengajaran: true,
           orasiIlmiah: true,
           jabatanStruktural: true,
           bimbingDosen: true,
