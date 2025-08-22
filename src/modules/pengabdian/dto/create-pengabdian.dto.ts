@@ -49,6 +49,7 @@ export const pelayananMasyarakatSchema = z.object({
     jenisKegiatan: z.enum(['KEAHLIAN', 'PENUGASAN', 'FUNGSI_JABATAN']),
     afiliasi: z.string().nonempty('Afiliasi wajib diisi'),
     lokasi: z.string().nonempty('Lokasi wajib diisi'),
+    lamaKegiatan: z.string().nonempty('Lama kegiatan wajib diisi'),
     jumlahDana: z.coerce.number().min(0),
     noSk: z.string().nonempty('Nomor SK wajib diisi'),
 });
