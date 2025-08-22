@@ -101,13 +101,12 @@ export class PengabdianService {
 
       let nilaiPak = 0;
 
-      if ('tingkat' in data || 'jenisKegiatan' in data) {
-        nilaiPak = this.getNilaiPak(
-          data.kategori,
-          'tingkat' in data ? data.tingkat : undefined,
-          'jenisKegiatan' in data ? data.jenisKegiatan : undefined
-        );
-      }
+      nilaiPak = this.getNilaiPak(
+        data.kategori,
+        "tingkat" in data && typeof data.tingkat === "string" ? data.tingkat : undefined,
+        "jenisKegiatan" in data && typeof data.jenisKegiatan === "string" ? data.jenisKegiatan : undefined
+      );
+
       console.log(`Nilai PAK: ${nilaiPak}`);
       const { kategori, semesterId, ...kategoriFields } = data;
       const relationKey = this.kategoriToRelationKey(data.kategori);
@@ -300,13 +299,12 @@ export class PengabdianService {
 
         let nilaiPak = 0;
 
-        if ('tingkat' in data || 'jenisKegiatan' in data) {
-          nilaiPak = this.getNilaiPak(
-            data.kategori,
-            'tingkat' in data ? data.tingkat : undefined,
-            'jenisKegiatan' in data ? data.jenisKegiatan : undefined
-          );
-        }
+        nilaiPak = this.getNilaiPak(
+          data.kategori,
+          "tingkat" in data && typeof data.tingkat === "string" ? data.tingkat : undefined,
+          "jenisKegiatan" in data && typeof data.jenisKegiatan === "string" ? data.jenisKegiatan : undefined
+        );
+
 
         const { kategori, semesterId, ...kategoriFields } = data;
         const relationKey = this.kategoriToRelationKey(data.kategori);
@@ -354,27 +352,27 @@ export class PengabdianService {
   }
 
   async validate(id: number, rawData: UpdateStatusValidasiDto, reviewerId: number,
-    ) {
-      try {
-        const parsed = parseAndThrow(updateStatusValidasiSchema, rawData);
-        const { statusValidasi, catatan } = parsed;
-  
-        const existing = await this.prisma.pengabdian.findUnique({ where: { id } });
-  
-        if (!existing) throw new NotFoundException('Data pendidikan tidak ditemukan');
-  
-        return this.prisma.pengabdian.update({
-          where: { id },
-          data: {
-            statusValidasi: statusValidasi,
-            reviewerId: reviewerId,
-            catatan: statusValidasi === 'REJECTED' ? catatan : catatan || null,
-          },
-        });
-      } catch (error) {
-        handleUpdateError(error, 'Validasi data Pengabdian');
-      }
+  ) {
+    try {
+      const parsed = parseAndThrow(updateStatusValidasiSchema, rawData);
+      const { statusValidasi, catatan } = parsed;
+
+      const existing = await this.prisma.pengabdian.findUnique({ where: { id } });
+
+      if (!existing) throw new NotFoundException('Data pendidikan tidak ditemukan');
+
+      return this.prisma.pengabdian.update({
+        where: { id },
+        data: {
+          statusValidasi: statusValidasi,
+          reviewerId: reviewerId,
+          catatan: statusValidasi === 'REJECTED' ? catatan : catatan || null,
+        },
+      });
+    } catch (error) {
+      handleUpdateError(error, 'Validasi data Pengabdian');
     }
+  }
 
   async delete(id: number, dosenId: number, roles: TypeUserRole | TypeUserRole[]) {
     try {

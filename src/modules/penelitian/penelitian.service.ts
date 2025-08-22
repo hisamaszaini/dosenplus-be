@@ -414,13 +414,12 @@ export class PenelitianService {
 
         let nilaiPak = 0;
 
-        if ('jenisProduk' in data || 'jenisKegiatan' in data) {
-          nilaiPak = this.getNilaiPak(
-            data.kategori,
-            'jenisProduk' in data ? data.jenisProduk : undefined,
-            'jenisKegiatan' in data ? data.jenisKegiatan : undefined
-          );
-        }
+        nilaiPak = this.getNilaiPak(
+          data.kategori,
+          "jenisKategori" in data && typeof data.jenisKategori === "string" ? data.jenisKategori : undefined,
+          "jenisProduk" in data && typeof data.jenisProduk === "string" ? data.jenisProduk : undefined,
+          "jenisKegiatan" in data && typeof data.jenisKegiatan === "string" ? data.jenisKegiatan : undefined
+        );
 
         const { kategori, semesterId, ...kategoriFields } = data;
         const relationKey = this.kategoriToRelationKey(data.kategori);
