@@ -87,7 +87,7 @@ export class PengabdianService {
     let relativePath: string | undefined;
 
     try {
-      const dosen = await this.prisma.pengabdian.findUniqueOrThrow({
+      const dosen = await this.prisma.dosen.findUniqueOrThrow({
         where: { id: dosenId },
       });
 
