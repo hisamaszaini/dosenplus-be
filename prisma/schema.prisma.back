@@ -1,0 +1,562 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  // output   = "../generated/prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Setting {
+  id         Int    @id @default(autoincrement())
+  namaRektor String
+  nipRektor  String
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum TypeUserRole {
+  ADMIN
+  DOSEN
+  VALIDATOR
+}
+
+enum StatusValidasi {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum NamaSemester {
+  GENAP
+  GANJIL
+}
+
+enum SemesterStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model User {
+  id                   Int                  @id @default(autoincrement())
+  email                String               @unique
+  username             String               @unique
+  name                 String
+  password             String
+  status               UserStatus           @default(ACTIVE)
+  fotoPath             String?
+  hashedRefreshToken   String?
+  passwordResetToken   String?
+  passwordResetExpires DateTime?
+  nip                  String?              @unique
+  jenisKelamin         String               @default("Laki-laki")
+  noHp                 String?              @unique
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  dosen                Dosen?
+  userRoles            UserRole[]
+  PendingUpdateDosen   PendingUpdateDosen[]
+  Pendidikan           Pendidikan[]
+  Penelitian           Penelitian[]
+  Pengabdian           Pengabdian[]
+  Penunjang            Penunjang[]
+}
+
+model Role {
+  id        Int          @id @default(autoincrement())
+  name      TypeUserRole @unique
+  userRoles UserRole[]
+}
+
+model UserRole {
+  id     Int  @id @default(autoincrement())
+  userId Int
+  roleId Int
+  user   User @relation(fields: [userId], references: [id])
+  role   Role @relation(fields: [roleId], references: [id])
+}
+
+model Fakultas {
+  id   Int    @id @default(autoincrement())
+  kode String @unique
+  nama String @unique
+
+  prodi Prodi[]
+  dosen Dosen[]
+
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  PendingUpdateDosen PendingUpdateDosen[]
+}
+
+model Prodi {
+  id   Int    @id @default(autoincrement())
+  kode String @unique
+  nama String @unique
+
+  fakultasId Int?
+  fakultas   Fakultas? @relation(fields: [fakultasId], references: [id], onDelete: SetNull)
+
+  dosen Dosen[]
+
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  PendingUpdateDosen PendingUpdateDosen[]
+}
+
+model Semester {
+  id           Int            @id @default(autoincrement())
+  kode         Int            @unique
+  nama         String         @unique
+  tipe         NamaSemester
+  tahunMulai   Int
+  tahunSelesai Int
+  status       SemesterStatus @default(ACTIVE)
+
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  Penelitian Penelitian[]
+  Pendidikan Pendidikan[]
+  Pengabdian Pengabdian[]
+  Penunjang  Penunjang[]
+
+  @@index([tipe])
+  @@index([tahunMulai, tahunSelesai])
+}
+
+model Dosen {
+  id              Int              @id
+  nuptk           String?          @unique
+  prodiId         Int?
+  fakultasId      Int?
+  jabatan         String
+  dataKepegawaian DataKepegawaian?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  user      User      @relation(fields: [id], references: [id], onDelete: Cascade)
+  prodi     Prodi?    @relation(fields: [prodiId], references: [id], onDelete: SetNull)
+  fakultas  Fakultas? @relation(fields: [fakultasId], references: [id], onDelete: SetNull)
+
+  PendingUpdateDosen PendingUpdateDosen?
+  Pendidikan         Pendidikan[]
+  Penelitian         Penelitian[]
+  Pengabdian         Pengabdian[]
+  Penunjang          Penunjang[]
+}
+
+model DataKepegawaian {
+  id            Int     @id
+  npwp          String?
+  namaBank      String?
+  noRek         String?
+  bpjsKesehatan String?
+  bpjsTKerja    String?
+  noKK          String?
+  dosen         Dosen   @relation(fields: [id], references: [id], onDelete: Cascade)
+}
+
+model PendingUpdateDosen {
+  id      Int   @id @default(autoincrement())
+  dosenId Int   @unique
+  dosen   Dosen @relation(fields: [dosenId], references: [id], onDelete: Cascade)
+
+  // === User
+  nama         String
+  nip          String?
+  jenisKelamin String
+  noHp         String?
+  fotoPath     String?
+
+  // === Biodata ===
+  nuptk      String?
+  prodiId    Int?
+  prodi      Prodi?    @relation(fields: [prodiId], references: [id], onDelete: SetNull)
+  fakultasId Int?
+  fakultas   Fakultas? @relation(fields: [fakultasId], references: [id], onDelete: SetNull)
+  jabatan    String?
+
+  // === Data Kepegawaian ===
+  npwp          String?
+  namaBank      String?
+  noRek         String?
+  bpjsKesehatan String?
+  bpjsTKerja    String?
+  noKK          String?
+
+  // === Metadata ===
+  status     StatusValidasi @default(PENDING)
+  reviewerId Int?
+  reviewer   User?          @relation(fields: [reviewerId], references: [id], onDelete: SetNull)
+  catatan    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum KategoriPendidikan {
+  PENDIDIKAN
+  PELAKSANAAN_PENDIDKAN
+}
+
+enum JenisKategoriPendidikan {
+  PENDIDIKAN
+  MELAKSANAKAN_PERKULIAHAN
+  MEMBIMBING_SEMINAR
+  MEMBIMBING_KKN_PKN_PKL
+  MEMBIMBING_TUGAS_AKHIR
+  BERTUGAS_SEBAGAI_PENGUJI
+  MEMBINA_KEGIATAN_MAHASISWA
+  MENGEMBANGKAN_PROGRAM_KULIAH
+  MENGEMBANGKAN_BAHAN_PENGAJARAN
+  MENYAMPAIKAN_ORASI_ILMIAH
+  MENDUDUKI_JABATAN_PIMPINAN
+  MEMBIMBING_DOSEN_JABATAN_AKADEMIK
+  MELAKSANAKAN_KEGIATAN_DETASERING
+  MELAKSANAKAN_PENGEMBANGAN_DIRI
+}
+
+enum JenisKegiatanPendidikan {
+  // Pendidikan Formal
+  S1
+  S2
+  S3
+  // Diklat Prajabatan
+  //   GOLONGAN_TIGA
+
+  // Melaksanakan Perkuliahan
+  ASISTEN_AHLI
+  LEKTOR
+  LEKTOR_KEPALA
+  GURU_BESAR
+
+  // Membimbing Tugas Akhir
+  PEMBIMBING_UTAMA
+  PEMBIMBING_PENDAMPING
+
+  // Penguji
+  KETUA_PENGUJI
+  ANGGOTA_PENGUJI
+
+  // Mengembangkan Bahan Pengajaran
+  BUKU_AJAR
+  DIKTAT
+  MODUL
+  PETUNJUK_PRAKTIKUM
+  MODEL
+  ALAT_BANTU
+  AUDIO_VISUAL
+  NASKAH_TUTORIAL
+  JOBSHEET
+
+  // Jabatan Pimpinan
+  REKTOR
+  WAKIL
+  KETUA_SEKOLAH
+  PEMBANTU_KETUA_SEKOLAH
+  DIREKTUR_AKADEMI
+  PEMBANTU_DIREKTUR
+  SEKRETARIS_JURUSAN
+
+  // Membimbing Dosen
+  PEMBIMBING_PENCANGKOKAN
+  REGULER
+
+  // Detasering
+  DATASERING
+  PENCANGKOKAN
+
+  // Pengembangan Diri
+  PENGEMBANGAN_DIRI_LAMA_961_JAM_KEATAS
+  PENGEMBANGAN_DIRI_LAMA_641_960_JAM
+  PENGEMBANGAN_DIRI_LAMA_481_640_JAM
+  PENGEMBANGAN_DIRI_LAMA_161_480_JAM
+  PENGEMBANGAN_DIRI_LAMA_81_160_JAM
+  PENGEMBANGAN_DIRI_LAMA_30_80_JAM
+  PENGEMBANGAN_DIRI_LAMA_10_30_JAM
+}
+
+enum SubKegiatanPendidikan {
+  DISERTASI
+  TESIS
+  SRKIPSI
+  LAPORAN_AKHIR_STUDI
+}
+
+model Pendidikan {
+  id         Int  @id @default(autoincrement())
+  dosenId    Int
+  semesterId Int?
+
+  dosen    Dosen     @relation(fields: [dosenId], references: [id])
+  semester Semester? @relation(fields: [semesterId], references: [id], onDelete: SetNull)
+
+  kategori      KategoriPendidikan?
+  jenisKegiatan JenisKategoriPendidikan
+  subKegiatan   SubKegiatanPendidikan
+  namaInstansi  String?
+
+  nilaiPak Float @default(0)
+
+  filePath String
+
+  statusValidasi StatusValidasi @default(PENDING)
+
+  meta Json @default("{}") @db.JsonB
+
+  reviewerId Int?
+  reviewer   User?   @relation(fields: [reviewerId], references: [id], onDelete: SetNull)
+  catatan    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum KategoriPenelitian {
+  KARYA_ILMIAH
+  PENELITIAN_DIDEMINASI
+  PENELITIAN_TIDAK_DIPUBLIKASI
+  TERJEMAHAN_BUKU
+  SUNTINGAN_BUKU
+  KARYA_BERHAKI
+  KARYA_NON_HAKI
+  SENI_NON_HAKI
+}
+
+enum JenisKategoriPenelitian {
+  // Karya Ilmiah
+  BUKU
+  BOOK_CHAPTER
+  PUBLIKASI_ILMIAH
+
+  // Diseminasi
+  PROSIDING_DIPUBLIKASIKAN
+  SEMINAR_TANPA_PROSIDING
+  PROSIDING_TANPA_SEMINAR
+  KORAN_MAJALAH
+
+  // HaKI
+  PATEN_INTERNASIONAL_INDUSTRI
+  PATEN_INTERNASIONAL
+  PATEN_NASIONAL_INDUSTRI
+  PATEN_NASIONAL
+  PATEN_Sederhana
+  CIPTAAN_DESAIN_GEOGRAFIS
+  CIPTAAN_BAHAN_PENGAJAR
+
+  // Non HaKI
+  INTERNASIONAL
+  NASIONAL
+  LOKAL
+}
+
+enum SubJenisPenelitian {
+  // KARYA ILMIAH BUKU
+  BUKU_REFERENSI
+  MONOGRAF
+
+  // KARYA ILMIAH BOOK_CHAPTER
+  // DAN PROSIDING: SEMINAR_TANPA_PROSIDING PROSIDING_TANPA_SEMINAR
+  INTERNASIONAL
+  NASIONAL
+
+  // JURNAL INTERNASIONAL
+  JURNAL_INTERNASIONAL_BEREPUTASI
+  JURNAL_INTERNASIONAL_INDEKS_BEREPUTASI
+  JURNAL_INTERNASIONAL
+  JURNAL_INTERNASIONAL_TIDAK_TERINDEKS
+
+  // JURNAL NASIONAL
+  JURNAL_NASIONAL_TERAKREDITASI
+  JURNAL_NASIONAL_TERAKREDITASI_P1_P2
+  JURNAL_NASIONAL_TERAKREDITASI_P3_P4
+  JURNAL_NASIONAL
+  JURNAL_NASIONAL_BERBAHASA_INGGRIS_INDEKS
+  JURNAL_NASIONAL_TIDAK_TERINDEKS
+
+  // JURNAL LAINNYA
+  JURNAL_PBB_TIDAK_MEMENUHI
+
+  //DISEMINASI PROSIDING
+  PROSIDING_INTERNASIONAL_TERINDEKS
+  PROSIDING_INTERNASIONAL_TIDAK_TERINDEKS
+  PROSIDING_NASIONAL_TIDAK_TERINDEKS
+}
+
+model Penelitian {
+  id            Int                      @id @default(autoincrement())
+  dosenId       Int
+  semesterId    Int?
+  kategori      KategoriPenelitian
+  jenisKategori JenisKategoriPenelitian?
+  subJenis   SubJenisPenelitian?
+  judul         String
+  tglTerbit     DateTime?
+  nilaiPak      Float                    @default(0)
+  filePath      String
+
+  dosen    Dosen     @relation(fields: [dosenId], references: [id], onDelete: Cascade)
+  semester Semester? @relation(fields: [semesterId], references: [id], onDelete: SetNull)
+
+  statusValidasi StatusValidasi @default(PENDING)
+  meta           Json           @default("{}") @db.JsonB
+  reviewerId     Int?
+  reviewer       User?          @relation(fields: [reviewerId], references: [id], onDelete: SetNull)
+  catatan        String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum KategoriPengabdian {
+  JABATAN_PIMPINAN_LEMBAGA_PEMERINTAHAN
+  PENGEMBANGAN_HASIL_PENDIDIKAN_PENELITIAN
+  PENYULUHAN_MASYARAKAT_SEMESTER
+  PENYULUHAN_MASYARAKAT_KURANG_SEMESTER
+  PELAYANAN_MASYARAKAT
+  KARYA_TIDAK_DIPUBLIKASIKAN
+  KARYA_DIPUBLIKASIKAN
+  PENGELOLAAN_JURNAL
+}
+
+enum JenisKegiatanPengabdian {
+  INTERNASIONAL
+  NASIONAL
+  LOKAL
+  INSENDENTAL
+
+  // PELAYANAN MASYARAKAT
+  BIDANG_KEAHLIAN
+  PENUGASAN_PT
+  FUNGSI_JABATAN
+
+  // PENGELOLAAN JURNAL
+  JURNAL_INTERNASIONAL
+  JURNAL_NASIONAL
+}
+
+model Pengabdian {
+  id            Int                      @id @default(autoincrement())
+  dosenId       Int
+  semesterId    Int?
+  kategori      KategoriPengabdian
+  jenisKategori JenisKegiatanPengabdian?
+
+  // Field umum
+  judul       String
+  mitra       String?
+  instansi    String?
+  tingkat     String?
+  namaJabatan String?
+  namaJurnal  String?
+  afiliasi    String?
+  jumlahDana  Decimal? @db.Decimal(12, 2)
+
+  tglTerbit DateTime?
+  nilaiPak  Float     @default(0)
+  filePath  String
+
+  dosen    Dosen     @relation(fields: [dosenId], references: [id], onDelete: Cascade)
+  semester Semester? @relation(fields: [semesterId], references: [id], onDelete: SetNull)
+
+  statusValidasi StatusValidasi @default(PENDING)
+  meta           Json           @default("{}") @db.JsonB
+  reviewerId     Int?
+  reviewer       User?          @relation(fields: [reviewerId], references: [id], onDelete: SetNull)
+  catatan        String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum KategoriPenunjang {
+  ANGGOTA_PANITIA_PT
+  ANGGOTA_PANITIA_LEMBAGA_PEMERINTAH
+  ANGGOTA_ORGANISASI_PROFESI_INTERNASIONAL
+  ANGGOTA_ORGANISASI_PROFESI_NASIONAL
+  WAKIL_PT_PANITIA_ANTAR_LEMBAGA
+  DELEGASI_NASIONAL_PERTEMUAN_INTERNASIONAL
+  AKTIF_PERTEMUAN_ILMIAH_INT_NAS_REG
+  AKTIF_PERTEMUAN_ILMIAH_INTERNAL_PT
+  TANDA_JASA_PENGHARGAAN
+  MENULIS_BUKU_SLTA_NASIONAL
+  PRESTASI_OLAHRAGA_HUMANIORA
+  TIM_PENILAI_JABATAN_AKADEMIK
+}
+
+enum JenisKategoriPenunjang {
+  // ANGGOTA PANITIA PT
+  KETUA_WAKIL_KEPALA_ANGGOTA_TAHUNAN
+  ANGGOTA_TAHUNAN
+
+  // ANGGOTA_PANITIA_LEMBAGA_PEMERINTAH
+  KETUA_WAKIL_PANITIA_PUSAT
+  ANGGOTA_PANITIA_PUSAT
+  KETUA_WAKIL_PANITIA_DAERAH
+  ANGGOTA_PANITIA_DAERAH
+
+  // UMUM
+  KETUA
+  ANGGOTA
+
+  // ANGGOTA ORGANISASI PROFESI
+  PENGURUS
+  ANGGOTA_ATAS_PERMINTAAN
+
+  // DELEGASI NASIONAL PERTEMUAN INTERNASIONAL
+  KETUA_DELEGASI
+  ANGGOTA_DELEGASI
+
+  // TANDA JASA PENGHARGAAN
+  SATYA_LENCANA_30_TAHUN
+  SATYA_LENCANA_20_TAHUN
+  SATYA_LENCANA_10_TAHUN
+  INTERNASIONAL_PENGHARGAAN
+  NASIONAL_PENGHARGAAN
+  DAERAH_PENGHARGAAN
+
+  // MENULIS BUKU
+  BUKU_SMTA
+  BUKU_SMTP
+  BUKU_SD
+
+  // PRESTASI_OLAHRAGA_HUMANIORA
+  INTERNASIONAL_PIAGAM_MEDALI
+  NASIONAL_PIAGAM_MEDALI
+  DAERAH_PIAGAM_MEDALI
+}
+
+model Penunjang {
+  id            Int                     @id @default(autoincrement())
+  dosenId       Int
+  semesterId    Int?
+  kategori      KategoriPenunjang
+  jenisKategori JenisKategoriPenunjang?
+
+  // Field umum
+
+  nilaiPak Float  @default(0)
+  filePath String
+
+  dosen    Dosen     @relation(fields: [dosenId], references: [id], onDelete: Cascade)
+  semester Semester? @relation(fields: [semesterId], references: [id], onDelete: SetNull)
+
+  statusValidasi StatusValidasi @default(PENDING)
+  meta           Json           @default("{}") @db.JsonB
+  reviewerId     Int?
+  reviewer       User?          @relation(fields: [reviewerId], references: [id], onDelete: SetNull)
+  catatan        String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

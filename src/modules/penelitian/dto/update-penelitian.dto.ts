@@ -1,11 +1,11 @@
 import z from "zod";
-import { editingBukuSchema, jenisBookChapterEnum, jenisBukuEnum, jenisJurnalEnum, karyaIlmiahSchema, karyaNonPatenSchema, karyaPatenHkiSchema, menerjemahkanBukuSchema, penelitianBaseSchema, penelitianDiseminasiSchema, penelitianTidakDipublikasiSchema, seniNonHkiSchema } from "./create-penelitian.dto";
+import { editingBukuSchema, jenisBookChapterEnum, jenisBukuEnum, jenisJurnalEnum, jenisProsidingEnum, jenisProsidingTanpaSeminarEnum, jenisSeminarTanpaProsidingEnum, karyaIlmiahSchema, karyaNonPatenSchema, karyaPatenHkiSchema, menerjemahkanBukuSchema, penelitianBaseSchema, penelitianDiseminasiSchema, penelitianTidakDipublikasiSchema, seniNonHkiSchema } from "./create-penelitian.dto";
 import { KategoriPenelitian } from "@prisma/client";
 
 export const updateBukuKaryaIlmiahSchema = z.object({
     kategori: z.literal(KategoriPenelitian.KARYA_ILMIAH),
     jenisKategori: z.literal('BUKU'),
-    jenisProduk: jenisBukuEnum,
+    subJenis: jenisBukuEnum,
 
     judul: z.string().nonempty('Judul wajib diisi'),
     tglTerbit: z.coerce.date({ 'message': 'Tanggal terbit wajib diisi' }),
@@ -15,8 +15,8 @@ export const updateBukuKaryaIlmiahSchema = z.object({
 
 export const updateBookChapterKaryaIlmiahSchema = z.object({
     kategori: z.literal(KategoriPenelitian.KARYA_ILMIAH),
-    jenisKategori: z.literal('BOOKCHAPTER'),
-    jenisProduk: jenisBookChapterEnum,
+    jenisKategori: z.literal('BOOK_CHAPTER'),
+    subJenis: jenisBookChapterEnum,
 
     judul: z.string().nonempty('Judul wajib diisi'),
     tglTerbit: z.coerce.date({ 'message': 'Tanggal terbit wajib diisi' }),
@@ -29,31 +29,28 @@ export const updateBookChapterKaryaIlmiahSchema = z.object({
 export const updateJurnalKaryaIlmiahSchema = z.object({
     kategori: z.literal(KategoriPenelitian.KARYA_ILMIAH),
     jenisKategori: z.literal('JURNAL'),
-    jenisProduk: jenisJurnalEnum,
+    subJenis: jenisJurnalEnum,
 
     judul: z.string().nonempty('Judul wajib diisi'),
     tglTerbit: z.coerce.date({ 'message': 'Tanggal terbit wajib diisi' }),
     penerbit: z.string().nonempty('Penerbit wajib diisi'),
     isbn: z.string().nonempty('ISBN wajib diisi'),
 
-    jenisJurnal: z.string().nonempty('Judul wajib diisi'),
-    penulsKe: z.coerce.number().positive({ message: 'Penulis ke- wajib diisi' }),
+    penulisKe: z.coerce.number().positive({ message: 'Penulis ke- wajib diisi' }),
+    jumlahPenulis: z.coerce.number().positive({ message: 'Jumlah penulis wajib diisi' }),
     corespondensi: z.boolean(),
     jumlahHalaman: z.coerce.number().positive('Jumlah halaman wajib diisi dan harus lebih dari 0'),
     link: z.string().nonempty('Tautan Wajib diisi'),
 }).partial().required({ kategori: true, jenisKategori: true });
 
 const updateProsidingDipublikasikanSchema = z.object({
-    kategori: z.literal(KategoriPenelitian.DISEMINASI),
+    kategori: z.literal(KategoriPenelitian.PENELITIAN_DIDEMINASI),
     jenisKategori: z.literal("PROSIDING_DIPUBLIKASIKAN"),
-    jenisProduk: z.enum([
-        "INTERNASIONAL_BEREPUTASI",
-        "INTERNASIONAL_NON_INDEKS",
-        "NASIONAL",
-    ]),
-    judul: z.string().nonempty("Judul seminar wajib diisi"),
-    judulArtikel: z.string().nonempty("Judul artikel wajib diisi"),
-    penulsKe: z.coerce.number().positive({ message: 'Penulis ke- wajib diisi' }),
+    subJenis: jenisProsidingEnum,
+    judul: z.string().nonempty("Judul artikel wajib diisi"),
+
+    judulSeminar: z.string().nonempty("Judul seminar wajib diisi"),
+    penulisKe: z.coerce.number().positive({ message: 'Penulis ke- wajib diisi' }),
     corespondensi: z.boolean(),
     tglTerbit: z.coerce.date({ message: "Tanggal terbit wajib diisi" }),
     penerbit: z.string().nonempty('Penerbit wajib diisi'),
@@ -64,12 +61,14 @@ const updateProsidingDipublikasikanSchema = z.object({
 }).partial().required({ kategori: true, jenisKategori: true });
 
 const updateSeminarTanpaProsidingSchema = z.object({
-    kategori: z.literal(KategoriPenelitian.DISEMINASI),
+    kategori: z.literal(KategoriPenelitian.PENELITIAN_DIDEMINASI),
     jenisKategori: z.literal("SEMINAR_TANPA_PROSIDING"),
-    jenisProduk: z.enum(["SEMINAR_INTERNASIONAL", "SEMINAR_NASIONAL"]),
-    judul: z.string().nonempty("Judul seminar wajib diisi"),
-    judulArtikel: z.string().nonempty("Judul artikel wajib diisi"),
-    penulsKe: z.coerce.number().positive({ message: 'Penulis ke- wajib diisi' }),
+    subJenis: jenisSeminarTanpaProsidingEnum,
+
+    judul: z.string().nonempty("Judul artikel wajib diisi"),
+
+    judulSeminar: z.string().nonempty("Judul seminar wajib diisi"),
+    penulisKe: z.coerce.number().positive({ message: 'Penulis ke- wajib diisi' }),
     corespondensi: z.boolean(),
     tglTerbit: z.coerce.date({ message: "Tanggal terbit wajib diisi" }),
     penerbit: z.string().nonempty('Penerbit wajib diisi'),
@@ -80,12 +79,13 @@ const updateSeminarTanpaProsidingSchema = z.object({
 }).partial().required({ kategori: true, jenisKategori: true });
 
 const updateProsidingTanpaPresentasiSchema = z.object({
-    kategori: z.literal(KategoriPenelitian.DISEMINASI),
-    jenisKategori: z.literal("PROSIDING_TANPA_PRESENTASI"),
-    jenisProduk: z.enum(["PROSIDING_INTERNASIONAL", "PROSIDING_NASIONAL"]),
-    judul: z.string().nonempty("Judul seminar wajib diisi"),
-    judulArtikel: z.string().nonempty("Judul artikel wajib diisi"),
-    penulsKe: z.coerce.number().positive({ message: 'Penulis ke- wajib diisi' }),
+    kategori: z.literal(KategoriPenelitian.PENELITIAN_DIDEMINASI),
+    jenisKategori: z.literal("PROSIDING_TANPA_SEMINAR"),
+    subJenis: jenisProsidingTanpaSeminarEnum,
+
+    judul: z.string().nonempty("Judul artikel wajib diisi"),
+
+    penulisKe: z.coerce.number().positive({ message: 'Penulis ke- wajib diisi' }),
     corespondensi: z.boolean(),
     tglTerbit: z.coerce.date({ message: "Tanggal terbit wajib diisi" }),
     penerbit: z.string().nonempty('Penerbit wajib diisi'),
@@ -96,11 +96,11 @@ const updateProsidingTanpaPresentasiSchema = z.object({
 }).partial().required({ kategori: true, jenisKategori: true });
 
 const updatePublikasiPopulerSchema = z.object({
-    kategori: z.literal(KategoriPenelitian.DISEMINASI),
-    jenisKategori: z.literal("PUBLIKASI_POPULER"),
-    judul: z.string().nonempty("Nama koran atau majalah wajib diisi"),
-    judulArtikel: z.string().nonempty("Judul artikel wajib diisi"),
-    penulsKe: z.coerce.number().positive({ message: 'Penulis ke- wajib diisi' }),
+    kategori: z.literal(KategoriPenelitian.PENELITIAN_DIDEMINASI),
+    jenisKategori: z.literal("KORAN_MAJALAH"),
+    nama: z.string().nonempty("Nama koran atau majalah wajib diisi"),
+    judul: z.string().nonempty("Judul artikel wajib diisi"),
+    penulisKe: z.coerce.number().positive({ message: 'Penulis ke- wajib diisi' }),
     corespondensi: z.boolean(),
     tglTerbit: z.coerce.date({ message: "Tanggal wajib diisi" }),
     penerbit: z.string().nonempty('Penerbit wajib diisi'),

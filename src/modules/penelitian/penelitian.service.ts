@@ -1,12 +1,13 @@
 import { deleteFileFromDisk, handleUpload } from '@/common/utils/dataFile';
 import { handleCreateError, handleDeleteError, handleFindError, handleUpdateError } from '@/common/utils/prisma-error-handler';
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { KategoriPenelitian, Prisma, StatusValidasi, TypeUserRole } from '@prisma/client';
+import { JenisKategoriPenelitian, KategoriPenelitian, Prisma, StatusValidasi, SubJenisPenelitian, TypeUserRole } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { cleanRelasi } from '@/common/utils/cleanRelasi';
 import { parseAndThrow } from '@/common/utils/zod-helper';
 import { fullCreatePenelitianSchema, UpdateStatusValidasiDto, updateStatusValidasiSchema } from './dto/create-penelitian.dto';
 import { fullUpdatePenelitianSchema } from './dto/update-penelitian.dto';
+import { buildWhereClause } from '@/common/utils/buildWhere';
 
 @Injectable()
 export class PenelitianService {
@@ -15,26 +16,12 @@ export class PenelitianService {
   constructor(private readonly prisma: PrismaService) {
   }
 
-  private kategoriToRelationKey(kategori: KategoriPenelitian): string {
-    const map: Record<KategoriPenelitian, string> = {
-      KARYA_ILMIAH: 'karyaIlmiah',
-      DISEMINASI: 'penelitianDiseminasi',
-      PENELITIAN_TIDAK_DIPUBLIKASIKAN: 'penelitianTidakDipublikasi',
-      MENERJEMAHKAN_BUKU: 'menerjemahkanBuku',
-      EDITING_BUKU: 'editingBuku',
-      PATEN_HAKI: 'karyaPatenHki',
-      TEKNOLOGI_NON_PATEN: 'karyaNonPaten',
-      SENI_NON_HKI: 'seniNonHki',
-    };
-    return map[kategori];
-  }
-
-  private getNilaiPak(kategori: string, jenisKategori?: string, jenisProduk?: string, jenisKegiatan?: string): number {
+  private getNilaiPak(kategori: string, jenisKategori?: string, subJenis?: string, jumlahPenulis?: number, koresponden?: boolean): number {
     let nilaiPak = 0;
 
     switch (kategori) {
       case 'KARYA_ILMIAH': {
-        switch (jenisProduk) {
+        switch (subJenis) {
           case 'BUKU_REFERENSI':
             nilaiPak = 40;
             break;
@@ -47,50 +34,50 @@ export class PenelitianService {
           case 'NASIONAL':
             nilaiPak = 10;
             break;
-          case 'JURNAL_INT_BEREPUTASI':
+          case 'JURNAL_INTERNASIONAL_BEREPUTASI':
             nilaiPak = 40;
             break;
-          case 'JURNAL_INT_TERINDEKS':
+          case 'JURNAL_INTERNASIONAL_INDEKS_BEREPUTASI':
             nilaiPak = 30;
             break;
-          case 'JURNAL_INT':
+          case 'JURNAL_INTERNASIONAL':
             nilaiPak = 20;
             break;
-          case 'JURNAL_NAS_DIKTI':
+          case 'JURNAL_NASIONAL_TERAKREDITASI_P1_P2':
             nilaiPak = 25;
             break;
-          case 'JURNAL_NAS_SINTA_1_2':
+          case 'JURNAL_NASIONAL_DIKTI':
             nilaiPak = 25;
             break;
-          case 'JURNAL_NAS_KEMENRISTEKDIKTI':
+          case 'JURNAL_NASIONAL_BERBAHASA_PBB_INDEKS':
             nilaiPak = 20;
             break;
-          case 'JURNAL_NAS_SINTA_3_4':
+          case 'JURNAL_NASIONAL_TERAKREDITASI_P3_P4':
             nilaiPak = 15;
             break;
-          case 'JURNAL_NAS':
+          case 'JURNAL_NASIONAL':
             nilaiPak = 10;
             break;
-          case 'JURNAL_PBB':
+          case 'JURNAL_PBB_TIDAK_MEMENUHI':
             nilaiPak = 10;
             break;
         }
         break;
       }
 
-      case 'DISEMINASI': {
+      case 'PENELITIAN_DIDEMINASI': {
 
         switch (jenisKategori) {
           // Prosiding dipublikasikan
           case 'PROSIDING_DIPUBLIKASIKAN':
-            switch (jenisProduk) {
-              case 'INTERNASIONAL_BEREPUTASI':
+            switch (subJenis) {
+              case 'PROSIDING_INTERNASIONAL_TERINDEKS':
                 nilaiPak = 30;
                 break;
-              case 'INTERNASIONAL_NON_INDEKS':
+              case 'PROSIDING_INTERNASIONAL_TIDAK_TERINDEKS':
                 nilaiPak = 15;
                 break;
-              case 'NASIONAL':
+              case 'PROSIDING_NASIONAL_TIDAK_TERINDEKS':
                 nilaiPak = 10;
                 break;
             }
@@ -98,30 +85,30 @@ export class PenelitianService {
 
           // Seminar tanpa prosiding
           case 'SEMINAR_TANPA_PROSIDING':
-            switch (jenisProduk) {
-              case 'SEMINAR_INTERNASIONAL':
+            switch (subJenis) {
+              case 'INTERNASIONAL':
                 nilaiPak = 5;
                 break;
-              case 'SEMINAR_NASIONAL':
+              case 'NASIONAL':
                 nilaiPak = 3;
                 break;
             }
             break;
 
           // Prosiding tanpa presentasi
-          case 'PROSIDING_TANPA_PRESENTASI':
-            switch (jenisProduk) {
-              case 'PROSIDING_INTERNASIONAL':
+          case 'PROSIDING_TANPA_SEMINAR':
+            switch (subJenis) {
+              case 'INTERNASIONAL':
                 nilaiPak = 10;
                 break;
-              case 'PROSIDING_NASIONAL':
+              case 'NASIONAL':
                 nilaiPak = 5;
                 break;
             }
             break;
 
-          // Publikasi populer
-          case 'PUBLIKASI_POPULER':
+          // Koran Majalah Publikasi populer
+          case 'KORAN_MAJALAH':
             nilaiPak = 1;
             break;
         }
@@ -129,37 +116,37 @@ export class PenelitianService {
         break;
       }
 
-      case 'PENELITIAN_TIDAK_DIPUBLIKASIKAN': nilaiPak = 2; break;
-      case 'MENERJEMAHKAN_BUKU': nilaiPak = 15; break;
-      case 'EDITING_BUKU': nilaiPak = 10; break;
+      case 'PENELITIAN_TIDAK_DIPUBLIKASI': nilaiPak = 2; break;
+      case 'TERJEMAHAN_BUKU': nilaiPak = 15; break;
+      case 'SUNTINGAN_BUKU': nilaiPak = 10; break;
 
-      case 'PATEN_HAKI': {
-        switch (jenisKegiatan) {
-          case 'INTERNASIONAL_INDUSTRI': {
+      case 'KARYA_BERHAKI': {
+        switch (jenisKategori) {
+          case 'PATEN_INTERNASIONAL_INDUSTRI': {
             nilaiPak = 60;
             break;
           }
-          case 'INTERNASIONAL': {
+          case 'PATEN_INTERNASIONAL': {
             nilaiPak = 50;
             break;
           }
-          case 'NASIONAL_INDUSTRI': {
+          case 'PATEN_NASIONAL_INDUSTRI': {
             nilaiPak = 40;
             break;
           }
-          case 'NASIONAL': {
+          case 'PATEN_NASIONAL': {
             nilaiPak = 30;
             break;
           }
-          case 'PATEN_SEDERHANA_KI': {
+          case 'PATEN_SEDERHANA': {
             nilaiPak = 20;
             break;
           }
-          case 'SERTIFIKAT_KI': {
+          case 'CIPTAAN_DESAIN_GEOGRAFIS': {
             nilaiPak = 15;
             break;
           }
-          case 'SERTIFIKAT_BAHAN_AJAR': {
+          case 'CIPTAAN_BAHAN_PENGAJAR': {
             nilaiPak = 15;
             break;
           }
@@ -168,8 +155,8 @@ export class PenelitianService {
         break;
       }
 
-      case 'TEKNOLOGI_NON_PATEN': {
-        switch (jenisKegiatan) {
+      case 'KARYA_NON_HAKI': {
+        switch (jenisKategori) {
           case 'INTERNASIONAL': {
             nilaiPak = 20;
             break;
@@ -187,10 +174,81 @@ export class PenelitianService {
         break;
       }
 
-      case 'SENI_NON_HKI': nilaiPak = 10; break;
+      case 'SENI_NON_HAKI': nilaiPak = 10; break;
 
     }
+
+    if (jumlahPenulis && jumlahPenulis > 1) {
+      if (koresponden) {
+        return nilaiPak * 0.6;
+      } else {
+        return (nilaiPak * 0.4) / (jumlahPenulis - 1);
+      }
+    }
+
     return nilaiPak;
+  }
+
+  private async aggregateByDosenRaw(
+    dosenId: number,
+    filter: Prisma.PenelitianWhereInput = {},
+    deepKategori = true,
+    deepJenis = false,
+    deepSub = false,
+  ): Promise<any> {
+    const whereClause = Prisma.sql`"dosenId" = ${dosenId}`;
+    const additional = buildWhereClause(filter, 'Penelitian');
+    const fullWhere =
+      additional === Prisma.empty
+        ? Prisma.sql`"dosenId" = ${dosenId}`
+        : Prisma.sql`"dosenId" = ${dosenId} AND ${additional}`;
+
+    const groupCols: string[] = [];
+    if (deepKategori) groupCols.push('"kategori"');
+    if (deepJenis) groupCols.push('"jenisKategori"');
+    if (deepSub) groupCols.push('"subJenis"');
+
+    if (groupCols.length === 0) return {};
+
+    const raw = await this.prisma.$queryRaw<
+      any[]
+    >`
+      SELECT
+        ${Prisma.raw(groupCols.join(', '))},
+        SUM("nilaiPak")::float AS total
+      FROM "Penelitian"
+      WHERE ${fullWhere}
+      GROUP BY ${Prisma.raw(groupCols.join(', '))}
+      ORDER BY ${Prisma.raw(groupCols.join(', '))}
+    `;
+
+    const result: any = {};
+    for (const row of raw) {
+      let cursor = result;
+
+      if (deepKategori) {
+        const k = row.kategori;
+        cursor[k] = cursor[k] || { total: 0 };
+        cursor[k].total += row.total;
+        if (deepJenis) cursor = cursor[k];
+      }
+
+      if (deepJenis) {
+        const jk = row.jenisKategori ?? '_null';
+        cursor.jenis = cursor.jenis || {};
+        cursor.jenis[jk] = cursor.jenis[jk] || { total: 0 };
+        cursor.jenis[jk].total += row.total;
+        if (deepSub) cursor = cursor.jenis[jk];
+      }
+
+      if (deepSub) {
+        const sj = row.subJenis ?? '_null';
+        cursor.sub = cursor.sub || {};
+        cursor.sub[sj] = (cursor.sub[sj] || 0) + row.total;
+      }
+    }
+
+    return result;
   }
 
   async create(dosenId: number, rawData: any, file: Express.Multer.File) {
@@ -210,19 +268,27 @@ export class PenelitianService {
         uploadSubfolder: this.UPLOAD_PATH,
       });
 
+      const { semesterId, kategori, judul, tglTerbit, ...kategoriFields } = data;
+      const jenisKategori: JenisKategoriPenelitian | null =
+        "jenisKategori" in data ? (data.jenisKategori as JenisKategoriPenelitian) : null;
+      const subJenis: SubJenisPenelitian | null =
+        "subJenis" in data ? (data.subJenis as SubJenisPenelitian) : null;
+      const jumlahPenulis = "jumlahPenulis" in data ? (data.jumlahPenulis) : undefined;
+      const koresponden = "corespondensi" in data ? (data.corespondensi) : undefined;
+
       let nilaiPak = 0;
 
       nilaiPak = this.getNilaiPak(
-        data.kategori,
-        "jenisKategori" in data && typeof data.jenisKategori === "string" ? data.jenisKategori : undefined,
-        "jenisProduk" in data && typeof data.jenisProduk === "string" ? data.jenisProduk : undefined,
-        "jenisKegiatan" in data && typeof data.jenisKegiatan === "string" ? data.jenisKegiatan : undefined
+        kategori,
+        jenisKategori ?? undefined,
+        subJenis ?? undefined,
+        jumlahPenulis,
+        koresponden
       );
-
       console.log(`Nilai PAK: ${nilaiPak}`);
 
-      const { kategori, semesterId, ...kategoriFields } = data;
-      const relationKey = this.kategoriToRelationKey(data.kategori);
+      delete (kategoriFields as any).jenisKategori;
+      delete (kategoriFields as any).subJenis;
 
       return {
         success: true,
@@ -231,16 +297,15 @@ export class PenelitianService {
           data: {
             dosenId,
             semesterId,
-            filePath: relativePath,
-            nilaiPak,
             kategori,
-            [relationKey]: {
-              create: kategoriFields,
-            },
+            jenisKategori,
+            subJenis,
+            judul,
+            tglTerbit,
+            nilaiPak,
+            filePath: relativePath,
+            detail: kategoriFields
           },
-          include: {
-            [relationKey]: true,
-          }
         })
       }
 
@@ -273,6 +338,7 @@ export class PenelitianService {
 
     const kategori = query.kategori as string | undefined;
     const semesterId = query.semesterId ? Number(query.semesterId) : undefined;
+    const finalDosenId = dosenId ?? (query.dosenId ? Number(query.dosenId) : undefined);
 
     const sortField = query.sortBy || 'createdAt';
     const sortOrder = query.sortOrder === 'asc' ? 'asc' : 'desc';
@@ -286,8 +352,8 @@ export class PenelitianService {
     const where: Prisma.PenelitianWhereInput = {};
 
     // Filtering
-    if (dosenId) {
-      where.dosenId = dosenId;
+    if (finalDosenId) {
+      where.dosenId = finalDosenId;
     }
 
     if (query.search) {
@@ -322,19 +388,21 @@ export class PenelitianService {
         orderBy: { [sortField]: sortOrder },
         include: {
           dosen: { select: { id: true, nama: true } },
-          semester: true,
-
-          karyaIlmiah: true,
-          penelitianDiseminasi: true,
-          penelitianTidakDipublikasi: true,
-          menerjemahkanBuku: true,
-          editingBuku: true,
-          karyaPatenHki: true,
-          karyaNonPaten: true,
-          seniNonHki: true,
+          semester: { select: { id: true, nama: true } },
         },
       }),
     ]);
+
+    let aggregate: any = null;
+    if (finalDosenId) {
+      aggregate = await this.aggregateByDosenRaw(
+        finalDosenId,
+        where,
+        true,
+        false,
+        false,
+      );
+    }
 
     return {
       success: true,
@@ -345,6 +413,7 @@ export class PenelitianService {
         totalPages: Math.ceil(total / limit),
       },
       data: data,
+      ...(aggregate && { aggregate }),
     };
   }
 
@@ -356,16 +425,7 @@ export class PenelitianService {
         where: { id },
         include: {
           dosen: { select: { id: true, nama: true } },
-          semester: true,
-
-          karyaIlmiah: true,
-          penelitianDiseminasi: true,
-          penelitianTidakDipublikasi: true,
-          menerjemahkanBuku: true,
-          editingBuku: true,
-          karyaPatenHki: true,
-          karyaNonPaten: true,
-          seniNonHki: true,
+          semester: { select: { id: true, nama: true } },
         },
       });
 
@@ -385,66 +445,81 @@ export class PenelitianService {
     }
   }
 
-  async update(id: number,
+  async update(
+    id: number,
     dosenId: number,
     rawData: any,
-    roles: TypeUserRole,
-    file?: Express.Multer.File) {
-
+    roles: TypeUserRole[],
+    file?: Express.Multer.File
+  ) {
     const data = parseAndThrow(fullUpdatePenelitianSchema, rawData);
     console.log(`[UPDATE] Data setelah parse: ${JSON.stringify(data, null, 2)}`);
 
     let newFilePath: string | undefined;
+
     try {
-      if (file) {
-        newFilePath = await handleUpload({
-          file,
-          uploadSubfolder: this.UPLOAD_PATH,
-        });
-      }
-
       const result = await this.prisma.$transaction(async (tx) => {
-        const existing = await tx.penelitian.findUniqueOrThrow({
-          where: { id }
-        });
+        const existing = await tx.penelitian.findUniqueOrThrow({ where: { id } });
 
+        // hanya admin atau pemilik data yang boleh update
         if (!roles.includes(TypeUserRole.ADMIN) && existing.dosenId !== dosenId) {
           throw new ForbiddenException('Anda tidak diizinkan mengakses data ini');
         }
 
+        // upload file baru jika ada
+        if (file) {
+          newFilePath = await handleUpload({
+            file,
+            uploadSubfolder: this.UPLOAD_PATH,
+          });
+        }
+
+        const { kategori, semesterId, judul, tglTerbit, ...kategoriFields } = data;
+
+        // safe narrowing
+        const jenisKategori: JenisKategoriPenelitian | null =
+          "jenisKategori" in data ? (data.jenisKategori as JenisKategoriPenelitian) : null;
+        const subJenis: SubJenisPenelitian | null =
+          "subJenis" in data ? (data.subJenis as SubJenisPenelitian) : null;
+        const jumlahPenulis = "jumlahPenulis" in data ? (data.jumlahPenulis) : undefined;
+        const koresponden = "corespondensi" in data ? (data.corespondensi) : undefined;
+
         let nilaiPak = 0;
 
         nilaiPak = this.getNilaiPak(
-          data.kategori,
-          "jenisKategori" in data && typeof data.jenisKategori === "string" ? data.jenisKategori : undefined,
-          "jenisProduk" in data && typeof data.jenisProduk === "string" ? data.jenisProduk : undefined,
-          "jenisKegiatan" in data && typeof data.jenisKegiatan === "string" ? data.jenisKegiatan : undefined
+          kategori,
+          jenisKategori ?? undefined,
+          subJenis ?? undefined,
+          jumlahPenulis,
+          koresponden
         );
+        console.log(`Nilai PAK: ${nilaiPak}`);
 
-        const { kategori, semesterId, ...kategoriFields } = data;
-        const relationKey = this.kategoriToRelationKey(data.kategori);
+        delete (kategoriFields as any).jenisKategori;
+        delete (kategoriFields as any).subJenis;
+
         const updated = await tx.penelitian.update({
           where: { id },
           data: {
             dosenId,
             semesterId,
-            filePath: newFilePath ?? existing.filePath,
+            kategori,
+            jenisKategori: jenisKategori ?? undefined,
+            subJenis: subJenis ?? undefined,
+            judul,
+            tglTerbit,
             nilaiPak,
+            filePath: newFilePath ?? existing.filePath,
+            detail: kategoriFields,
             statusValidasi: StatusValidasi.PENDING,
             catatan: null,
-            [relationKey]: {
-              update: kategoriFields,
-            },
           },
-          include: {
-            [relationKey]: true,
-          }
         });
 
         return { updated, existing };
       });
 
-      // Hapus file lama setelah transaksi berhasil
+      // hapus file lama setelah transaksi sukses
       if (newFilePath && result.existing.filePath) {
         await deleteFileFromDisk(result.existing.filePath);
       }
@@ -453,12 +528,11 @@ export class PenelitianService {
         success: true,
         message: 'Data berhasil diperbarui',
         data: result.updated,
-      }
+      };
     } catch (error) {
       if (process.env.NODE_ENV !== 'production') {
         console.error('UPDATE Penelitian FAILED:', error);
       }
-
       if (newFilePath) {
         await deleteFileFromDisk(newFilePath);
       }

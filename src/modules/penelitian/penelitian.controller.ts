@@ -3,11 +3,11 @@ import { PenelitianService } from './penelitian.service';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { TypeUserRole } from '@prisma/client';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { CreatePenelitianDto } from './dto/create-penelitian.dto';
 import { UpdatePenelitianFullDto } from './dto/update-penelitian.dto';
 import { ParseJsonStringPipe } from '@/common/pipes/parse-json-string.pipe';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { CreatePenelitianFullDto } from './dto/create-penelitian.dto';
 
 @Controller('penelitian')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -32,7 +32,7 @@ export class PenelitianController {
     @Body('data') dataRaw: any,
     @Req() req: any
   ) {
-    let data: CreatePenelitianDto;
+    let data: CreatePenelitianFullDto;
     try {
       if (!dataRaw || typeof dataRaw !== 'string') {
         throw new BadRequestException('data harus berupa string JSON.');
@@ -62,10 +62,10 @@ export class PenelitianController {
     )
     file: Express.Multer.File,
 
-    @Body('data') dataRaw: CreatePenelitianDto,
+    @Body('data') dataRaw: CreatePenelitianFullDto,
     @Req() req: any
   ) {
-    let data: CreatePenelitianDto;
+    let data: CreatePenelitianFullDto;
     try {
       if (!dataRaw || typeof dataRaw !== 'string') {
         throw new BadRequestException('data harus berupa string JSON.');
