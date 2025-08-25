@@ -325,68 +325,63 @@ export class PengabdianService {
     file?: Express.Multer.File
   ) {
     const data = parseAndThrow(fullUpdatePengabdianSchema, rawData);
+    console.log(`[UPDATE] Data setelah parse: ${JSON.stringify(data, null, 2)}`);
 
     let newFilePath: string | undefined;
-    if (file) {
-      newFilePath = await handleUpload({
-        file,
-        uploadSubfolder: this.UPLOAD_PATH,
-      });
-    }
-
     try {
       const result = await this.prisma.$transaction(async (tx) => {
-        const existing = await tx.pengabdian.findUniqueOrThrow({ where: { id } });
+        const existing = await tx.pengabdian.findUniqueOrThrow({
+          where: { id },
+        });
 
         if (!roles.includes(TypeUserRole.ADMIN) && existing.dosenId !== dosenId) {
           throw new ForbiddenException('Anda tidak diizinkan mengakses data ini');
         }
 
-        const payload: any = {};
-
-        if ('semesterId' in data) payload.semesterId = data.semesterId;
-        if ('kategori' in data) payload.kategori = data.kategori;
-
-        if ('jenisKegiatan' in data) payload.jenisKegiatan = data.jenisKegiatan;
-        if ('tingkat' in data) payload.tingkat = data.tingkat;
-
-        const needRecalc =
-          'kategori' in payload ||
-          'tingkat' in payload ||
-          'jenisKegiatan' in payload;
-
-        if (needRecalc) {
-          payload.nilaiPak = this.getNilaiPak(
-            payload.kategori ?? existing.kategori,
-            payload.tingkat ?? existing.tingkat,
-            payload.jenisKegiatan ?? existing.jenisKegiatan,
-          );
+        if (file) {
+          newFilePath = await handleUpload({
+            file,
+            uploadSubfolder: this.UPLOAD_PATH,
+          });
         }
 
-        const { kategori, semesterId, jenisKegiatan, tingkat, ...detailRest } = data;
-        if (Object.keys(detailRest).length) {
-          payload.detail = {
-            ...(typeof existing.detail === 'object' && existing.detail !== null
-              ? existing.detail
-              : {}),
-            ...detailRest,
-          };
-        }
+        const jenisKegiatan: JenisKegiatanPengabdian | null =
+          "jenisKegiatan" in data ? (data.jenisKegiatan as JenisKegiatanPengabdian) : null;
 
-        if (newFilePath) payload.filePath = newFilePath;
+        const tingkat: TingkatPengabdian | null =
+          "tingkat" in data ? (data.tingkat as TingkatPengabdian) : null;
 
-        payload.statusValidasi = StatusValidasi.PENDING;
-        payload.catatan = null;
+        let nilaiPak = this.getNilaiPak(
+          data.kategori,
+          tingkat ?? undefined,
+          jenisKegiatan ?? undefined,
+        );
+
+        const { kategori, semesterId, ...kategoriFields } = data;
+
+        delete (kategoriFields as any).jenisKegiatan;
+        delete (kategoriFields as any).tingkat;
 
         const updated = await tx.pengabdian.update({
           where: { id },
-          data: payload,
+          data: {
+            dosenId,
+            semesterId,
+            kategori,
+            jenisKegiatan,
+            tingkat,
+            nilaiPak,
+            statusValidasi: StatusValidasi.PENDING,
+            catatan: null,
+            filePath: newFilePath ?? existing.filePath,
+            detail: kategoriFields,
+          },
         });
 
         return { updated, existing };
       });
 
-      // Hapus file lama jika ada
+      // Hapus file lama setelah transaksi berhasil
       if (newFilePath && result.existing.filePath) {
         await deleteFileFromDisk(result.existing.filePath);
       }
@@ -396,9 +391,15 @@ export class PengabdianService {
         message: 'Data berhasil diperbarui',
         data: result.updated,
       };
-    } catch (err) {
-      if (newFilePath) await deleteFileFromDisk(newFilePath);
-      handleUpdateError(err, 'Pengabdian');
+    } catch (error) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('UPDATE Pengabdian FAILED:', error);
+      }
+
+      if (newFilePath) {
+        await deleteFileFromDisk(newFilePath);
+      }
+      handleUpdateError(error, 'Pengabdian');
     }
   }
 

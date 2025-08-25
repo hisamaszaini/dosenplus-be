@@ -1,0 +1,67 @@
+async update(
+  id: number,
+  dosenId: number,
+  body: unknown,
+  roles: TypeUserRole[],
+  file?: Express.Multer.File,
+) {
+  const data = fullUpdatePenelitianSchema.parse(body);
+
+  const existing = await this.prisma.penelitian.findUniqueOrThrow({ where: { id } });
+  if (!roles.includes(TypeUserRole.ADMIN) && existing.dosenId !== dosenId) {
+    throw new ForbiddenException('Anda tidak diizinkan mengakses data ini');
+  }
+
+  let newFilePath: string | undefined;
+  if (file) {
+    newFilePath = await handleUpload({ file, uploadSubfolder: this.UPLOAD_PATH });
+  }
+
+  return await this.prisma.$transaction(async (tx) => {
+    const payload: any = {};
+
+    const ROOT_KEYS = [
+      'semesterId',
+      'judul',
+      'tglTerbit',
+      'jenisKategori',
+      'subJenis',
+    ] as const;
+    for (const k of ROOT_KEYS) {
+      if (k in data) payload[k] = data[k];
+    }
+
+    payload.nilaiPak = this.getNilaiPak(
+      data.kategori,
+      'jenisKategori' in data ? data.jenisKategori : existing.jenisKategori,
+      'subJenis'      in data ? data.subJenis      : existing.subJenis,
+      'jumlahPenulis' in data ? data.jumlahPenulis : (existing.detail as any)?.jumlahPenulis,
+      'corespondensi' in data ? data.corespondensi : (existing.detail as any)?.corespondensi,
+    );
+
+    const { semesterId, judul, tglTerbit, kategori, jenisKategori, subJenis, ...detailRest } = data;
+    const categoryChanged =
+      ('kategori'      in data && data.kategori      !== existing.kategori) ||
+      ('jenisKategori' in data && data.jenisKategori !== existing.jenisKategori) ||
+      ('subJenis'      in data && data.subJenis      !== existing.subJenis);
+
+    payload.detail = categoryChanged
+      ? detailRest
+      : { ...(existing.detail as object), ...detailRest };
+
+    if (newFilePath) payload.filePath = newFilePath;
+    payload.statusValidasi = StatusValidasi.PENDING;
+    payload.catatan = null;
+
+    const updated = await tx.penelitian.update({ where: { id }, data: payload });
+    return { updated, existing };
+  }).then(async (res) => {
+    if (newFilePath && res.existing.filePath) {
+      await deleteFileFromDisk(res.existing.filePath);
+    }
+    return { success: true, message: 'Data berhasil diperbarui', data: res.updated };
+  }).catch((err) => {
+    if (newFilePath) deleteFileFromDisk(newFilePath);
+    handleUpdateError(err, 'Penelitian');
+  });
+}

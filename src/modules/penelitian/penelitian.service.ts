@@ -8,6 +8,7 @@ import { parseAndThrow } from '@/common/utils/zod-helper';
 import { fullCreatePenelitianSchema, UpdateStatusValidasiDto, updateStatusValidasiSchema } from './dto/create-penelitian.dto';
 import { fullUpdatePenelitianSchema } from './dto/update-penelitian.dto';
 import { buildWhereClause } from '@/common/utils/buildWhere';
+import { UpdatePenelitianInput } from './penelitian.types';
 
 @Injectable()
 export class PenelitianService {
