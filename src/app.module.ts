@@ -13,6 +13,7 @@ import { PelaksanaanPendidikanModule } from './modules/pelaksanaan-pendidikan/pe
 import { PrismaModule } from '../prisma/prisma.module';
 import { PenelitianModule } from './modules/penelitian/penelitian.module';
 import { PengabdianModule } from './modules/pengabdian/pengabdian.module';
+import { PenunjangModule } from './modules/penunjang/penunjang.module';
 
 @Module({
   imports: [
@@ -38,6 +39,8 @@ import { PengabdianModule } from './modules/pengabdian/pengabdian.module';
     PenelitianModule,
 
     PengabdianModule,
+
+    PenunjangModule,
 
   ],
   controllers: [AppController],
