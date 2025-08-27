@@ -3,7 +3,7 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { parseAndThrow } from '@/common/utils/zod-helper';
 import { fullCreatePenunjangSchema, UpdateStatusValidasiDto, updateStatusValidasiSchema } from './dto/create-penunjang.dto';
 import { deleteFileFromDisk, handleUpload } from '@/common/utils/dataFile';
-import { JenisKategoriPenunjang, KategoriPenunjang, Prisma, StatusValidasi, TypeUserRole } from '@prisma/client';
+import { JenisKegiatanPenunjang, KategoriPenunjang, Prisma, StatusValidasi, TypeUserRole } from '@prisma/client';
 import { handleCreateError, handleDeleteError, handleFindError, handleUpdateError } from '@/common/utils/prisma-error-handler';
 import { buildWhereClause } from '@/common/utils/buildWhere';
 import { cleanRelasi } from '@/common/utils/cleanRelasi';
@@ -16,14 +16,14 @@ export class PenunjangService {
   constructor(private readonly prisma: PrismaService) {
   }
 
-  private getNilaiPak(kategori: string, jenisKategori?: string): number {
-    console.log(`Kategori: ${kategori} jenisKategori: ${jenisKategori}`);
+  private getNilaiPak(kategori: string, jenisKegiatan?: string): number {
+    console.log(`Kategori: ${kategori} jenisKegiatan: ${jenisKegiatan}`);
 
     let nilaiPak = 0;
 
     switch (kategori) {
       case 'ANGGOTA_PANITIA_PT': {
-        switch (jenisKategori) {
+        switch (jenisKegiatan) {
           case 'KETUA_WAKIL_KEPALA_ANGGOTA_TAHUNAN': nilaiPak = 3; break;
           case 'ANGGOTA_TAHUNAN': nilaiPak = 2; break;
         }
@@ -31,7 +31,7 @@ export class PenunjangService {
       }
 
       case 'ANGGOTA_PANITIA_LEMBAGA_PEMERINTAH': {
-        switch (jenisKategori) {
+        switch (jenisKegiatan) {
           case 'KETUA_WAKIL_PANITIA_PUSAT': nilaiPak = 3; break;
           case 'ANGGOTA_PANITIA_PUSAT': nilaiPak = 2; break;
           case 'KETUA_WAKIL_PANITIA_DAERAH': nilaiPak = 2; break;
@@ -41,7 +41,7 @@ export class PenunjangService {
       }
 
       case 'ANGGOTA_ORGANISASI_PROFESI_INTERNASIONAL': {
-        switch (jenisKategori) {
+        switch (jenisKegiatan) {
           case 'PENGURUS': nilaiPak = 2; break;
           case 'ANGGOTA_ATAS_PERMINTAAN': nilaiPak = 1; break;
           case 'ANGGOTA': nilaiPak = 0.5; break;
@@ -50,7 +50,7 @@ export class PenunjangService {
       }
 
       case 'ANGGOTA_ORGANISASI_PROFESI_NASIONAL': {
-        switch (jenisKategori) {
+        switch (jenisKegiatan) {
           case 'PENGURUS': nilaiPak = 1.5; break;
           case 'ANGGOTA_ATAS_PERMINTAAN': nilaiPak = 1; break;
           case 'ANGGOTA': nilaiPak = 0.5; break;
@@ -63,7 +63,7 @@ export class PenunjangService {
       }
 
       case 'DELEGASI_NASIONAL_PERTEMUAN_INTERNASIONAL': {
-        switch (jenisKategori) {
+        switch (jenisKegiatan) {
           case 'KETUA_DELEGASI': nilaiPak = 3; break;
           case 'ANGGOTA_DELEGASI': nilaiPak = 2; break;
         }
@@ -72,7 +72,7 @@ export class PenunjangService {
       }
 
       case 'AKTIF_PERTEMUAN_ILMIAH_INT_NAS_REG': {
-        switch (jenisKategori) {
+        switch (jenisKegiatan) {
           case 'KETUA': nilaiPak = 3; break;
           case 'ANGGOTA': nilaiPak = 2; break;
         }
@@ -82,7 +82,7 @@ export class PenunjangService {
 
 
       case 'AKTIF_PERTEMUAN_ILMIAH_INTERNAL_PT': {
-        switch (jenisKategori) {
+        switch (jenisKegiatan) {
           case 'KETUA': nilaiPak = 2; break;
           case 'ANGGOTA': nilaiPak = 1; break;
         }
@@ -91,7 +91,7 @@ export class PenunjangService {
       }
 
       case 'TANDA_JASA_PENGHARGAAN': {
-        switch (jenisKategori) {
+        switch (jenisKegiatan) {
           case 'SATYA_LENCANA_30_TAHUN': nilaiPak = 3; break;
           case 'SATYA_LENCANA_20_TAHUN': nilaiPak = 2; break;
           case 'SATYA_LENCANA_10_TAHUN': nilaiPak = 1; break;
@@ -107,7 +107,7 @@ export class PenunjangService {
       }
 
       case 'PRESTASI_OLAHRAGA_HUMANIORA': {
-        switch (jenisKategori) {
+        switch (jenisKegiatan) {
           case 'PIAGAM_MEDALI_INTERNASIONAL': nilaiPak = 5; break;
           case 'PIAGAM_MEDALI_NASIONAL': nilaiPak = 3; break;
           case 'PIAGAM_MEDALI_DAERAH': nilaiPak = 1; break;
@@ -140,7 +140,7 @@ export class PenunjangService {
 
     const groupCols: string[] = [];
     if (deepKategori) groupCols.push('"kategori"');
-    if (deepJenis) groupCols.push('"jenisKategori"');
+    if (deepJenis) groupCols.push('"jenisKegiatan"');
 
     if (groupCols.length === 0) return {};
 
@@ -162,7 +162,7 @@ export class PenunjangService {
       result[kategori].total += total;
 
       if (deepJenis) {
-        const jk = row.jenisKategori ?? '_null';
+        const jk = row.jenisKegiatan ?? '_null';
         result[kategori].jenis = result[kategori].jenis || {};
         result[kategori].jenis[jk] = (result[kategori].jenis[jk] || 0) + total;
       }
@@ -188,20 +188,20 @@ export class PenunjangService {
         uploadSubfolder: this.UPLOAD_PATH,
       });
 
-      const jenisKategori: JenisKategoriPenunjang | null =
-        "jenisKategori" in data ? (data.jenisKategori as JenisKategoriPenunjang) : null;
+      const jenisKegiatan: JenisKegiatanPenunjang | null =
+        "jenisKegiatan" in data ? (data.jenisKegiatan as JenisKegiatanPenunjang) : null;
 
       let nilaiPak = 0;
 
       nilaiPak = this.getNilaiPak(
         data.kategori,
-        jenisKategori ?? undefined,
+        jenisKegiatan ?? undefined,
       );
 
       console.log(`Nilai PAK: ${nilaiPak}`);
-      const { kategori, semesterId, instansi, ...kategoriFields } = data;
+      const { kategori, semesterId, namaKegiatan, instansi, ...kategoriFields } = data;
 
-      delete (kategoriFields as any).jenisKategori;
+      delete (kategoriFields as any).jenisKegiatan;
 
       return {
         success: true,
@@ -210,8 +210,9 @@ export class PenunjangService {
           data: {
             dosenId,
             semesterId,
+            namaKegiatan,
             kategori,
-            jenisKategori,
+            jenisKegiatan,
             nilaiPak,
             instansi,
             filePath: relativePath,
@@ -384,17 +385,17 @@ export class PenunjangService {
           });
         }
 
-        const jenisKategori: JenisKategoriPenunjang | null =
-          "jenisKategori" in data ? (data.jenisKategori as JenisKategoriPenunjang) : null;
+        const jenisKegiatan: JenisKegiatanPenunjang | null =
+          "jenisKegiatan" in data ? (data.jenisKegiatan as JenisKegiatanPenunjang) : null;
 
         let nilaiPak = this.getNilaiPak(
           data.kategori,
-          jenisKategori ?? undefined,
+          jenisKegiatan ?? undefined,
         );
 
         const { kategori, semesterId, instansi, ...kategoriFields } = data;
 
-        delete (kategoriFields as any).jenisKategori;
+        delete (kategoriFields as any).jenisKegiatan;
 
         const updated = await tx.penunjang.update({
           where: { id },
@@ -402,7 +403,7 @@ export class PenunjangService {
             dosenId,
             semesterId,
             kategori,
-            jenisKategori,
+            jenisKegiatan,
             nilaiPak,
             instansi,
             statusValidasi: StatusValidasi.PENDING,

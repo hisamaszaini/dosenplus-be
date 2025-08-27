@@ -57,7 +57,7 @@ export const penunjangBaseSchema = z.object({
 
 export const anggotaPanitiaPTSchema = z.object({
     kategori: z.literal(KategoriPenunjang.ANGGOTA_PANITIA_PT),
-    jenisKategori: jenisPanitiaPTEnum,
+    jenisKegiatan: jenisPanitiaPTEnum,
     namaKegiatan: z.string().nonempty({ message: "Nama kegiatan wajib diisi" }),
     instansi: z.string().nonempty({ message: "Instansi wajib diisi" }),
     noSk: z.string().nonempty('Nomor SK wajib diisi'),
@@ -67,7 +67,7 @@ export const anggotaPanitiaPTSchema = z.object({
 
 export const anggotaPanitiaLPSchema = z.object({
     kategori: z.literal(KategoriPenunjang.ANGGOTA_PANITIA_LEMBAGA_PEMERINTAH),
-    jenisKategori: jenisPanitiaLembagaPemerintahEnum,
+    jenisKegiatan: jenisPanitiaLembagaPemerintahEnum,
     namaKegiatan: z.string().nonempty({ message: "Nama kegiatan wajib diisi" }),
     instansi: z.string().nonempty({ message: "Instansi wajib diisi" }),
     noSk: z.string().nonempty('Nomor SK wajib diisi'),
@@ -77,7 +77,7 @@ export const anggotaPanitiaLPSchema = z.object({
 
 export const anggotaOrganisasiProfesiInternasionalSchema = z.object({
     kategori: z.literal(KategoriPenunjang.ANGGOTA_ORGANISASI_PROFESI_INTERNASIONAL),
-    jenisKategori: jenisAnggotaOrganisasiProfesiEnum,
+    jenisKegiatan: jenisAnggotaOrganisasiProfesiEnum,
     namaKegiatan: z.string().nonempty({ message: "Nama kegiatan wajib diisi" }),
     instansi: z.string().nonempty({ message: "Instansi wajib diisi" }),
     noSk: z.string().nonempty('Nomor SK wajib diisi'),
@@ -87,7 +87,7 @@ export const anggotaOrganisasiProfesiInternasionalSchema = z.object({
 
 export const anggotaOrganisasiProfesiNasionalSchema = z.object({
     kategori: z.literal(KategoriPenunjang.ANGGOTA_ORGANISASI_PROFESI_NASIONAL),
-    jenisKategori: jenisAnggotaOrganisasiProfesiEnum,
+    jenisKegiatan: jenisAnggotaOrganisasiProfesiEnum,
     namaKegiatan: z.string().nonempty({ message: "Nama kegiatan wajib diisi" }),
     instansi: z.string().nonempty({ message: "Instansi wajib diisi" }),
     noSk: z.string().nonempty('Nomor SK wajib diisi'),
@@ -106,7 +106,7 @@ export const wakilPTPanitiaAntarLembagaSchema = z.object({
 
 export const delegasiNasionalPertemuanInterSchema = z.object({
     kategori: z.literal(KategoriPenunjang.DELEGASI_NASIONAL_PERTEMUAN_INTERNASIONAL),
-    jenisKategori: jenisAnggotaDelegasiNasionalEnum,
+    jenisKegiatan: jenisAnggotaDelegasiNasionalEnum,
     namaKegiatan: z.string().nonempty({ message: "Nama kegiatan wajib diisi" }),
     instansi: z.string().nonempty({ message: "Instansi wajib diisi" }),
     noSk: z.string().nonempty('Nomor SK wajib diisi'),
@@ -116,7 +116,7 @@ export const delegasiNasionalPertemuanInterSchema = z.object({
 
 export const aktifPertemuanIlmiahIntNasRegSchema = z.object({
     kategori: z.literal(KategoriPenunjang.AKTIF_PERTEMUAN_ILMIAH_INT_NAS_REG),
-    jenisKategori: jenisAnggotaPertemuanEnum,
+    jenisKegiatan: jenisAnggotaPertemuanEnum,
     namaKegiatan: z.string().nonempty({ message: "Nama kegiatan wajib diisi" }),
     instansi: z.string().nonempty({ message: "Instansi wajib diisi" }),
     noSk: z.string().nonempty('Nomor SK wajib diisi'),
@@ -126,7 +126,7 @@ export const aktifPertemuanIlmiahIntNasRegSchema = z.object({
 
 export const aktifPertemuanIlmiahInternalPTSchema = z.object({
     kategori: z.literal(KategoriPenunjang.AKTIF_PERTEMUAN_ILMIAH_INTERNAL_PT),
-    jenisKategori: jenisAnggotaPertemuanEnum,
+    jenisKegiatan: jenisAnggotaPertemuanEnum,
     namaKegiatan: z.string().nonempty({ message: "Nama kegiatan wajib diisi" }),
     instansi: z.string().nonempty({ message: "Instansi wajib diisi" }),
     noSk: z.string().nonempty('Nomor SK wajib diisi'),
@@ -136,7 +136,7 @@ export const aktifPertemuanIlmiahInternalPTSchema = z.object({
 
 export const tandaJasaPenghargaanSchema = z.object({
     kategori: z.literal(KategoriPenunjang.TANDA_JASA_PENGHARGAAN),
-    jenisKategori: jenisTandaJasaPenghargaanEnum,
+    jenisKegiatan: jenisTandaJasaPenghargaanEnum,
     namaKegiatan: z.string().nonempty({ message: "Nama kegiatan wajib diisi" }),
     instansi: z.string().nonempty({ message: "Instansi wajib diisi" }),
     noSk: z.string().nonempty('Nomor SK wajib diisi'),
@@ -146,7 +146,7 @@ export const tandaJasaPenghargaanSchema = z.object({
 
 export const menulisBukuSLTANasionalSchema = z.object({
     kategori: z.literal(KategoriPenunjang.MENULIS_BUKU_SLTA_NASIONAL),
-    jenisKategori: jenisMenulisBukuEnum,
+    jenisKegiatan: jenisMenulisBukuEnum,
     namaKegiatan: z.string().nonempty({ message: "Nama kegiatan wajib diisi" }),
     instansi: z.string().nonempty({ message: "Instansi wajib diisi" }),
     noSk: z.string().nonempty('Nomor SK wajib diisi'),
@@ -156,7 +156,7 @@ export const menulisBukuSLTANasionalSchema = z.object({
 
 export const prestasiOlahragaHumanioraSchema = z.object({
     kategori: z.literal(KategoriPenunjang.PRESTASI_OLAHRAGA_HUMANIORA),
-    jenisKategori: jenisPrestasiOlahragaEnum,
+    jenisKegiatan: jenisPrestasiOlahragaEnum,
     namaKegiatan: z.string().nonempty({ message: "Nama kegiatan wajib diisi" }),
     instansi: z.string().nonempty({ message: "Instansi wajib diisi" }),
     noSk: z.string().nonempty('Nomor SK wajib diisi'),
@@ -166,7 +166,7 @@ export const prestasiOlahragaHumanioraSchema = z.object({
 
 export const timPenilaiJabatanAkademikDosenSchema = z.object({
     kategori: z.literal(KategoriPenunjang.TIM_PENILAI_JABATAN_AKADEMIK),
-    jenisKategori: jenisPrestasiOlahragaEnum,
+    jenisKegiatan: jenisPrestasiOlahragaEnum,
     namaKegiatan: z.string().nonempty({ message: "Nama kegiatan wajib diisi" }),
     instansi: z.string().nonempty({ message: "Instansi wajib diisi" }),
     noSk: z.string().nonempty('Nomor SK wajib diisi'),

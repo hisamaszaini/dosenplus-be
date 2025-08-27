@@ -723,7 +723,7 @@ enum KategoriPenunjang {
   TIM_PENILAI_JABATAN_AKADEMIK
 }
 
-enum JenisKategoriPenunjang {
+enum JenisKegiatanPenunjang {
   // ANGGOTA PANITIA PT
   KETUA_WAKIL_KEPALA_ANGGOTA_TAHUNAN
   ANGGOTA_TAHUNAN
@@ -770,9 +770,10 @@ model Penunjang {
   dosenId       Int
   semesterId    Int?
   kategori      KategoriPenunjang
-  jenisKategori JenisKategoriPenunjang?
+  jenisKegiatan JenisKegiatanPenunjang?
 
   // Field umum
+  namaKegiatan String
   instansi String
   nilaiPak Float  @default(0)
   filePath String
