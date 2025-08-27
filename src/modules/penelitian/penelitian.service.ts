@@ -196,13 +196,14 @@ export class PenelitianService {
     deepKategori = true,
     deepJenis = false,
     deepSub = false,
+    includeStatus = false,
   ): Promise<any> {
     const whereClause = Prisma.sql`"dosenId" = ${dosenId}`;
     const additional = buildWhereClause(filter, 'Penelitian');
     const fullWhere =
       additional === Prisma.empty
-        ? Prisma.sql`"dosenId" = ${dosenId}`
-        : Prisma.sql`"dosenId" = ${dosenId} AND ${additional}`;
+        ? whereClause
+        : Prisma.sql`${whereClause} AND ${additional}`;
 
     const groupCols: string[] = [];
     if (deepKategori) groupCols.push('"kategori"');
@@ -211,17 +212,26 @@ export class PenelitianService {
 
     if (groupCols.length === 0) return {};
 
-    const raw = await this.prisma.$queryRaw<
-      any[]
-    >`
-      SELECT
-        ${Prisma.raw(groupCols.join(', '))},
-        SUM("nilaiPak")::float AS total
-      FROM "Penelitian"
-      WHERE ${fullWhere}
-      GROUP BY ${Prisma.raw(groupCols.join(', '))}
-      ORDER BY ${Prisma.raw(groupCols.join(', '))}
+    let selectFields = `
+    ${Prisma.raw(groupCols.join(', '))},
+    SUM("nilaiPak")::float AS total
+  `;
+
+    if (includeStatus) {
+      selectFields += `,
+      COUNT(CASE WHEN "statusValidasi" = 'PENDING' THEN 1 END)::int AS pending,
+      COUNT(CASE WHEN "statusValidasi" = 'APPROVED' THEN 1 END)::int AS approved,
+      COUNT(CASE WHEN "statusValidasi" = 'REJECTED' THEN 1 END)::int AS rejected
     `;
+    }
+
+    const raw = await this.prisma.$queryRaw<any[]>`
+    SELECT ${Prisma.raw(selectFields)}
+    FROM "Penelitian"
+    WHERE ${fullWhere}
+    GROUP BY ${Prisma.raw(groupCols.join(', '))}
+    ORDER BY ${Prisma.raw(groupCols.join(', '))}
+  `;
 
     const result: any = {};
     for (const row of raw) {
@@ -230,6 +240,12 @@ export class PenelitianService {
       if (deepKategori) {
         const k = row.kategori;
         cursor[k] = cursor[k] || { total: 0 };
+        if (includeStatus) {
+          cursor[k].statusCounts = cursor[k].statusCounts || { pending: 0, approved: 0, rejected: 0 };
+          cursor[k].statusCounts.pending += row.pending;
+          cursor[k].statusCounts.approved += row.approved;
+          cursor[k].statusCounts.rejected += row.rejected;
+        }
         cursor[k].total += row.total;
         if (deepJenis) cursor = cursor[k];
       }
@@ -238,6 +254,12 @@ export class PenelitianService {
         const jk = row.jenisKategori ?? '_null';
         cursor.jenis = cursor.jenis || {};
         cursor.jenis[jk] = cursor.jenis[jk] || { total: 0 };
+        if (includeStatus) {
+          cursor.jenis[jk].statusCounts = cursor.jenis[jk].statusCounts || { pending: 0, approved: 0, rejected: 0 };
+          cursor.jenis[jk].statusCounts.pending += row.pending;
+          cursor.jenis[jk].statusCounts.approved += row.approved;
+          cursor.jenis[jk].statusCounts.rejected += row.rejected;
+        }
         cursor.jenis[jk].total += row.total;
         if (deepSub) cursor = cursor.jenis[jk];
       }
@@ -245,7 +267,14 @@ export class PenelitianService {
       if (deepSub) {
         const sj = row.subJenis ?? '_null';
         cursor.sub = cursor.sub || {};
-        cursor.sub[sj] = (cursor.sub[sj] || 0) + row.total;
+        cursor.sub[sj] = cursor.sub[sj] || { total: 0 };
+        if (includeStatus) {
+          cursor.sub[sj].statusCounts = cursor.sub[sj].statusCounts || { pending: 0, approved: 0, rejected: 0 };
+          cursor.sub[sj].statusCounts.pending += row.pending;
+          cursor.sub[sj].statusCounts.approved += row.approved;
+          cursor.sub[sj].statusCounts.rejected += row.rejected;
+        }
+        cursor.sub[sj].total += row.total;
       }
     }
 
