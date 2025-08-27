@@ -1,12 +1,12 @@
-/*
-https://docs.nestjs.com/modules
-*/
-
 import { Module } from '@nestjs/common';
+import { KesimpulanController } from './kesimpulan.controller';
+import { KesimpulanService } from './kesimpulan.service';
 
 @Module({
-    imports: [],
-    controllers: [],
-    providers: [],
+    imports: [
+        KesimpulanModule
+    ],
+    controllers: [KesimpulanController],
+    providers: [KesimpulanService],
 })
-export class KesimpulanModule {}
+export class KesimpulanModule { }

@@ -366,5 +366,4 @@ export class KesimpulanService {
             throw error;
         }
     }
-
 }
