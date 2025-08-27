@@ -379,6 +379,7 @@ export class PenelitianService {
     if (query.search) {
       const search = query.search.toLowerCase();
       where.OR = [
+        { judul: { contains: search, mode: 'insensitive' } },
         { dosen: { nama: { contains: search, mode: 'insensitive' } } },
       ];
     }
