@@ -166,7 +166,6 @@ export const prestasiOlahragaHumanioraSchema = z.object({
 
 export const timPenilaiJabatanAkademikDosenSchema = z.object({
     kategori: z.literal(KategoriPenunjang.TIM_PENILAI_JABATAN_AKADEMIK),
-    jenisKegiatan: jenisPrestasiOlahragaEnum,
     namaKegiatan: z.string().nonempty({ message: "Nama kegiatan wajib diisi" }),
     instansi: z.string().nonempty({ message: "Instansi wajib diisi" }),
     noSk: z.string().nonempty('Nomor SK wajib diisi'),
