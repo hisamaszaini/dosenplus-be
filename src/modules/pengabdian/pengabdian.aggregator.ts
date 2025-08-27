@@ -49,9 +49,8 @@ export class PengabdianAggregator {
   ): Promise<AggregationResult> {
     const { includeDetail = true, includeStatus = true, filter = {} } = options;
 
-    const detailField = includeDetail 
-      ? Prisma.sql`COALESCE("jenisKegiatan", "tingkat") as detail`
-      : Prisma.sql`NULL as detail`;
+    // Build safe detail query
+    const detailQuery = this.buildSafeDetailQuery(includeDetail);
 
     const rawData = await this.prisma.$queryRaw<Array<{
       kategori: string;
@@ -64,7 +63,7 @@ export class PengabdianAggregator {
     }>>`
       SELECT 
         "kategori",
-        ${detailField},
+        ${detailQuery},
         SUM("nilaiPak")::float as total,
         COUNT(*)::int as count,
         COUNT(CASE WHEN "statusValidasi" = 'PENDING' THEN 1 END)::int as pending,
@@ -72,18 +71,32 @@ export class PengabdianAggregator {
         COUNT(CASE WHEN "statusValidasi" = 'REJECTED' THEN 1 END)::int as rejected
       FROM "Pengabdian"
       WHERE "dosenId" = ${dosenId}
-      GROUP BY "kategori", ${includeDetail ? Prisma.sql`COALESCE("jenisKegiatan", "tingkat")` : Prisma.empty}
+      GROUP BY "kategori", ${includeDetail ? Prisma.sql`detail` : Prisma.empty}
       ORDER BY "kategori"
     `;
 
     return this.buildStructuredResult(rawData, includeDetail);
   }
 
+  private buildSafeDetailQuery(includeDetail: boolean): Prisma.Sql {
+    if (!includeDetail) {
+      return Prisma.sql`NULL::text as detail`;
+    }
+
+    return Prisma.sql`
+      CASE 
+        WHEN "jenisKegiatan" IS NOT NULL THEN "jenisKegiatan"::text
+        WHEN "tingkat" IS NOT NULL THEN "tingkat"::text
+        ELSE NULL
+      END::text as detail
+    `;
+  }
+
   private buildStructuredResult(
     rawData: any[],
     includeDetail: boolean
   ): AggregationResult {
-    const result = this.prefillStructure();
+    const result = this.prefillStructure(includeDetail); // Pass includeDetail
 
     for (const row of rawData) {
       const { kategori, detail, total, count, pending, approved, rejected } = row;
@@ -99,7 +112,7 @@ export class PengabdianAggregator {
         Object.assign(result[kategori], this.mergeNodes(result[kategori], nodeData));
       }
 
-      // Update detail level (jenisKegiatan OR tingkat)
+      // Update detail level
       if (includeDetail && detail && result[kategori]?.detail) {
         result[kategori].detail![detail] = nodeData;
       }
@@ -108,7 +121,7 @@ export class PengabdianAggregator {
     return result;
   }
 
-  private prefillStructure(): AggregationResult {
+  private prefillStructure(includeDetail: boolean): AggregationResult {
     const result: AggregationResult = {};
     
     Object.entries(PENGABDIAN_MAPPING).forEach(([kategori, config]) => {
@@ -118,7 +131,7 @@ export class PengabdianAggregator {
         statusCounts: { pending: 0, approved: 0, rejected: 0 }
       };
 
-      if (config.hasDetail) {
+      if (includeDetail && config.hasDetail) {
         result[kategori].detail = {};
         config.values.forEach(value => {
           result[kategori].detail![value] = {
