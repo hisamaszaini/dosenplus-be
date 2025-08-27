@@ -116,6 +116,29 @@ export class PelaksanaanPendidikanAggregator {
     ): AggregationResult {
         const result: AggregationResult = {};
 
+        // Prefill structure with all possible details
+        Object.entries(PELAKSANAAN_DETAIL_MAPPING).forEach(([kategori, config]) => {
+            result[kategori] = {
+                total: 0,
+                count: 0,
+                statusCounts: { pending: 0, approved: 0, rejected: 0 }
+            };
+
+            if (includeDetail && config.hasDetail) {
+                result[kategori].detail = {};
+                // Assuming we have a predefined list of possible details for each category
+                const possibleDetails = this.getPossibleDetailsForCategory(kategori);
+                possibleDetails.forEach(detail => {
+                    result[kategori].detail![detail] = {
+                        total: 0,
+                        count: 0,
+                        statusCounts: { pending: 0, approved: 0, rejected: 0 }
+                    };
+                });
+            }
+        });
+
+        // Update with actual data
         for (const row of rawData) {
             const { kategori, detail, total, count, pending, approved, rejected } = row;
 
@@ -137,11 +160,43 @@ export class PelaksanaanPendidikanAggregator {
                 if (!result[kategori].detail) {
                     result[kategori].detail = {};
                 }
-                result[kategori].detail![detail] = { total, count, statusCounts: { pending, approved, rejected } };
+                if (!result[kategori].detail![detail]) {
+                    result[kategori].detail![detail] = {
+                        total: 0,
+                        count: 0,
+                        statusCounts: { pending: 0, approved: 0, rejected: 0 }
+                    };
+                }
+                result[kategori].detail![detail].total += total;
+                result[kategori].detail![detail].count += count;
+                result[kategori].detail![detail].statusCounts.pending += pending;
+                result[kategori].detail![detail].statusCounts.approved += approved;
+                result[kategori].detail![detail].statusCounts.rejected += rejected;
             }
         }
 
         return result;
+    }
+
+    private getPossibleDetailsForCategory(kategori: string): string[] {
+        switch (kategori) {
+            case 'BIMBINGAN_TUGAS_AKHIR':
+                return ['jenis1', 'jenis2', 'jenis3']; // Replace with actual possible values
+            case 'PENGUJI_UJIAN_AKHIR':
+                return ['peran1', 'peran2']; // Replace with actual possible values
+            case 'BAHAN_PENGAJARAN':
+                return ['jenis1', 'jenis2']; // Replace with actual possible values
+            case 'JABATAN_STRUKTURAL':
+                return ['namaJabatan1', 'namaJabatan2']; // Replace with actual possible values
+            case 'BIMBING_DOSEN':
+                return ['bidangAhli1', 'bidangAhli2']; // Replace with actual possible values
+            case 'DATA_SERING_PENCAKOKAN':
+                return ['jenis1', 'jenis2']; // Replace with actual possible values
+            case 'PENGEMBANGAN_DIRI':
+                return ['namaKegiatan1', 'namaKegiatan2']; // Replace with actual possible values
+            default:
+                return [];
+        }
     }
 
     formatForAPI(result: AggregationResult) {
