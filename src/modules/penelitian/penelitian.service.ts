@@ -196,13 +196,32 @@ export class PenelitianService {
     deepJenis = false,
     deepSub = false,
   ): Promise<any> {
-    const whereClause = Prisma.sql`"dosenId" = ${dosenId}`;
-    const additional = buildWhereClause(filter, 'Penelitian');
-    const fullWhere =
-      additional === Prisma.empty
-        ? Prisma.sql`"dosenId" = ${dosenId}`
-        : Prisma.sql`"dosenId" = ${dosenId} AND ${additional}`;
+    // base condition
+    const baseWhere = Prisma.sql`"dosenId" = ${dosenId}`;
+    const parts: Prisma.Sql[] = [baseWhere];
 
+    // handle filter manual di sini
+    if (filter.statusValidasi) {
+      parts.push(
+        Prisma.sql`"statusValidasi" = ${filter.statusValidasi}::"StatusValidasi"`
+      );
+    }
+
+    if (filter.semesterId) {
+      parts.push(
+        Prisma.sql`"semesterId" = ${filter.semesterId}`
+      );
+    }
+
+    if (filter.kategori) {
+      parts.push(
+        Prisma.sql`"kategori" = ${filter.kategori}::"KategoriPenelitian"`
+      );
+    }
+
+    const fullWhere = Prisma.join(parts, ' AND ');
+
+    // tentukan grouping
     const groupCols: string[] = [];
     if (deepKategori) groupCols.push('"kategori"');
     if (deepJenis) groupCols.push('"jenisKategori"');
@@ -210,18 +229,18 @@ export class PenelitianService {
 
     if (groupCols.length === 0) return {};
 
-    const raw = await this.prisma.$queryRaw<
-      any[]
-    >`
-      SELECT
-        ${Prisma.raw(groupCols.join(', '))},
-        SUM("nilaiPak")::float AS total
-      FROM "Penelitian"
-      WHERE ${fullWhere}
-      GROUP BY ${Prisma.raw(groupCols.join(', '))}
-      ORDER BY ${Prisma.raw(groupCols.join(', '))}
-    `;
+    // query raw dengan casting yang sudah benar
+    const raw = await this.prisma.$queryRaw<any[]>`
+    SELECT
+      ${Prisma.raw(groupCols.join(', '))},
+      SUM("nilaiPak")::float AS total
+    FROM "Penelitian"
+    WHERE ${fullWhere}
+    GROUP BY ${Prisma.raw(groupCols.join(', '))}
+    ORDER BY ${Prisma.raw(groupCols.join(', '))}
+  `;
 
+    // mapping hasil ke nested object
     const result: any = {};
     for (const row of raw) {
       let cursor = result;
@@ -250,6 +269,7 @@ export class PenelitianService {
 
     return result;
   }
+
 
   async create(dosenId: number, rawData: any, file: Express.Multer.File) {
     const data = parseAndThrow(fullCreatePenelitianSchema, rawData);
