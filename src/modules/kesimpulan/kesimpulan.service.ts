@@ -11,6 +11,8 @@ type DeepPartial<T> = {
     [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
 };
 
+type EnumValues = readonly string[];
+
 @Injectable()
 export class KesimpulanService {
     constructor(private readonly prisma: PrismaService) {
@@ -24,7 +26,7 @@ export class KesimpulanService {
         deepJenis = false,
         deepSub = false,
         includeStatus = true,
-    ): Promise<any> {
+    ) {
         const additional = buildWhereClause(filter, 'Penelitian');
         const fullWhere =
             additional === Prisma.empty
@@ -35,17 +37,15 @@ export class KesimpulanService {
         if (deepKategori) groupCols.push('"kategori"');
         if (deepJenis) groupCols.push('"jenisKategori"');
         if (deepSub) groupCols.push('"subJenis"');
-
         if (groupCols.length === 0) return {};
 
         const raw = await prisma.$queryRaw<any[]>`
-    SELECT
-      ${Prisma.raw(groupCols.join(', '))},
-      SUM("nilaiPak")::float AS total
-      ${includeStatus
+    SELECT ${Prisma.raw(groupCols.join(', '))},
+           SUM("nilaiPak")::float AS total
+           ${includeStatus
                 ? Prisma.raw(`, COUNT(CASE WHEN "statusValidasi" = 'PENDING' THEN 1 END)::int AS pending,
-                       COUNT(CASE WHEN "statusValidasi" = 'APPROVED' THEN 1 END)::int AS approved,
-                       COUNT(CASE WHEN "statusValidasi" = 'REJECTED' THEN 1 END)::int AS rejected`)
+                            COUNT(CASE WHEN "statusValidasi" = 'APPROVED' THEN 1 END)::int AS approved,
+                            COUNT(CASE WHEN "statusValidasi" = 'REJECTED' THEN 1 END)::int AS rejected`)
                 : Prisma.empty}
     FROM "Penelitian"
     WHERE ${fullWhere}
@@ -53,71 +53,41 @@ export class KesimpulanService {
     ORDER BY ${Prisma.raw(groupCols.join(', '))}
   `;
 
-        const result: any = {};
-
-        if (deepKategori) {
-            for (const k of Object.values(KategoriPenelitian)) {
-                result[k] = { total: 0 };
-                if (includeStatus) {
-                    result[k].statusCounts = { pending: 0, approved: 0, rejected: 0 };
-                }
-
-                if (deepJenis) {
-                    result[k].jenis = {};
-                    for (const j of Object.values(JenisKategoriPenelitian)) {
-                        result[k].jenis[j] = { total: 0 };
-                        if (includeStatus) {
-                            result[k].jenis[j].statusCounts = { pending: 0, approved: 0, rejected: 0 };
-                        }
-
-                        if (deepSub) {
-                            result[k].jenis[j].sub = {};
-                            for (const s of Object.values(SubJenisPenelitian)) {
-                                result[k].jenis[j].sub[s] = {
-                                    total: 0,
-                                    ...(includeStatus && {
-                                        statusCounts: { pending: 0, approved: 0, rejected: 0 },
-                                    }),
-                                };
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        const result = this.prefillEnum(
+            Object.values(KategoriPenelitian),
+            {
+                jenis: deepJenis ? Object.values(JenisKategoriPenelitian) : undefined,
+                sub: deepSub ? Object.values(SubJenisPenelitian) : undefined,
+            },
+            includeStatus,
+        );
 
         for (const row of raw) {
-            let cursor = result;
-
-            if (deepKategori) {
-                const k = row.kategori;
-                cursor[k].total += row.total;
-                if (includeStatus) {
-                    cursor[k].statusCounts.pending += row.pending;
-                    cursor[k].statusCounts.approved += row.approved;
-                    cursor[k].statusCounts.rejected += row.rejected;
-                }
-                if (deepJenis) cursor = cursor[k];
+            const k = row.kategori as KategoriPenelitian;
+            result[k].total += row.total || 0;
+            if (includeStatus) {
+                result[k].statusCounts.pending += row.pending || 0;
+                result[k].statusCounts.approved += row.approved || 0;
+                result[k].statusCounts.rejected += row.rejected || 0;
             }
 
-            if (deepJenis) {
-                const jk = row.jenisKategori ?? '_null';
-                cursor.jenis[jk].total += row.total;
+            if (deepJenis && row.jenisKategori) {
+                const j = row.jenisKategori as JenisKategoriPenelitian;
+                result[k].jenis[j].total += row.total || 0;
                 if (includeStatus) {
-                    cursor.jenis[jk].statusCounts.pending += row.pending;
-                    cursor.jenis[jk].statusCounts.approved += row.approved;
-                    cursor.jenis[jk].statusCounts.rejected += row.rejected;
+                    result[k].jenis[j].statusCounts.pending += row.pending || 0;
+                    result[k].jenis[j].statusCounts.approved += row.approved || 0;
+                    result[k].jenis[j].statusCounts.rejected += row.rejected || 0;
                 }
-                if (deepSub) cursor = cursor.jenis[jk];
-            }
 
-            if (deepSub) {
-                const sj = row.subJenis ?? '_null';
-                cursor.sub[sj].total += row.total;
-                if (includeStatus) {
-                    cursor.sub[sj].statusCounts.pending += row.pending;
-                    cursor.sub[sj].statusCounts.approved += row.approved;
-                    cursor.sub[sj].statusCounts.rejected += row.rejected;
+                if (deepSub && row.subJenis) {
+                    const s = row.subJenis as SubJenisPenelitian;
+                    result[k].jenis[j].sub[s].total += row.total || 0;
+                    if (includeStatus) {
+                        result[k].jenis[j].sub[s].statusCounts.pending += row.pending || 0;
+                        result[k].jenis[j].sub[s].statusCounts.approved += row.approved || 0;
+                        result[k].jenis[j].sub[s].statusCounts.rejected += row.rejected || 0;
+                    }
                 }
             }
         }
@@ -365,5 +335,43 @@ export class KesimpulanService {
         } catch (error) {
             throw error;
         }
+    }
+
+
+    prefillEnum<T extends EnumValues>(
+        keys: T,
+        deepKeys?: { jenis?: EnumValues; sub?: EnumValues; tingkat?: EnumValues },
+        includeStatus = false,
+    ): Record<string, any> {
+        const res: Record<string, any> = {};
+        for (const k of keys) {
+            res[k] = { total: 0 };
+            if (includeStatus) res[k].statusCounts = { pending: 0, approved: 0, rejected: 0 };
+
+            if (deepKeys?.jenis) {
+                res[k].jenis = {};
+                for (const j of deepKeys.jenis) {
+                    res[k].jenis[j] = { total: 0 };
+                    if (includeStatus) res[k].jenis[j].statusCounts = { pending: 0, approved: 0, rejected: 0 };
+
+                    if (deepKeys?.sub) {
+                        res[k].jenis[j].sub = {};
+                        for (const s of deepKeys.sub) {
+                            res[k].jenis[j].sub[s] = { total: 0 };
+                            if (includeStatus) res[k].jenis[j].sub[s].statusCounts = { pending: 0, approved: 0, rejected: 0 };
+                        }
+                    }
+                }
+            }
+
+            if (deepKeys?.tingkat) {
+                res[k].tingkat = {};
+                for (const t of deepKeys.tingkat) {
+                    res[k].tingkat[t] = { total: 0 };
+                    if (includeStatus) res[k].tingkat[t].statusCounts = { pending: 0, approved: 0, rejected: 0 };
+                }
+            }
+        }
+        return res;
     }
 }
