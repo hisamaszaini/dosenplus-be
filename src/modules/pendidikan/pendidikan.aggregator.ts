@@ -103,11 +103,28 @@ export class PendidikanAggregator {
     ): AggregationResult {
         const result: AggregationResult = {};
 
-        // Build structure dynamically based on actual data
+        Object.entries(PENDIDIKAN_MAPPING).forEach(([kategori, config]) => {
+            result[kategori] = {
+                total: 0,
+                count: 0,
+                statusCounts: { pending: 0, approved: 0, rejected: 0 }
+            };
+
+            if (includeDetail && config.hasDetail) {
+                result[kategori][config.detailField] = {};
+                config.values.forEach(value => {
+                    result[kategori][config.detailField]![value] = {
+                        total: 0,
+                        count: 0,
+                        statusCounts: { pending: 0, approved: 0, rejected: 0 }
+                    };
+                });
+            }
+        });
+
         for (const row of rawData) {
             const { kategori, detail, total, count, pending, approved, rejected } = row;
 
-            // Initialize kategori if not exists
             if (!result[kategori]) {
                 result[kategori] = {
                     total: 0,
@@ -116,14 +133,12 @@ export class PendidikanAggregator {
                 };
             }
 
-            // Update kategori level
             result[kategori].total += total;
             result[kategori].count += count;
             result[kategori].statusCounts.pending += pending;
             result[kategori].statusCounts.approved += approved;
             result[kategori].statusCounts.rejected += rejected;
 
-            // Update detail level dynamically
             if (includeDetail && detail) {
                 const detailField = kategori === 'FORMAL' ? 'jenjang' : 'jenis';
 
@@ -131,11 +146,19 @@ export class PendidikanAggregator {
                     result[kategori][detailField] = {};
                 }
 
-                result[kategori][detailField]![detail] = {
-                    total,
-                    count,
-                    statusCounts: { pending, approved, rejected }
-                };
+                if (!result[kategori][detailField]![detail]) {
+                    result[kategori][detailField]![detail] = {
+                        total: 0,
+                        count: 0,
+                        statusCounts: { pending: 0, approved: 0, rejected: 0 }
+                    };
+                }
+
+                result[kategori][detailField]![detail].total += total;
+                result[kategori][detailField]![detail].count += count;
+                result[kategori][detailField]![detail].statusCounts.pending += pending;
+                result[kategori][detailField]![detail].statusCounts.approved += approved;
+                result[kategori][detailField]![detail].statusCounts.rejected += rejected;
             }
         }
 
@@ -166,16 +189,5 @@ export class PendidikanAggregator {
         });
 
         return summary;
-    }
-    
-    // Helper untuk mendapatkan semua jenis diklat unik
-    async getDiklatJenisList(dosenId: number) {
-        return await this.prisma.pendidikan.findMany({
-            where: { dosenId, kategori: 'DIKLAT' },
-            select: { Diklat: { select: { jenisDiklat: true } } },
-            distinct: ['id']
-        }).then(results =>
-            [...new Set(results.map(r => r.Diklat?.jenisDiklat).filter(Boolean))]
-        );
     }
 }
