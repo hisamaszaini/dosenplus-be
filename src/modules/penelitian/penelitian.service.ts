@@ -427,6 +427,7 @@ export class PenelitianService {
         true,
         false,
         false,
+        true,
       );
     }
 
