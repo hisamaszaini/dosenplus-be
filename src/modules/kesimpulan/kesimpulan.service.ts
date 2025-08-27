@@ -1,377 +1,167 @@
-/*
-https://docs.nestjs.com/providers#services
-*/
-
 import { Injectable } from '@nestjs/common';
-import { JenisKategoriPenelitian, JenisKegiatanPengabdian, JenisKegiatanPenunjang, KategoriPenelitian, KategoriPengabdian, KategoriPenunjang, Prisma, PrismaClient, SubJenisPenelitian, TingkatPengabdian, TypeUserRole } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { buildWhereClause } from '@/common/utils/buildWhere';
-
-type DeepPartial<T> = {
-    [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
-};
-
-type EnumValues = readonly string[];
+import { PenelitianAggregator } from '../penelitian/penelitian.aggregator';
+import { PengabdianAggregator } from '../pengabdian/pengabdian.aggregator';
+import { PenunjangAggregator } from '../penunjang/penunjang.aggregator';
 
 @Injectable()
 export class KesimpulanService {
+    private penelitianAggregator: PenelitianAggregator;
+    private pengabdianAggregator: PengabdianAggregator;
+    private penunjangAggregator: PenunjangAggregator;
+
     constructor(private readonly prisma: PrismaService) {
+        this.penelitianAggregator = new PenelitianAggregator(prisma);
+        this.pengabdianAggregator = new PengabdianAggregator(prisma);
+        this.penunjangAggregator = new PenunjangAggregator(prisma);
     }
 
-    async aggregatePenelitianByDosen(
-        prisma: PrismaClient,
-        dosenId: number,
-        filter: Prisma.PenelitianWhereInput = {},
-        deepKategori = true,
-        deepJenis = false,
-        deepSub = false,
-        includeStatus = true,
+    async findById(
+        dosenId: number, 
+        options: {
+            includeDetails?: boolean;
+            semesterId?: number;
+            tahun?: number;
+            status?: string;
+        } = {}
     ) {
-        const additional = buildWhereClause(filter, 'Penelitian');
-        const fullWhere =
-            additional === Prisma.empty
-                ? Prisma.sql`"dosenId" = ${dosenId}`
-                : Prisma.sql`"dosenId" = ${dosenId} AND ${additional}`;
-
-        const groupCols: string[] = [];
-        if (deepKategori) groupCols.push('"kategori"');
-        if (deepJenis) groupCols.push('"jenisKategori"');
-        if (deepSub) groupCols.push('"subJenis"');
-        if (groupCols.length === 0) return {};
-
-        const raw = await prisma.$queryRaw<any[]>`
-    SELECT ${Prisma.raw(groupCols.join(', '))},
-           SUM("nilaiPak")::float AS total
-           ${includeStatus
-                ? Prisma.raw(`, COUNT(CASE WHEN "statusValidasi" = 'PENDING' THEN 1 END)::int AS pending,
-                            COUNT(CASE WHEN "statusValidasi" = 'APPROVED' THEN 1 END)::int AS approved,
-                            COUNT(CASE WHEN "statusValidasi" = 'REJECTED' THEN 1 END)::int AS rejected`)
-                : Prisma.empty}
-    FROM "Penelitian"
-    WHERE ${fullWhere}
-    GROUP BY ${Prisma.raw(groupCols.join(', '))}
-    ORDER BY ${Prisma.raw(groupCols.join(', '))}
-  `;
-
-        const result = this.prefillEnum(
-            Object.values(KategoriPenelitian),
-            {
-                jenis: deepJenis ? Object.values(JenisKategoriPenelitian) : undefined,
-                sub: deepSub ? Object.values(SubJenisPenelitian) : undefined,
-            },
-            includeStatus,
-        );
-
-        for (const row of raw) {
-            const k = row.kategori as KategoriPenelitian;
-            result[k].total += row.total || 0;
-            if (includeStatus) {
-                result[k].statusCounts.pending += row.pending || 0;
-                result[k].statusCounts.approved += row.approved || 0;
-                result[k].statusCounts.rejected += row.rejected || 0;
-            }
-
-            if (deepJenis && row.jenisKategori) {
-                const j = row.jenisKategori as JenisKategoriPenelitian;
-                result[k].jenis[j].total += row.total || 0;
-                if (includeStatus) {
-                    result[k].jenis[j].statusCounts.pending += row.pending || 0;
-                    result[k].jenis[j].statusCounts.approved += row.approved || 0;
-                    result[k].jenis[j].statusCounts.rejected += row.rejected || 0;
-                }
-
-                if (deepSub && row.subJenis) {
-                    const s = row.subJenis as SubJenisPenelitian;
-                    result[k].jenis[j].sub[s].total += row.total || 0;
-                    if (includeStatus) {
-                        result[k].jenis[j].sub[s].statusCounts.pending += row.pending || 0;
-                        result[k].jenis[j].sub[s].statusCounts.approved += row.approved || 0;
-                        result[k].jenis[j].sub[s].statusCounts.rejected += row.rejected || 0;
-                    }
-                }
-            }
-        }
-
-        return result;
-    }
-
-    async aggregatePengabdianByDosen(
-        prisma: PrismaClient,
-        dosenId: number,
-        filter: Prisma.PengabdianWhereInput = {},
-        deepKategori = true,
-        deepJenis = false,
-        deepTingkat = false,
-        includeStatus = false,
-    ): Promise<any> {
-        const additional = buildWhereClause(filter, 'Pengabdian');
-        const fullWhere =
-            additional === Prisma.empty
-                ? Prisma.sql`"dosenId" = ${dosenId}`
-                : Prisma.sql`"dosenId" = ${dosenId} AND ${additional}`;
-
-        const groupCols: string[] = [];
-        if (deepKategori) groupCols.push('"kategori"');
-        if (deepJenis) groupCols.push('"jenisKegiatan"');
-        if (deepTingkat) groupCols.push('"tingkat"');
-
-        if (groupCols.length === 0) return {};
-
-        const raw = await prisma.$queryRaw<any[]>`
-    SELECT
-      ${Prisma.raw(groupCols.join(', '))},
-      SUM("nilaiPak")::float AS total
-      ${includeStatus
-                ? Prisma.raw(`, COUNT(CASE WHEN "statusValidasi" = 'PENDING' THEN 1 END)::int AS pending,
-                       COUNT(CASE WHEN "statusValidasi" = 'APPROVED' THEN 1 END)::int AS approved,
-                       COUNT(CASE WHEN "statusValidasi" = 'REJECTED' THEN 1 END)::int AS rejected`)
-                : Prisma.empty}
-    FROM "Pengabdian"
-    WHERE ${fullWhere}
-    GROUP BY ${Prisma.raw(groupCols.join(', '))}
-    ORDER BY ${Prisma.raw(groupCols.join(', '))}
-  `;
-
-        const result: any = {};
-
-        if (deepKategori) {
-            for (const k of Object.values(KategoriPengabdian)) {
-                result[k] = { total: 0 };
-                if (includeStatus) {
-                    result[k].statusCounts = { pending: 0, approved: 0, rejected: 0 };
-                }
-
-                if (deepJenis) {
-                    result[k].jenis = {};
-                    for (const j of Object.values(JenisKegiatanPengabdian)) {
-                        result[k].jenis[j] = {
-                            total: 0,
-                            ...(includeStatus && {
-                                statusCounts: { pending: 0, approved: 0, rejected: 0 },
-                            }),
-                        };
-                    }
-                }
-
-                if (deepTingkat) {
-                    result[k].tingkat = {};
-                    for (const t of Object.values(TingkatPengabdian)) {
-                        result[k].tingkat[t] = {
-                            total: 0,
-                            ...(includeStatus && {
-                                statusCounts: { pending: 0, approved: 0, rejected: 0 },
-                            }),
-                        };
-                    }
-                }
-            }
-        }
-
-        for (const row of raw) {
-            const k = row.kategori;
-            if (!result[k]) continue;
-
-            result[k].total += row.total;
-            if (includeStatus) {
-                result[k].statusCounts.pending += row.pending || 0;
-                result[k].statusCounts.approved += row.approved || 0;
-                result[k].statusCounts.rejected += row.rejected || 0;
-            }
-
-            if (deepJenis && row.jenisKegiatan) {
-                const j = row.jenisKegiatan;
-                if (result[k].jenis[j]) {
-                    result[k].jenis[j].total += row.total;
-                    if (includeStatus) {
-                        result[k].jenis[j].statusCounts.pending += row.pending || 0;
-                        result[k].jenis[j].statusCounts.approved += row.approved || 0;
-                        result[k].jenis[j].statusCounts.rejected += row.rejected || 0;
-                    }
-                }
-            }
-
-            if (deepTingkat && row.tingkat) {
-                const t = row.tingkat;
-                if (result[k].tingkat[t]) {
-                    result[k].tingkat[t].total += row.total;
-                    if (includeStatus) {
-                        result[k].tingkat[t].statusCounts.pending += row.pending || 0;
-                        result[k].tingkat[t].statusCounts.approved += row.approved || 0;
-                        result[k].tingkat[t].statusCounts.rejected += row.rejected || 0;
-                    }
-                }
-            }
-        }
-
-        return result;
-    }
-
-    async aggregatePenunjangByDosen(
-        prisma: PrismaClient,
-        dosenId: number,
-        filter: Prisma.PenunjangWhereInput = {},
-        deepKategori = true,
-        deepJenis = false,
-        includeStatus = false,
-    ): Promise<any> {
-        const additional = buildWhereClause(filter, 'Penunjang');
-        const fullWhere =
-            additional === Prisma.empty
-                ? Prisma.sql`"dosenId" = ${dosenId}`
-                : Prisma.sql`"dosenId" = ${dosenId} AND ${additional}`;
-
-        const groupCols: string[] = [];
-        if (deepKategori) groupCols.push('"kategori"');
-        if (deepJenis) groupCols.push('"jenisKegiatan"');
-
-        if (groupCols.length === 0) return {};
-
-        const raw = await prisma.$queryRaw<any[]>`
-    SELECT
-      ${Prisma.raw(groupCols.join(', '))},
-      SUM("nilaiPak")::float AS total
-      ${includeStatus
-                ? Prisma.raw(`, COUNT(CASE WHEN "statusValidasi" = 'PENDING' THEN 1 END)::int AS pending,
-                       COUNT(CASE WHEN "statusValidasi" = 'APPROVED' THEN 1 END)::int AS approved,
-                       COUNT(CASE WHEN "statusValidasi" = 'REJECTED' THEN 1 END)::int AS rejected`)
-                : Prisma.empty}
-    FROM "Penunjang"
-    WHERE ${fullWhere}
-    GROUP BY ${Prisma.raw(groupCols.join(', '))}
-    ORDER BY ${Prisma.raw(groupCols.join(', '))}
-  `;
-
-        const result: any = {};
-
-        if (deepKategori) {
-            for (const k of Object.values(KategoriPenunjang)) {
-                result[k] = { total: 0 };
-                if (includeStatus) {
-                    result[k].statusCounts = { pending: 0, approved: 0, rejected: 0 };
-                }
-
-                if (deepJenis) {
-                    result[k].jenis = {};
-                    for (const j of Object.values(JenisKegiatanPenunjang)) {
-                        result[k].jenis[j] = {
-                            total: 0,
-                            ...(includeStatus && {
-                                statusCounts: { pending: 0, approved: 0, rejected: 0 },
-                            }),
-                        };
-                    }
-                }
-            }
-        }
-
-        for (const row of raw) {
-            const k = row.kategori;
-            if (!result[k]) continue;
-
-            result[k].total += row.total;
-            if (includeStatus) {
-                result[k].statusCounts.pending += row.pending || 0;
-                result[k].statusCounts.approved += row.approved || 0;
-                result[k].statusCounts.rejected += row.rejected || 0;
-            }
-
-            if (deepJenis && row.jenisKegiatan) {
-                const j = row.jenisKegiatan;
-                if (result[k].jenis[j]) {
-                    result[k].jenis[j].total += row.total;
-                    if (includeStatus) {
-                        result[k].jenis[j].statusCounts.pending += row.pending || 0;
-                        result[k].jenis[j].statusCounts.approved += row.approved || 0;
-                        result[k].jenis[j].statusCounts.rejected += row.rejected || 0;
-                    }
-                }
-            }
-        }
-
-        return result;
-    }
-
-    async findById(dosenId: number, roles: TypeUserRole | TypeUserRole[]) {
         try {
-            const data = await this.prisma.dosen.findUniqueOrThrow({
+            // Ambil data dosen
+            const dosen = await this.prisma.dosen.findUniqueOrThrow({
                 where: { id: dosenId },
             });
 
-            const [dataPenelitian, dataPengabdian, dataPenunjang] = await Promise.all([
-                this.aggregatePenelitianByDosen(
-                    this.prisma,
-                    dosenId,
-                    {},
-                    true,
-                    true,
-                    true,
-                    true
-                ),
-                this.aggregatePengabdianByDosen(
-                    this.prisma,
-                    dosenId,
-                    {},
-                    true,
-                    true,
-                    true,
-                    true
-                ),
-                this.aggregatePenunjangByDosen(
-                    this.prisma,
-                    dosenId,
-                    {},
-                    true,
-                    true,
-                    true
-                ),
+            // Build filter
+            const filter: any = {};
+            if (options.semesterId) filter.semesterId = options.semesterId;
+            if (options.tahun) filter.tahun = options.tahun;
+            if (options.status) filter.statusValidasi = options.status;
+
+            // Hitung aggregasi untuk semua kategori
+            const [penelitian, pengabdian, penunjang] = await Promise.all([
+                this.penelitianAggregator.aggregateByDosen(dosenId, {
+                    includeJenis: options.includeDetails ?? true,
+                    includeSub: options.includeDetails ?? true,
+                    includeStatus: true,
+                    filter
+                }),
+                
+                this.pengabdianAggregator.aggregateByDosen(dosenId, {
+                    includeDetail: options.includeDetails ?? true,
+                    includeStatus: true,
+                    filter
+                }),
+                
+                this.penunjangAggregator.aggregateByDosen(dosenId, {
+                    includeJenis: options.includeDetails ?? true,
+                    includeStatus: true,
+                    filter
+                })
             ]);
 
+            // Hitung summary total
+            const totalSummary = this.calculateTotalSummary(penelitian, pengabdian, penunjang);
+
             return {
-                dosen: data,
-                penelitian: dataPenelitian,
-                pengabdian: dataPengabdian,
-                penunjang: dataPenunjang,
+                dosen,
+                summary: totalSummary,
+                details: {
+                    penelitian: this.penelitianAggregator.formatForAPI(penelitian),
+                    pengabdian: this.pengabdianAggregator.formatForAPI(pengabdian),
+                    penunjang: this.penunjangAggregator.formatForAPI(penunjang)
+                }
             };
         } catch (error) {
             throw error;
         }
     }
 
+    async getQuickSummary(
+        dosenId: number,
+        options: {
+            semesterId?: number;
+            tahun?: number;
+        } = {}
+    ) {
+        try {
+            const filter: any = {};
+            if (options.semesterId) filter.semesterId = options.semesterId;
+            if (options.tahun) filter.tahun = options.tahun;
 
-    prefillEnum<T extends EnumValues>(
-        keys: T,
-        deepKeys?: { jenis?: EnumValues; sub?: EnumValues; tingkat?: EnumValues },
-        includeStatus = false,
-    ): Record<string, any> {
-        const res: Record<string, any> = {};
-        for (const k of keys) {
-            res[k] = { total: 0 };
-            if (includeStatus) res[k].statusCounts = { pending: 0, approved: 0, rejected: 0 };
+            // Get summaries only (tanpa detail)
+            const [penelitianSummary, pengabdianSummary, penunjangSummary] = await Promise.all([
+                this.penelitianAggregator.getSummary(dosenId, filter),
+                this.pengabdianAggregator.calculateSummary(
+                    await this.pengabdianAggregator.aggregateByDosen(dosenId, {
+                        includeDetail: false,
+                        filter
+                    })
+                ),
+                this.penunjangAggregator.calculateSummary(
+                    await this.penunjangAggregator.aggregateByDosen(dosenId, {
+                        includeJenis: false,
+                        filter
+                    })
+                )
+            ]);
 
-            if (deepKeys?.jenis) {
-                res[k].jenis = {};
-                for (const j of deepKeys.jenis) {
-                    res[k].jenis[j] = { total: 0 };
-                    if (includeStatus) res[k].jenis[j].statusCounts = { pending: 0, approved: 0, rejected: 0 };
-
-                    if (deepKeys?.sub) {
-                        res[k].jenis[j].sub = {};
-                        for (const s of deepKeys.sub) {
-                            res[k].jenis[j].sub[s] = { total: 0 };
-                            if (includeStatus) res[k].jenis[j].sub[s].statusCounts = { pending: 0, approved: 0, rejected: 0 };
-                        }
-                    }
+            const total = {
+                total: penelitianSummary.total + pengabdianSummary.total + penunjangSummary.total,
+                count: penelitianSummary.count + pengabdianSummary.count + penunjangSummary.count,
+                statusCounts: {
+                    pending: penelitianSummary.statusCounts.pending + 
+                            pengabdianSummary.statusCounts.pending + 
+                            penunjangSummary.statusCounts.pending,
+                    approved: penelitianSummary.statusCounts.approved + 
+                            pengabdianSummary.statusCounts.approved + 
+                            penunjangSummary.statusCounts.approved,
+                    rejected: penelitianSummary.statusCounts.rejected + 
+                            pengabdianSummary.statusCounts.rejected + 
+                            penunjangSummary.statusCounts.rejected
                 }
-            }
+            };
 
-            if (deepKeys?.tingkat) {
-                res[k].tingkat = {};
-                for (const t of deepKeys.tingkat) {
-                    res[k].tingkat[t] = { total: 0 };
-                    if (includeStatus) res[k].tingkat[t].statusCounts = { pending: 0, approved: 0, rejected: 0 };
+            return {
+                total,
+                breakdown: {
+                    penelitian: penelitianSummary,
+                    pengabdian: pengabdianSummary,
+                    penunjang: penunjangSummary
                 }
-            }
+            };
+        } catch (error) {
+            throw error;
         }
-        return res;
+    }
+
+    private calculateTotalSummary(
+        penelitian: any,
+        pengabdian: any,
+        penunjang: any
+    ) {
+        const penelitianSummary = this.penelitianAggregator.calculateSummary(penelitian);
+        const pengabdianSummary = this.pengabdianAggregator.calculateSummary(pengabdian);
+        const penunjangSummary = this.penunjangAggregator.calculateSummary(penunjang);
+
+        return {
+            total: penelitianSummary.total + pengabdianSummary.total + penunjangSummary.total,
+            count: penelitianSummary.count + pengabdianSummary.count + penunjangSummary.count,
+            statusCounts: {
+                pending: penelitianSummary.statusCounts.pending + 
+                        pengabdianSummary.statusCounts.pending + 
+                        penunjangSummary.statusCounts.pending,
+                approved: penelitianSummary.statusCounts.approved + 
+                        pengabdianSummary.statusCounts.approved + 
+                        penunjangSummary.statusCounts.approved,
+                rejected: penelitianSummary.statusCounts.rejected + 
+                        pengabdianSummary.statusCounts.rejected + 
+                        penunjangSummary.statusCounts.rejected
+            },
+            categories: {
+                penelitian: penelitianSummary,
+                pengabdian: pengabdianSummary,
+                penunjang: penunjangSummary
+            }
+        };
     }
 }
