@@ -364,7 +364,7 @@ export class PenelitianService {
     const sortOrder = query.sortOrder === 'asc' ? 'asc' : 'desc';
 
     // Sorting
-    const allowedSortFields = ['createdAt', 'updatedAt', 'nilaiPak', 'kategori', 'statusValidasi'];
+    const allowedSortFields = ['createdAt', 'updatedAt', '', 'jenisProduk', 'nilaiPak', 'kategori', 'statusValidasi'];
     const sortBy = query.sortBy && allowedSortFields.includes(query.sortBy)
       ? query.sortBy
       : 'createdAt';
