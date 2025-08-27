@@ -10,6 +10,15 @@ import { Roles } from '../auth/decorators/roles.decorator';
 export class KesimpulanController {
     constructor(private readonly kesimpulanService: KesimpulanService) { }
 
+    @Get('simpel')
+    @Roles(TypeUserRole.DOSEN)
+    async findSimple(
+        @Req() req: any,
+    ) {
+        const dosenId = req.user.sub;
+        return this.kesimpulanService.findById(dosenId, { includeDetails: false });
+    }
+
     @Get(':id')
     @Roles(TypeUserRole.ADMIN, TypeUserRole.VALIDATOR)
     async findOne(
