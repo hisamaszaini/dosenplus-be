@@ -14,6 +14,7 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { PenelitianModule } from './modules/penelitian/penelitian.module';
 import { PengabdianModule } from './modules/pengabdian/pengabdian.module';
 import { PenunjangModule } from './modules/penunjang/penunjang.module';
+import { KesimpulanModule } from './modules/kesimpulan/kesimpulan.module';
 
 @Module({
   imports: [
@@ -42,8 +43,10 @@ import { PenunjangModule } from './modules/penunjang/penunjang.module';
 
     PenunjangModule,
 
+    KesimpulanModule,
   ],
-  controllers: [AppController],
+  controllers: [
+    AppController],
   providers: [
     AppService
   ],
