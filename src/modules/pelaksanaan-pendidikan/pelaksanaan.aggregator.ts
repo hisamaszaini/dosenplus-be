@@ -32,6 +32,39 @@ export class PelaksanaanPendidikanAggregator {
 
         const whereClause = this.buildWhereClause(dosenId, filter);
 
+        // --- variabel bagian conditional ---
+        const selectDetail = includeDetail
+            ? Prisma.sql`
+        CASE 
+          WHEN p."kategori" = 'BIMBINGAN_TUGAS_AKHIR' THEN bta."jenis"::text
+          WHEN p."kategori" = 'PENGUJI_UJIAN_AKHIR' THEN pu."peran"::text
+          WHEN p."kategori" = 'BAHAN_PENGAJARAN' THEN bp."jenis"::text
+          WHEN p."kategori" = 'JABATAN_STRUKTURAL' THEN js."namaJabatan"::text
+          WHEN p."kategori" = 'BIMBING_DOSEN' THEN bd."bidangAhli"::text
+          WHEN p."kategori" = 'DATA_SERING_PENCAKOKAN' THEN dp."jenis"::text
+          WHEN p."kategori" = 'PENGEMBANGAN_DIRI' THEN pd."namaKegiatan"::text
+          ELSE NULL
+        END as detail
+      `
+            : Prisma.sql`NULL as detail`;
+
+        const joinDetail = includeDetail
+            ? Prisma.sql`
+        LEFT JOIN "BimbinganTugasAkhir" bta ON p."id" = bta."pelaksanaanId" AND p."kategori" = 'BIMBINGAN_TUGAS_AKHIR'
+        LEFT JOIN "PengujiUjianAkhir" pu ON p."id" = pu."pelaksanaanId" AND p."kategori" = 'PENGUJI_UJIAN_AKHIR'
+        LEFT JOIN "BahanPengajaran" bp ON p."id" = bp."pelaksanaanId" AND p."kategori" = 'BAHAN_PENGAJARAN'
+        LEFT JOIN "JabatanStruktural" js ON p."id" = js."pelaksanaanId" AND p."kategori" = 'JABATAN_STRUKTURAL'
+        LEFT JOIN "BimbingDosen" bd ON p."id" = bd."pelaksanaanId" AND p."kategori" = 'BIMBING_DOSEN'
+        LEFT JOIN "DataseringPencakokan" dp ON p."id" = dp."pelaksanaanId" AND p."kategori" = 'DATA_SERING_PENCAKOKAN'
+        LEFT JOIN "PengembanganDiri" pd ON p."id" = pd."pelaksanaanId" AND p."kategori" = 'PENGEMBANGAN_DIRI'
+      `
+            : Prisma.empty;
+
+        const groupByClause = includeDetail
+            ? Prisma.sql`GROUP BY "kategori", "detail"`
+            : Prisma.sql`GROUP BY "kategori"`;
+
+        // --- query utama ---
         const rawData = await this.prisma.$queryRaw<Array<{
             kategori: string;
             detail?: string;
@@ -46,34 +79,9 @@ export class PelaksanaanPendidikanAggregator {
         p."kategori",
         p."nilaiPak",
         p."statusValidasi",
-        ${includeDetail
-                ? Prisma.sql`
-            CASE 
-              WHEN p."kategori" = 'BIMBINGAN_TUGAS_AKHIR' THEN bta."jenis"::text
-              WHEN p."kategori" = 'PENGUJI_UJIAN_AKHIR' THEN pu."peran"::text
-              WHEN p."kategori" = 'BAHAN_PENGAJARAN' THEN bp."jenis"::text
-              WHEN p."kategori" = 'JABATAN_STRUKTURAL' THEN js."namaJabatan"::text
-              WHEN p."kategori" = 'BIMBING_DOSEN' THEN bd."bidangAhli"::text
-              WHEN p."kategori" = 'DATA_SERING_PENCAKOKAN' THEN dp."jenis"::text
-              WHEN p."kategori" = 'PENGEMBANGAN_DIRI' THEN pd."namaKegiatan"::text
-              ELSE NULL
-            END as detail
-          `
-                : Prisma.sql`NULL as detail`
-            }
+        ${selectDetail}
       FROM "PelaksanaanPendidikan" p
-      ${includeDetail
-                ? Prisma.sql`
-          LEFT JOIN "BimbinganTugasAkhir" bta ON p."id" = bta."pelaksanaanId" AND p."kategori" = 'BIMBINGAN_TUGAS_AKHIR'
-          LEFT JOIN "PengujiUjianAkhir" pu ON p."id" = pu."pelaksanaanId" AND p."kategori" = 'PENGUJI_UJIAN_AKHIR'
-          LEFT JOIN "BahanPengajaran" bp ON p."id" = bp."pelaksanaanId" AND p."kategori" = 'BAHAN_PENGAJARAN'
-          LEFT JOIN "JabatanStruktural" js ON p."id" = js."pelaksanaanId" AND p."kategori" = 'JABATAN_STRUKTURAL'
-          LEFT JOIN "BimbingDosen" bd ON p."id" = bd."pelaksanaanId" AND p."kategori" = 'BIMBING_DOSEN'
-          LEFT JOIN "DataseringPencakokan" dp ON p."id" = dp."pelaksanaanId" AND p."kategori" = 'DATA_SERING_PENCAKOKAN'
-          LEFT JOIN "PengembanganDiri" pd ON p."id" = pd."pelaksanaanId" AND p."kategori" = 'PENGEMBANGAN_DIRI'
-        `
-                : Prisma.empty
-            }
+      ${joinDetail}
       WHERE ${whereClause}
     )
     SELECT
@@ -85,7 +93,7 @@ export class PelaksanaanPendidikanAggregator {
       COUNT(CASE WHEN "statusValidasi" = 'APPROVED' THEN 1 END)::int as approved,
       COUNT(CASE WHEN "statusValidasi" = 'REJECTED' THEN 1 END)::int as rejected
     FROM pelaksanaan_summary
-    GROUP BY "kategori", ${includeDetail ? Prisma.sql`"detail"` : Prisma.empty}
+    ${groupByClause}
     ORDER BY "kategori"
   `;
 
@@ -116,29 +124,6 @@ export class PelaksanaanPendidikanAggregator {
     ): AggregationResult {
         const result: AggregationResult = {};
 
-        // Prefill structure with all possible details
-        Object.entries(PELAKSANAAN_DETAIL_MAPPING).forEach(([kategori, config]) => {
-            result[kategori] = {
-                total: 0,
-                count: 0,
-                statusCounts: { pending: 0, approved: 0, rejected: 0 }
-            };
-
-            if (includeDetail && config.hasDetail) {
-                result[kategori].detail = {};
-                // Assuming we have a predefined list of possible details for each category
-                const possibleDetails = this.getPossibleDetailsForCategory(kategori);
-                possibleDetails.forEach(detail => {
-                    result[kategori].detail![detail] = {
-                        total: 0,
-                        count: 0,
-                        statusCounts: { pending: 0, approved: 0, rejected: 0 }
-                    };
-                });
-            }
-        });
-
-        // Update with actual data
         for (const row of rawData) {
             const { kategori, detail, total, count, pending, approved, rejected } = row;
 
@@ -160,43 +145,11 @@ export class PelaksanaanPendidikanAggregator {
                 if (!result[kategori].detail) {
                     result[kategori].detail = {};
                 }
-                if (!result[kategori].detail![detail]) {
-                    result[kategori].detail![detail] = {
-                        total: 0,
-                        count: 0,
-                        statusCounts: { pending: 0, approved: 0, rejected: 0 }
-                    };
-                }
-                result[kategori].detail![detail].total += total;
-                result[kategori].detail![detail].count += count;
-                result[kategori].detail![detail].statusCounts.pending += pending;
-                result[kategori].detail![detail].statusCounts.approved += approved;
-                result[kategori].detail![detail].statusCounts.rejected += rejected;
+                result[kategori].detail![detail] = { total, count, statusCounts: { pending, approved, rejected } };
             }
         }
 
         return result;
-    }
-
-    private getPossibleDetailsForCategory(kategori: string): string[] {
-        switch (kategori) {
-            case 'BIMBINGAN_TUGAS_AKHIR':
-                return ['jenis1', 'jenis2', 'jenis3']; // Replace with actual possible values
-            case 'PENGUJI_UJIAN_AKHIR':
-                return ['peran1', 'peran2']; // Replace with actual possible values
-            case 'BAHAN_PENGAJARAN':
-                return ['jenis1', 'jenis2']; // Replace with actual possible values
-            case 'JABATAN_STRUKTURAL':
-                return ['namaJabatan1', 'namaJabatan2']; // Replace with actual possible values
-            case 'BIMBING_DOSEN':
-                return ['bidangAhli1', 'bidangAhli2']; // Replace with actual possible values
-            case 'DATA_SERING_PENCAKOKAN':
-                return ['jenis1', 'jenis2']; // Replace with actual possible values
-            case 'PENGEMBANGAN_DIRI':
-                return ['namaKegiatan1', 'namaKegiatan2']; // Replace with actual possible values
-            default:
-                return [];
-        }
     }
 
     formatForAPI(result: AggregationResult) {
