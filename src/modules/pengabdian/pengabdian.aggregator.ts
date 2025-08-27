@@ -48,9 +48,7 @@ export class PengabdianAggregator {
     } = {}
   ): Promise<AggregationResult> {
     const { includeDetail = true, includeStatus = true, filter = {} } = options;
-
-    // Build safe detail query
-    const detailQuery = this.buildSafeDetailQuery(includeDetail);
+    const whereClause = this.buildWhereClause(dosenId, filter);
 
     const rawData = await this.prisma.$queryRaw<Array<{
       kategori: string;
@@ -61,42 +59,63 @@ export class PengabdianAggregator {
       approved: number;
       rejected: number;
     }>>`
-      SELECT 
+      WITH pengabdian_data AS (
+        SELECT
+          "kategori",
+          ${includeDetail 
+            ? Prisma.sql`
+              CASE 
+                WHEN "jenisKegiatan" IS NOT NULL THEN "jenisKegiatan"::text
+                WHEN "tingkat" IS NOT NULL THEN "tingkat"::text
+                ELSE NULL
+              END as detail
+            `
+            : Prisma.sql`NULL::text as detail`
+          },
+          "nilaiPak",
+          "statusValidasi"
+        FROM "Pengabdian"
+        WHERE ${whereClause}
+      )
+      SELECT
         "kategori",
-        ${detailQuery},
+        ${includeDetail ? Prisma.sql`"detail"` : Prisma.sql`NULL as detail`},
         SUM("nilaiPak")::float as total,
         COUNT(*)::int as count,
         COUNT(CASE WHEN "statusValidasi" = 'PENDING' THEN 1 END)::int as pending,
         COUNT(CASE WHEN "statusValidasi" = 'APPROVED' THEN 1 END)::int as approved,
         COUNT(CASE WHEN "statusValidasi" = 'REJECTED' THEN 1 END)::int as rejected
-      FROM "Pengabdian"
-      WHERE "dosenId" = ${dosenId}
-      GROUP BY "kategori", ${includeDetail ? Prisma.sql`detail` : Prisma.empty}
+      FROM pengabdian_data
+      GROUP BY "kategori", ${includeDetail ? Prisma.sql`"detail"` : Prisma.empty}
       ORDER BY "kategori"
     `;
 
     return this.buildStructuredResult(rawData, includeDetail);
   }
 
-  private buildSafeDetailQuery(includeDetail: boolean): Prisma.Sql {
-    if (!includeDetail) {
-      return Prisma.sql`NULL::text as detail`;
+  private buildWhereClause(dosenId: number, filter: any): Prisma.Sql {
+    let conditions = Prisma.sql`"dosenId" = ${dosenId}`;
+    
+    if (filter.semesterId) {
+      conditions = Prisma.sql`${conditions} AND "semesterId" = ${filter.semesterId}`;
     }
-
-    return Prisma.sql`
-      CASE 
-        WHEN "jenisKegiatan" IS NOT NULL THEN "jenisKegiatan"::text
-        WHEN "tingkat" IS NOT NULL THEN "tingkat"::text
-        ELSE NULL
-      END::text as detail
-    `;
+    
+    if (filter.tahun) {
+      conditions = Prisma.sql`${conditions} AND EXTRACT(YEAR FROM "tglMulai") = ${filter.tahun}`;
+    }
+    
+    if (filter.statusValidasi) {
+      conditions = Prisma.sql`${conditions} AND "statusValidasi" = ${filter.statusValidasi}`;
+    }
+    
+    return conditions;
   }
 
   private buildStructuredResult(
     rawData: any[],
     includeDetail: boolean
   ): AggregationResult {
-    const result = this.prefillStructure(includeDetail); // Pass includeDetail
+    const result = this.prefillStructure(includeDetail);
 
     for (const row of rawData) {
       const { kategori, detail, total, count, pending, approved, rejected } = row;
@@ -107,12 +126,10 @@ export class PengabdianAggregator {
         statusCounts: { pending, approved, rejected }
       };
 
-      // Update kategori level
       if (result[kategori]) {
         Object.assign(result[kategori], this.mergeNodes(result[kategori], nodeData));
       }
 
-      // Update detail level
       if (includeDetail && detail && result[kategori]?.detail) {
         result[kategori].detail![detail] = nodeData;
       }
