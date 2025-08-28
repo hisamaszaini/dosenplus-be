@@ -317,15 +317,35 @@ export class PengabdianService {
 
       if (semesterId) where.semesterId = semesterId;
 
-      // --- Hybrid sorting ---
+      // Hybrid sorting
       let data: Pengabdian[] = [];
       let total = 0;
 
       if (sortBy === 'judul') {
-        // Determine the correct key for sorting based on kategori
-        let sortKey = 'judulKarya'; // Default key
-        if (kategori === 'PENYULUHAN_MASYARAKAT_KURANG_SEMESTER' || kategori === 'PENYULUHAN_MASYARAKAT_SEMESTER') {
-          sortKey = 'judulMakalah';
+        let sortKey = 'judulKarya';
+        switch (kategori) {
+          case KategoriPengabdian.JABATAN_PIMPINAN_LEMBAGA_PEMERINTAHAN:
+            sortKey = 'namaJabatan';
+            break;
+          case KategoriPengabdian.PENGEMBANGAN_HASIL_PENDIDIKAN_PENELITIAN:
+            sortKey = 'namaKegiatan';
+            break;
+          case KategoriPengabdian.PENYULUHAN_MASYARAKAT_SEMESTER:
+          case KategoriPengabdian.PENYULUHAN_MASYARAKAT_KURANG_SEMESTER:
+            sortKey = 'judulMakalah';
+            break;
+          case KategoriPengabdian.PELAYANAN_MASYARAKAT:
+            sortKey = 'namaKegiatan';
+            break;
+          case KategoriPengabdian.KARYA_TIDAK_DIPUBLIKASIKAN:
+          case KategoriPengabdian.KARYA_DIPUBLIKASIKAN:
+            sortKey = 'judulKarya';
+            break;
+          case KategoriPengabdian.PENGELOLAAN_JURNAL:
+            sortKey = 'namaJurnal';
+            break;
+          default:
+            sortKey = 'judulKarya';
         }
 
         total = await this.prisma.pengabdian.count({ where });
