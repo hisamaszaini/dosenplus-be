@@ -257,17 +257,20 @@ export class PengabdianService {
     }
   }
 
-  async findAll(query: {
-    page?: number;
-    limit?: number;
-    search?: string;
-    status?: string;
-    dosenId?: number;
-    sortBy?: string;
-    sortOrder?: string;
-    kategori?: string;
-    semesterId?: number;
-  }, dosenId?: number) {
+  async findAll(
+    query: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      status?: string;
+      dosenId?: number;
+      sortBy?: string;
+      sortOrder?: string;
+      kategori?: string;
+      semesterId?: number;
+    },
+    dosenId?: number,
+  ) {
     try {
       const page = Number(query.page) || 1;
       const limit = Number(query.limit) || 10;
@@ -275,7 +278,8 @@ export class PengabdianService {
 
       const kategori = query.kategori as string | undefined;
       const semesterId = query.semesterId ? Number(query.semesterId) : undefined;
-      const finalDosenId = dosenId ?? (query.dosenId ? Number(query.dosenId) : undefined);
+      const finalDosenId =
+        dosenId ?? (query.dosenId ? Number(query.dosenId) : undefined);
 
       const sortField = query.sortBy || 'createdAt';
       const allowedSortFields = [
@@ -288,13 +292,14 @@ export class PengabdianService {
         'kategori',
         'statusValidasi',
       ];
-      const sortBy = allowedSortFields.includes(sortField) ? sortField : 'createdAt';
+      const sortBy = allowedSortFields.includes(sortField)
+        ? sortField
+        : 'createdAt';
 
       const sortOrder =
         ['asc', 'desc'].includes(query.sortOrder?.toLowerCase() ?? '')
           ? query.sortOrder!.toLowerCase()
           : 'desc';
-
 
       const where: Prisma.PengabdianWhereInput = {};
 
@@ -303,7 +308,9 @@ export class PengabdianService {
 
       if (query.search) {
         const search = query.search.toLowerCase();
-        where.OR = [{ dosen: { nama: { contains: search, mode: 'insensitive' } } }];
+        where.OR = [
+          { dosen: { nama: { contains: search, mode: 'insensitive' } } },
+        ];
       }
 
       if (query.status) {
@@ -311,7 +318,11 @@ export class PengabdianService {
       }
 
       if (kategori) {
-        if (Object.values(KategoriPengabdian).includes(kategori as KategoriPengabdian)) {
+        if (
+          Object.values(KategoriPengabdian).includes(
+            kategori as KategoriPengabdian,
+          )
+        ) {
           where.kategori = kategori as KategoriPengabdian;
         } else {
           throw new BadRequestException(`Kategori tidak valid: ${kategori}`);
@@ -354,21 +365,21 @@ export class PengabdianService {
         total = await this.prisma.pengabdian.count({ where });
 
         const rawData = await this.prisma.$queryRawUnsafe<any[]>(`
-  SELECT p.*, 
-         d.id as "dosenId", d.nama as "dosenNama",
-         s.id as "semesterId", s.nama as "semesterNama"
-  FROM "Pengabdian" p
-  LEFT JOIN "Dosen" d ON p."dosenId" = d.id
-  LEFT JOIN "Semester" s ON p."semesterId" = s.id
-  WHERE (${finalDosenId ? `p."dosenId" = ${finalDosenId}` : '1=1'})
-  ${query.status ? `AND p."statusValidasi" = '${query.status.toUpperCase()}'` : ''}
-  ${kategori ? `AND p."kategori" = '${kategori}'` : ''}
-  ${semesterId ? `AND p."semesterId" = ${semesterId}` : ''}
-  ORDER BY p.detail->>'${sortKey}' ${sortOrder.toUpperCase()}
-  OFFSET ${skip} LIMIT ${limit};
-`);
+        SELECT p.*, 
+               d.id as "dosenId", d.nama as "dosenNama",
+               s.id as "semesterId", s.nama as "semesterNama"
+        FROM "Pengabdian" p
+        LEFT JOIN "Dosen" d ON p."dosenId" = d.id
+        LEFT JOIN "Semester" s ON p."semesterId" = s.id
+        WHERE (${finalDosenId ? `p."dosenId" = ${finalDosenId}` : '1=1'})
+          ${query.status ? `AND p."statusValidasi" = '${query.status.toUpperCase()}'` : ''}
+          ${kategori ? `AND p."kategori" = '${kategori}'` : ''}
+          ${semesterId ? `AND p."semesterId" = ${semesterId}` : ''}
+        ORDER BY p.detail->>'${sortKey}' ${sortOrder.toUpperCase()}
+        OFFSET ${skip} LIMIT ${limit};
+      `);
 
-        const data = rawData.map(item => {
+        data = rawData.map(item => {
           const { dosenNama, semesterNama, dosenId, semesterId, ...rest } = item;
           return {
             ...rest,
@@ -426,7 +437,6 @@ export class PengabdianService {
       throw new Error('Internal Server Error');
     }
   }
-
 
   async findOne(id: number, dosenId: number, roles: TypeUserRole | TypeUserRole[]) {
     try {
