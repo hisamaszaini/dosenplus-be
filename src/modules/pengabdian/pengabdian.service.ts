@@ -8,6 +8,11 @@ import { handleCreateError, handleDeleteError, handleFindError, handleUpdateErro
 import { cleanRelasi } from '@/common/utils/cleanRelasi';
 import { fullUpdatePengabdianSchema } from './dto/update-pengabdian.dto';
 
+type PengabdianWithNested = Pengabdian & {
+  dosen: { id: number; nama: string };
+  semester: { id: number | null; nama: string | null };
+};
+
 @Injectable()
 export class PengabdianService {
   private readonly UPLOAD_PATH = 'pengabdian';
@@ -318,7 +323,7 @@ export class PengabdianService {
       if (semesterId) where.semesterId = semesterId;
 
       // Hybrid sorting
-      let data: Pengabdian[] = [];
+      let data: PengabdianWithNested[] = [];
       let total = 0;
 
       if (sortBy === 'judul') {
@@ -350,7 +355,7 @@ export class PengabdianService {
 
         total = await this.prisma.pengabdian.count({ where });
 
-        data = await this.prisma.$queryRawUnsafe(`
+        const rawSqlData = await this.prisma.$queryRawUnsafe<Pengabdian[]>`
         SELECT p.*, d.id as "dosenId", d.nama as "dosenNama", s.id as "semesterId", s.nama as "semesterNama"
         FROM "Pengabdian" p
         LEFT JOIN "Dosen" d ON p."dosenId" = d.id
@@ -361,7 +366,13 @@ export class PengabdianService {
         ${semesterId ? `AND p."semesterId" = ${semesterId}` : ''}
         ORDER BY p.detail->>'${sortKey}' ${sortOrder.toUpperCase()}
         OFFSET ${skip} LIMIT ${limit};
-      `);
+      `.toString();
+
+        data = rawSqlData.map(item => ({
+          ...item,
+          dosen: { id: item.dosenId, nama: item.dosenNama },
+          semester: item.semesterId ? { id: item.semesterId, nama: item.semesterNama } : null,
+        }));
       } else {
         [total, data] = await this.prisma.$transaction([
           this.prisma.pengabdian.count({ where }),
