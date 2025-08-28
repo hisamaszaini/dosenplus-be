@@ -380,19 +380,20 @@ export class PengabdianService {
       `);
 
         data = rawData.map(item => {
-          const { dosenNama, semesterNama, dosenId, semesterId, ...rest } = item;
+          const { dosenNama, semesterNama, ...rest } = item;
           return {
             ...rest,
             dosen: {
-              id: dosenId,
+              id: rest.dosenId,
               nama: dosenNama,
             },
             semester: {
-              id: semesterId,
+              id: rest.semesterId,
               nama: semesterNama,
             },
           };
         });
+
       } else {
         [total, data] = await this.prisma.$transaction([
           this.prisma.pengabdian.count({ where }),
