@@ -5,8 +5,6 @@ import { fullCreatePenunjangSchema, UpdateStatusValidasiDto, updateStatusValidas
 import { deleteFileFromDisk, handleUpload } from '@/common/utils/dataFile';
 import { JenisKegiatanPenunjang, KategoriPenunjang, Prisma, StatusValidasi, TypeUserRole } from '@prisma/client';
 import { handleCreateError, handleDeleteError, handleFindError, handleUpdateError } from '@/common/utils/prisma-error-handler';
-import { buildWhereClause } from '@/common/utils/buildWhere';
-import { cleanRelasi } from '@/common/utils/cleanRelasi';
 import { fullUpdatePenunjangSchema } from './dto/update-penunjang.dto';
 
 @Injectable()
@@ -124,6 +122,56 @@ export class PenunjangService {
     return nilaiPak;
   }
 
+  private buildWhereClause(
+    filter: Record<string, any>,
+    tableName: string = 'Penunjang',
+  ): Prisma.Sql {
+    const parts: Prisma.Sql[] = [];
+
+    // Handle statusValidasi filter
+    if (filter.statusValidasi) {
+      parts.push(Prisma.sql`"${Prisma.raw(tableName)}"."statusValidasi" = ${filter.statusValidasi}::"StatusValidasi"`);
+    }
+
+    // Handle semesterId filter
+    if (filter.semesterId) {
+      parts.push(Prisma.sql`"${Prisma.raw(tableName)}"."semesterId" = ${filter.semesterId}`);
+    }
+
+    // Handle kategori filter
+    if (filter.kategori) {
+      parts.push(Prisma.sql`"${Prisma.raw(tableName)}"."kategori" = ${filter.kategori}::"KategoriPenunjang"`);
+    }
+
+    // Handle jenisKegiatan filter
+    if (filter.jenisKegiatan) {
+      parts.push(Prisma.sql`"${Prisma.raw(tableName)}"."jenisKegiatan" = ${filter.jenisKegiatan}::"JenisKegiatanPenunjang"`);
+    }
+
+    // Handle dosenId filter
+    if (filter.dosenId) {
+      parts.push(Prisma.sql`"${Prisma.raw(tableName)}"."dosenId" = ${filter.dosenId}`);
+    }
+
+    // Handle createdAt filter
+    if (filter.createdAt) {
+      parts.push(Prisma.sql`"${Prisma.raw(tableName)}"."createdAt" = ${filter.createdAt}`);
+    }
+
+    // Handle updatedAt filter
+    if (filter.updatedAt) {
+      parts.push(Prisma.sql`"${Prisma.raw(tableName)}"."updatedAt" = ${filter.updatedAt}`);
+    }
+
+    // Handle reviewerId filter
+    if (filter.reviewerId) {
+      parts.push(Prisma.sql`"${Prisma.raw(tableName)}"."reviewerId" = ${filter.reviewerId}`);
+    }
+
+    // Combine all parts into a single WHERE clause
+    return parts.length === 0 ? Prisma.empty : Prisma.join(parts, ' AND ');
+  }
+
   private async aggregateByDosenRaw(
     dosenId: number,
     filter: Prisma.PenunjangWhereInput = {},
@@ -132,7 +180,7 @@ export class PenunjangService {
   ): Promise<any> {
 
     const whereClause = Prisma.sql`"dosenId" = ${dosenId}`;
-    const additional = buildWhereClause(filter, 'Penunjang');
+    const additional = this.buildWhereClause(filter, 'Penunjang');
     const fullWhere =
       additional === Prisma.empty
         ? whereClause
