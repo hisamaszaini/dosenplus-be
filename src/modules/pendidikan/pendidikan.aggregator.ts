@@ -8,9 +8,9 @@ export const PENDIDIKAN_MAPPING = {
         values: ['S1', 'S2', 'S3'] as const
     },
     DIKLAT: {
-        hasDetail: true,
+        hasDetail: false,
         detailField: 'jenis',
-        values: ['PENDIDIKAN', 'PELATIHAN', 'SEMINAR'] as const
+        values: [null] as const
     }
 } as const;
 
