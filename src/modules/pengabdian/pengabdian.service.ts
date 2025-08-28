@@ -76,7 +76,7 @@ export class PengabdianService {
 
     // Handle statusValidasi filter
     if (filter.statusValidasi) {
-      parts.push(Prisma.sql`"${Prisma.raw(tableName)}"."statusValidasi" = ${filter.statusValidasi}`);
+      parts.push(Prisma.sql`"${Prisma.raw(tableName)}"."statusValidasi" = ${filter.statusValidasi}::"StatusValidasi"`);
     }
 
     // Handle semesterId filter
@@ -86,17 +86,17 @@ export class PengabdianService {
 
     // Handle kategori filter
     if (filter.kategori) {
-      parts.push(Prisma.sql`"${Prisma.raw(tableName)}"."kategori" = ${filter.kategori}`);
+      parts.push(Prisma.sql`"${Prisma.raw(tableName)}"."kategori" = ${filter.kategori}::"KategoriPengabdian"`);
     }
 
     // Handle jenisKegiatan filter
     if (filter.jenisKegiatan) {
-      parts.push(Prisma.sql`"${Prisma.raw(tableName)}"."jenisKegiatan" = ${filter.jenisKegiatan}`);
+      parts.push(Prisma.sql`"${Prisma.raw(tableName)}"."jenisKegiatan" = ${filter.jenisKegiatan}::"JenisKegiatanPengabdian"`);
     }
 
     // Handle tingkat filter
     if (filter.tingkat) {
-      parts.push(Prisma.sql`"${Prisma.raw(tableName)}"."tingkat" = ${filter.tingkat}`);
+      parts.push(Prisma.sql`"${Prisma.raw(tableName)}"."tingkat" = ${filter.tingkat}::"TingkatPengabdian"`);
     }
 
     // Handle dosenId filter
