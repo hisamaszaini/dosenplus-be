@@ -8,11 +8,6 @@ import { handleCreateError, handleDeleteError, handleFindError, handleUpdateErro
 import { cleanRelasi } from '@/common/utils/cleanRelasi';
 import { fullUpdatePengabdianSchema } from './dto/update-pengabdian.dto';
 
-type PengabdianWithNested = Pengabdian & {
-  dosen: { id: number; nama: string };
-  semester: { id: number | null; nama: string | null };
-};
-
 @Injectable()
 export class PengabdianService {
   private readonly UPLOAD_PATH = 'pengabdian';
@@ -323,7 +318,7 @@ export class PengabdianService {
       if (semesterId) where.semesterId = semesterId;
 
       // Hybrid sorting
-      let data: PengabdianWithNested[] = [];
+      let data: Pengabdian[] = [];
       let total = 0;
 
       if (sortBy === 'judul') {
@@ -355,24 +350,32 @@ export class PengabdianService {
 
         total = await this.prisma.pengabdian.count({ where });
 
-        const rawSqlData = await this.prisma.$queryRawUnsafe<Pengabdian[]>`
-        SELECT p.*, d.id as "dosenId", d.nama as "dosenNama", s.id as "semesterId", s.nama as "semesterNama"
-        FROM "Pengabdian" p
-        LEFT JOIN "Dosen" d ON p."dosenId" = d.id
-        LEFT JOIN "Semester" s ON p."semesterId" = s.id
-        WHERE (${finalDosenId ? `p."dosenId" = ${finalDosenId}` : '1=1'})
-        ${query.status ? `AND p."statusValidasi" = '${query.status.toUpperCase()}'` : ''}
-        ${kategori ? `AND p."kategori" = '${kategori}'` : ''}
-        ${semesterId ? `AND p."semesterId" = ${semesterId}` : ''}
-        ORDER BY p.detail->>'${sortKey}' ${sortOrder.toUpperCase()}
-        OFFSET ${skip} LIMIT ${limit};
-      `.toString();
-
-        data = rawSqlData.map(item => ({
-          ...item,
-          dosen: { id: item.dosenId, nama: item.dosenNama },
-          semester: item.semesterId ? { id: item.semesterId, nama: item.semesterNama } : null,
-        }));
+        const data = await this.prisma.$queryRawUnsafe<any[]>(`
+  SELECT p.*, 
+         d.id as "dosenId", d.nama as "dosenNama", 
+         s.id as "semesterId", s.nama as "semesterNama"
+  FROM "Pengabdian" p
+  LEFT JOIN "Dosen" d ON p."dosenId" = d.id
+  LEFT JOIN "Semester" s ON p."semesterId" = s.id
+  WHERE (${finalDosenId ? `p."dosenId" = ${finalDosenId}` : '1=1'})
+  ${query.status ? `AND p."statusValidasi" = '${query.status.toUpperCase()}'` : ''}
+  ${kategori ? `AND p."kategori" = '${kategori}'` : ''}
+  ${semesterId ? `AND p."semesterId" = ${semesterId}` : ''}
+  ORDER BY p.detail->>'${sortKey}' ${sortOrder.toUpperCase()}
+  OFFSET ${skip} LIMIT ${limit};
+`).then(rows =>
+          rows.map(item => ({
+            ...item,
+            dosen: {
+              id: item.dosenId,
+              nama: item.dosenNama,
+            },
+            semester: {
+              id: item.semesterId,
+              nama: item.semesterNama,
+            },
+          }))
+        );
       } else {
         [total, data] = await this.prisma.$transaction([
           this.prisma.pengabdian.count({ where }),
