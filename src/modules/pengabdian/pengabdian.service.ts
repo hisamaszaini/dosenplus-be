@@ -353,26 +353,35 @@ export class PengabdianService {
 
         total = await this.prisma.pengabdian.count({ where });
 
-        const rows = await this.prisma.$queryRawUnsafe<any[]>(`
-        SELECT p.*, 
-               d.id as "dosenId", d.nama as "dosenNama", 
-               s.id as "semesterId", s.nama as "semesterNama"
-        FROM "Pengabdian" p
-        LEFT JOIN "Dosen" d ON p."dosenId" = d.id
-        LEFT JOIN "Semester" s ON p."semesterId" = s.id
-        WHERE (${finalDosenId ? `p."dosenId" = ${finalDosenId}` : '1=1'})
-        ${query.status ? `AND p."statusValidasi" = '${query.status.toUpperCase()}'` : ''}
-        ${kategori ? `AND p."kategori" = '${kategori}'` : ''}
-        ${semesterId ? `AND p."semesterId" = ${semesterId}` : ''}
-        ORDER BY p.detail->>'${sortKey}' ${sortOrder.toUpperCase()}
-        OFFSET ${skip} LIMIT ${limit};
-      `);
+        const rawData = await this.prisma.$queryRawUnsafe<any[]>(`
+  SELECT p.*, 
+         d.id as "dosenId", d.nama as "dosenNama",
+         s.id as "semesterId", s.nama as "semesterNama"
+  FROM "Pengabdian" p
+  LEFT JOIN "Dosen" d ON p."dosenId" = d.id
+  LEFT JOIN "Semester" s ON p."semesterId" = s.id
+  WHERE (${finalDosenId ? `p."dosenId" = ${finalDosenId}` : '1=1'})
+  ${query.status ? `AND p."statusValidasi" = '${query.status.toUpperCase()}'` : ''}
+  ${kategori ? `AND p."kategori" = '${kategori}'` : ''}
+  ${semesterId ? `AND p."semesterId" = ${semesterId}` : ''}
+  ORDER BY p.detail->>'${sortKey}' ${sortOrder.toUpperCase()}
+  OFFSET ${skip} LIMIT ${limit};
+`);
 
-        data = rows.map(item => ({
-          ...item,
-          dosen: { id: item.dosenId, nama: item.dosenNama },
-          semester: { id: item.semesterId, nama: item.semesterNama },
-        }));
+        const data = rawData.map(item => {
+          const { dosenNama, semesterNama, dosenId, semesterId, ...rest } = item;
+          return {
+            ...rest,
+            dosen: {
+              id: dosenId,
+              nama: dosenNama,
+            },
+            semester: {
+              id: semesterId,
+              nama: semesterNama,
+            },
+          };
+        });
       } else {
         [total, data] = await this.prisma.$transaction([
           this.prisma.pengabdian.count({ where }),
