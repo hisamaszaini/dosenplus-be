@@ -1,6 +1,6 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { JenisKegiatanPengabdian, KategoriPengabdian, Prisma, StatusValidasi, Tingkat, TingkatPengabdian, TypeUserRole } from '@prisma/client';
+import { JenisKegiatanPengabdian, KategoriPengabdian, Pengabdian, Prisma, StatusValidasi, Tingkat, TingkatPengabdian, TypeUserRole } from '@prisma/client';
 import { fullCreatePengabdianSchema, UpdateStatusValidasiDto, updateStatusValidasiSchema } from './dto/create-pengabdian.dto';
 import { parseAndThrow } from '@/common/utils/zod-helper';
 import { deleteFileFromDisk, handleUpload } from '@/common/utils/dataFile';
@@ -268,93 +268,123 @@ export class PengabdianService {
     kategori?: string;
     semesterId?: number;
   }, dosenId?: number) {
+    try {
+      const page = Number(query.page) || 1;
+      const limit = Number(query.limit) || 10;
+      const skip = (page - 1) * limit;
 
-    const page = Number(query.page) || 1;
-    const limit = Number(query.limit) || 10;
-    const skip = (page - 1) * limit;
+      const kategori = query.kategori as string | undefined;
+      const semesterId = query.semesterId ? Number(query.semesterId) : undefined;
+      const finalDosenId = dosenId ?? (query.dosenId ? Number(query.dosenId) : undefined);
 
-    const kategori = query.kategori as string | undefined;
-    const semesterId = query.semesterId ? Number(query.semesterId) : undefined;
-    const finalDosenId = dosenId ?? (query.dosenId ? Number(query.dosenId) : undefined);
+      const sortField = query.sortBy || 'createdAt';
+      const sortOrder = query.sortOrder === 'asc' ? 'asc' : 'desc';
 
-    const sortField = query.sortBy || 'createdAt';
-    const sortOrder = query.sortOrder === 'asc' ? 'asc' : 'desc';
-
-    // Sorting
-    const allowedSortFields = ['createdAt', 'updatedAt', 'nilaiPak', 'kategori', 'statusValidasi'];
-
-    const sortBy = query.sortBy && allowedSortFields.includes(query.sortBy)
-      ? query.sortBy
-      : 'createdAt';
-
-    const where: Prisma.PengabdianWhereInput = {};
-
-    // Filtering
-    if (finalDosenId) {
-      where.dosenId = finalDosenId;
-    }
-
-    if (query.search) {
-      const search = query.search.toLowerCase();
-      where.OR = [
-        { dosen: { nama: { contains: search, mode: 'insensitive' } } },
+      const allowedSortFields = [
+        'createdAt',
+        'updatedAt',
+        'judul',
+        'jenisKegiatan',
+        'tingkat',
+        'nilaiPak',
+        'kategori',
+        'statusValidasi',
       ];
-    }
 
-    if (query.status) {
-      where.statusValidasi = query.status.toUpperCase() as StatusValidasi;
-    }
+      const sortBy = allowedSortFields.includes(sortField) ? sortField : 'createdAt';
 
-    if (kategori) {
-      if (kategori && Object.values(KategoriPengabdian).includes(kategori as KategoriPengabdian)) {
-        where.kategori = kategori as KategoriPengabdian;
-      } else if (kategori) {
-        throw new BadRequestException(`Kategori tidak valid: ${kategori}`);
+      const where: Prisma.PengabdianWhereInput = {};
+
+      // Filtering
+      if (finalDosenId) where.dosenId = finalDosenId;
+
+      if (query.search) {
+        const search = query.search.toLowerCase();
+        where.OR = [{ dosen: { nama: { contains: search, mode: 'insensitive' } } }];
       }
-    }
 
-    if (semesterId) {
-      where.semesterId = semesterId;
-    }
+      if (query.status) {
+        where.statusValidasi = query.status.toUpperCase() as StatusValidasi;
+      }
 
-    const [total, data] = await this.prisma.$transaction([
-      this.prisma.pengabdian.count({ where }),
-      this.prisma.pengabdian.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { [sortField]: sortOrder },
-        include: {
-          dosen: { select: { id: true, nama: true } },
-          semester: {
-            select: { id: true, nama: true }
-          }
+      if (kategori) {
+        if (Object.values(KategoriPengabdian).includes(kategori as KategoriPengabdian)) {
+          where.kategori = kategori as KategoriPengabdian;
+        } else {
+          throw new BadRequestException(`Kategori tidak valid: ${kategori}`);
+        }
+      }
+
+      if (semesterId) where.semesterId = semesterId;
+
+      // --- Hybrid sorting ---
+      let data: Pengabdian[] = [];
+      let total = 0;
+
+      if (sortBy === 'judul') {
+        // Determine the correct key for sorting based on kategori
+        let sortKey = 'judulKarya'; // Default key
+        if (kategori === 'PENYULUHAN_MASYARAKAT_KURANG_SEMESTER' || kategori === 'PENYULUHAN_MASYARAKAT_SEMESTER') {
+          sortKey = 'judulMakalah';
+        }
+
+        total = await this.prisma.pengabdian.count({ where });
+
+        data = await this.prisma.$queryRawUnsafe(`
+        SELECT p.*, d.id as "dosenId", d.nama as "dosenNama", s.id as "semesterId", s.nama as "semesterNama"
+        FROM "Pengabdian" p
+        LEFT JOIN "Dosen" d ON p."dosenId" = d.id
+        LEFT JOIN "Semester" s ON p."semesterId" = s.id
+        WHERE (${finalDosenId ? `p."dosenId" = ${finalDosenId}` : '1=1'})
+        ${query.status ? `AND p."statusValidasi" = '${query.status.toUpperCase()}'` : ''}
+        ${kategori ? `AND p."kategori" = '${kategori}'` : ''}
+        ${semesterId ? `AND p."semesterId" = ${semesterId}` : ''}
+        ORDER BY p.detail->>'${sortKey}' ${sortOrder.toUpperCase()}
+        OFFSET ${skip} LIMIT ${limit};
+      `);
+      } else {
+        [total, data] = await this.prisma.$transaction([
+          this.prisma.pengabdian.count({ where }),
+          this.prisma.pengabdian.findMany({
+            where,
+            skip,
+            take: limit,
+            orderBy: { [sortBy]: sortOrder },
+            include: {
+              dosen: { select: { id: true, nama: true } },
+              semester: { select: { id: true, nama: true } },
+            },
+          }),
+        ]);
+      }
+
+      // aggregate opsional
+      let aggregate: any = null;
+      if (finalDosenId) {
+        aggregate = await this.aggregateByDosenRaw(
+          finalDosenId,
+          where,
+          true,
+          false,
+          false,
+        );
+      }
+
+      return {
+        success: true,
+        meta: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
         },
-      }),
-    ]);
-
-    let aggregate: any = null;
-    if (finalDosenId) {
-      aggregate = await this.aggregateByDosenRaw(
-        finalDosenId,
-        where,
-        true,
-        false,
-        false,
-      );
+        data,
+        ...(aggregate && { aggregate }),
+      };
+    } catch (error) {
+      console.error('Error in findAll:', error);
+      throw new Error('Internal Server Error');
     }
-
-    return {
-      success: true,
-      meta: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-      data: data,
-      ...(aggregate && { aggregate }),
-    };
   }
 
   async findOne(id: number, dosenId: number, roles: TypeUserRole | TypeUserRole[]) {
