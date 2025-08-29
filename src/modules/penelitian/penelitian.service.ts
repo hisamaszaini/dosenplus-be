@@ -454,11 +454,9 @@ export class PenelitianService {
         throw new ForbiddenException('Anda tidak diizinkan mengakses data ini');
       }
 
-      const cleanData = cleanRelasi(data);
-
       return {
         success: true,
-        data: cleanData,
+        data: data,
       };
     } catch (error) {
       console.error(error);
