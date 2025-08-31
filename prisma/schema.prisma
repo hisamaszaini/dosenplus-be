@@ -109,9 +109,10 @@ model Fakultas {
 model Prodi {
   id         Int     @id @default(autoincrement())
   externalId Int?    @unique
-  kode       String  @unique
+  kode       String
   kodeFp     String? @unique
-  nama       String  @unique
+  kelas      String  @unique
+  nama       String
   jenjang    String
 
   fakultasId Int?
@@ -282,7 +283,7 @@ enum SemesterStatus {
 
 model Semester {
   id           Int            @id @default(autoincrement())
-  externalId   Int?            @unique
+  externalId   Int?           @unique
   kode         Int            @unique
   nama         String         @unique
   tipe         NamaSemester

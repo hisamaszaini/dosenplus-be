@@ -13,6 +13,7 @@ export class SyncService {
     async syncFakultas() {
         // const res = await this.httpService.axiosRef.get('https://apikey.umpo.ac.id/lpsi/api/fakultas/find-all');
         const res = await this.httpService.axiosRef.get('http://154.26.131.207:3444/api/fakultas');
+        console.log(res.data);
         const items = res.data?.data || [];
         for (const item of items) {
             await this.prisma.fakultas.upsert({
@@ -21,12 +22,13 @@ export class SyncService {
                 create: { externalId: item.idFakultas, nama: item.namaFakultas, kode: item.kodeFakultas },
             });
         }
-        return `${items.length} fakultas synced`;
+        return `${items.length} fakultas berhasil disinkronkan`;
     }
 
     async syncProdi() {
         // const res = await this.httpService.axiosRef.get('https://apikey.umpo.ac.id/lpsi/api/jurusan/find-All');
         const res = await this.httpService.axiosRef.get('http://154.26.131.207:3444/api/prodi');
+        console.log(res);
         const items = res.data?.data || [];
 
         for (const item of items) {

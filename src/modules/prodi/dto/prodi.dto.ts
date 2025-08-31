@@ -6,6 +6,7 @@ export const baseProdiSchema = z.object({
   externalId: z.number().nullable().optional(),
   kodeFp: z.string().nullable().optional(),
   kode: z.string().min(1, { message: "Kode prodi minimal 1 karakter" }),
+  kelas: z.string().min(2, { message: "Kelas prodi minimal 2 karakter" }),
   nama: z.string().min(5, { message: "Nama prodi minimal 5 karakter" }),
   jenjang: JenjangEnum,
   fakultasId: z

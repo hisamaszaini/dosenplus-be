@@ -20,34 +20,19 @@ CREATE TYPE "NamaSemester" AS ENUM ('GENAP', 'GANJIL');
 CREATE TYPE "SemesterStatus" AS ENUM ('ACTIVE', 'INACTIVE');
 
 -- CreateEnum
-CREATE TYPE "KategoriKegiatan" AS ENUM ('PERKULIAHAN', 'BIMBINGAN_SEMINAR', 'BIMBINGAN_TUGAS_AKHIR', 'BIMBINGAN_KKN_PKN_PKL', 'PENGUJI_UJIAN_AKHIR', 'PEMBINA_KEGIATAN_MHS', 'PENGEMBANGAN_PROGRAM', 'BAHAN_PENGAJARAN', 'ORASI_ILMIAH', 'JABATAN_STRUKTURAL', 'BIMBING_DOSEN', 'DATA_SERING_PENCAKOKAN', 'PENGEMBANGAN_DIRI');
+CREATE TYPE "KategoriPelaksanaanPendidikan" AS ENUM ('PERKULIAHAN', 'MEMBIMBING_SEMINAR', 'MEMBIMBING_KKN_PKN_PKL', 'MEMBIMBING_TUGAS_AKHIR', 'PENGUJI_UJIAN_AKHIR', 'MEMBINA_KEGIATAN_MHS', 'MENGEMBANGKAN_PROGRAM', 'BAHAN_PENGAJARAN', 'ORASI_ILMIAH', 'MENDUDUKI_JABATAN', 'MEMBIMBING_DOSEN', 'DATASERING_PENCANGKOKAN', 'PENGEMBANGAN_DIRI');
 
 -- CreateEnum
-CREATE TYPE "JenisKegiatan" AS ENUM ('DOSEN_PEMBIMBING', 'DOSEN_PENGUJI', 'PEMBINA', 'PENULIS_BUKU', 'NARASUMBER', 'PENGEMBANGAN');
+CREATE TYPE "JenisKategoriPelaksanaan" AS ENUM ('ASISTEN_AHLI', 'LEKTOR', 'LEKTOR_KEPALA', 'GURU_BESAR', 'KKN', 'PKL', 'PKN', 'PEMBIMBING_UTAMA', 'PEMBIMBING_PENDAMPING', 'KETUA_PENGUJI', 'ANGGOTA_PENGUJI', 'BUKU_AJAR', 'DIKTAT', 'MODUL', 'PETUNJUK_PRAKTIKUM', 'ALAT_BANTU', 'AUDIO_VISUAL', 'NASKAH_TUTORIAL', 'JOBSHEET', 'REKTOR', 'WAKIL', 'KETUA_SEKOLAH', 'PEMBANTU_KETUA_SEKOLAH', 'DIREKTUR_AKADEMI', 'PEMBANTU_DIREKTUR', 'SEKRETARIS_JURUSAN', 'PEMBIMBING_PENCANGKOKAN', 'PEMBIMBING_REGULER', 'DATASERING', 'PENCANGKOKAN', 'LEBIH_DARI_960', 'ANTARA_641_960', 'ANTARA_481_640', 'ANTARA_161_480', 'ANTARA_81_160', 'ANTARA_30_80', 'ANTARA_10_30');
 
 -- CreateEnum
-CREATE TYPE "JabatanFungsional" AS ENUM ('ASISTEN_AHLI', 'LEKTOR', 'LEKTOR_KEPALA', 'GURU_BESAR');
-
--- CreateEnum
-CREATE TYPE "JenisKKNPKNPKL" AS ENUM ('KKN', 'PKN', 'PKL');
-
--- CreateEnum
-CREATE TYPE "JenisBahanPengajaran" AS ENUM ('BUKU_AJAR', 'PRODUK_LAIN');
-
--- CreateEnum
-CREATE TYPE "Tingkat" AS ENUM ('LOKAL', 'DAERAH', 'NASIONAL', 'INTERNASIONAL');
-
--- CreateEnum
-CREATE TYPE "JenisBimbingan" AS ENUM ('REGULER', 'PENCAKOKAN');
-
--- CreateEnum
-CREATE TYPE "JenisDatasering" AS ENUM ('DATASERING', 'PENCAKOKAN');
+CREATE TYPE "subJenisPelaksanaan" AS ENUM ('DISERTASI', 'TESIS', 'SKRIPSI', 'LAPORAN_AKHIR_STUDI');
 
 -- CreateEnum
 CREATE TYPE "KategoriPenelitian" AS ENUM ('KARYA_ILMIAH', 'PENELITIAN_DIDEMINASI', 'PENELITIAN_TIDAK_DIPUBLIKASI', 'TERJEMAHAN_BUKU', 'SUNTINGAN_BUKU', 'KARYA_BERHAKI', 'KARYA_NON_HAKI', 'SENI_NON_HAKI');
 
 -- CreateEnum
-CREATE TYPE "JenisKategoriPenelitian" AS ENUM ('BUKU', 'BOOK_CHAPTER', 'PUBLIKASI_ILMIAH', 'PROSIDING_DIPUBLIKASIKAN', 'SEMINAR_TANPA_PROSIDING', 'PROSIDING_TANPA_SEMINAR', 'KORAN_MAJALAH', 'PATEN_INTERNASIONAL_INDUSTRI', 'PATEN_INTERNASIONAL', 'PATEN_NASIONAL_INDUSTRI', 'PATEN_NASIONAL', 'PATEN_SEDERHANA', 'CIPTAAN_DESAIN_GEOGRAFIS', 'CIPTAAN_BAHAN_PENGAJAR', 'INTERNASIONAL', 'NASIONAL', 'LOKAL');
+CREATE TYPE "JenisKategoriPenelitian" AS ENUM ('BUKU', 'BOOK_CHAPTER', 'JURNAL', 'PROSIDING_DIPUBLIKASIKAN', 'SEMINAR_TANPA_PROSIDING', 'PROSIDING_TANPA_SEMINAR', 'KORAN_MAJALAH', 'PATEN_INTERNASIONAL_INDUSTRI', 'PATEN_INTERNASIONAL', 'PATEN_NASIONAL_INDUSTRI', 'PATEN_NASIONAL', 'PATEN_SEDERHANA', 'CIPTAAN_DESAIN_GEOGRAFIS', 'CIPTAAN_BAHAN_PENGAJAR', 'INTERNASIONAL', 'NASIONAL', 'LOKAL');
 
 -- CreateEnum
 CREATE TYPE "SubJenisPenelitian" AS ENUM ('BUKU_REFERENSI', 'MONOGRAF', 'INTERNASIONAL', 'NASIONAL', 'JURNAL_INTERNASIONAL_BEREPUTASI', 'JURNAL_INTERNASIONAL_INDEKS_BEREPUTASI', 'JURNAL_INTERNASIONAL', 'JURNAL_INTERNASIONAL_TIDAK_TERINDEKS', 'JURNAL_NASIONAL_DIKTI', 'JURNAL_NASIONAL_TERAKREDITASI_P1_P2', 'JURNAL_NASIONAL_BERBAHASA_PBB_INDEKS', 'JURNAL_NASIONAL_TERAKREDITASI_P3_P4', 'JURNAL_NASIONAL', 'JURNAL_PBB_TIDAK_MEMENUHI', 'PROSIDING_INTERNASIONAL_TERINDEKS', 'PROSIDING_INTERNASIONAL_TIDAK_TERINDEKS', 'PROSIDING_NASIONAL_TIDAK_TERINDEKS');
@@ -65,13 +50,13 @@ CREATE TYPE "TingkatPengabdian" AS ENUM ('INTERNASIONAL', 'NASIONAL', 'LOKAL', '
 CREATE TYPE "KategoriPenunjang" AS ENUM ('ANGGOTA_PANITIA_PT', 'ANGGOTA_PANITIA_LEMBAGA_PEMERINTAH', 'ANGGOTA_ORGANISASI_PROFESI_INTERNASIONAL', 'ANGGOTA_ORGANISASI_PROFESI_NASIONAL', 'WAKIL_PT_PANITIA_ANTAR_LEMBAGA', 'DELEGASI_NASIONAL_PERTEMUAN_INTERNASIONAL', 'AKTIF_PERTEMUAN_ILMIAH_INT_NAS_REG', 'AKTIF_PERTEMUAN_ILMIAH_INTERNAL_PT', 'TANDA_JASA_PENGHARGAAN', 'MENULIS_BUKU_SLTA_NASIONAL', 'PRESTASI_OLAHRAGA_HUMANIORA', 'TIM_PENILAI_JABATAN_AKADEMIK');
 
 -- CreateEnum
-CREATE TYPE "JenisKategoriPenunjang" AS ENUM ('KETUA_WAKIL_KEPALA_ANGGOTA_TAHUNAN', 'ANGGOTA_TAHUNAN', 'KETUA_WAKIL_PANITIA_PUSAT', 'ANGGOTA_PANITIA_PUSAT', 'KETUA_WAKIL_PANITIA_DAERAH', 'ANGGOTA_PANITIA_DAERAH', 'KETUA', 'ANGGOTA', 'PENGURUS', 'ANGGOTA_ATAS_PERMINTAAN', 'KETUA_DELEGASI', 'ANGGOTA_DELEGASI', 'SATYA_LENCANA_30_TAHUN', 'SATYA_LENCANA_20_TAHUN', 'SATYA_LENCANA_10_TAHUN', 'INTERNASIONAL_PENGHARGAAN', 'NASIONAL_PENGHARGAAN', 'DAERAH_PENGHARGAAN', 'BUKU_SMTA', 'BUKU_SMTP', 'BUKU_SD', 'INTERNASIONAL_PIAGAM_MEDALI', 'NASIONAL_PIAGAM_MEDALI', 'DAERAH_PIAGAM_MEDALI');
+CREATE TYPE "JenisKegiatanPenunjang" AS ENUM ('KETUA_WAKIL_KEPALA_ANGGOTA_TAHUNAN', 'ANGGOTA_TAHUNAN', 'KETUA_WAKIL_PANITIA_PUSAT', 'ANGGOTA_PANITIA_PUSAT', 'KETUA_WAKIL_PANITIA_DAERAH', 'ANGGOTA_PANITIA_DAERAH', 'KETUA', 'ANGGOTA', 'PENGURUS', 'ANGGOTA_ATAS_PERMINTAAN', 'KETUA_DELEGASI', 'ANGGOTA_DELEGASI', 'SATYA_LENCANA_30_TAHUN', 'SATYA_LENCANA_20_TAHUN', 'SATYA_LENCANA_10_TAHUN', 'PENGHARGAAN_INTERNASIONAL', 'PENGHARGAAN_NASIONAL', 'PENGHARGAAN_DAERAH', 'BUKU_SMTA', 'BUKU_SMTP', 'BUKU_SD', 'PIAGAM_MEDALI_INTERNASIONAL', 'PIAGAM_MEDALI_NASIONAL', 'PIAGAM_MEDALI_DAERAH');
 
 -- CreateTable
 CREATE TABLE "Setting" (
     "id" SERIAL NOT NULL,
     "namaRektor" TEXT NOT NULL,
-    "nipRektor" TEXT NOT NULL,
+    "nikRektor" TEXT NOT NULL,
 
     CONSTRAINT "Setting_pkey" PRIMARY KEY ("id")
 );
@@ -79,6 +64,7 @@ CREATE TABLE "Setting" (
 -- CreateTable
 CREATE TABLE "User" (
     "id" SERIAL NOT NULL,
+    "externalId" INTEGER,
     "email" TEXT NOT NULL,
     "username" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -115,7 +101,7 @@ CREATE TABLE "UserRole" (
 CREATE TABLE "Validator" (
     "id" INTEGER NOT NULL,
     "nama" TEXT NOT NULL,
-    "nip" TEXT,
+    "nik" TEXT,
     "jenis_kelamin" TEXT NOT NULL,
     "no_hp" TEXT,
 
@@ -125,6 +111,7 @@ CREATE TABLE "Validator" (
 -- CreateTable
 CREATE TABLE "Fakultas" (
     "id" SERIAL NOT NULL,
+    "externalId" INTEGER,
     "kode" TEXT NOT NULL,
     "nama" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -136,8 +123,11 @@ CREATE TABLE "Fakultas" (
 -- CreateTable
 CREATE TABLE "Prodi" (
     "id" SERIAL NOT NULL,
+    "externalId" INTEGER,
     "kode" TEXT NOT NULL,
+    "kodeFp" TEXT,
     "nama" TEXT NOT NULL,
+    "jenjang" TEXT NOT NULL,
     "fakultasId" INTEGER,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -148,14 +138,16 @@ CREATE TABLE "Prodi" (
 -- CreateTable
 CREATE TABLE "Dosen" (
     "id" INTEGER NOT NULL,
+    "externalId" INTEGER,
     "nama" TEXT NOT NULL,
-    "nip" TEXT,
+    "nik" TEXT,
     "nuptk" TEXT,
     "jenis_kelamin" TEXT NOT NULL,
     "no_hp" TEXT,
     "prodiId" INTEGER,
     "fakultasId" INTEGER,
     "jabatan" TEXT NOT NULL,
+    "tmt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -180,13 +172,14 @@ CREATE TABLE "PendingUpdateDosen" (
     "id" SERIAL NOT NULL,
     "dosenId" INTEGER NOT NULL,
     "nama" TEXT NOT NULL,
-    "nip" TEXT,
+    "nik" TEXT,
     "nuptk" TEXT,
     "jenis_kelamin" TEXT NOT NULL,
     "no_hp" TEXT,
     "prodiId" INTEGER,
     "fakultasId" INTEGER,
     "jabatan" TEXT,
+    "tmt" TIMESTAMP(3),
     "fotoPath" TEXT,
     "npwp" TEXT,
     "nama_bank" TEXT,
@@ -206,8 +199,10 @@ CREATE TABLE "PendingUpdateDosen" (
 -- CreateTable
 CREATE TABLE "Pendidikan" (
     "id" SERIAL NOT NULL,
+    "externalId" INTEGER,
     "dosenId" INTEGER NOT NULL,
     "kategori" "KategoriPendidikan" NOT NULL,
+    "jenjang" "Jenjang",
     "nilaiPak" DOUBLE PRECISION NOT NULL DEFAULT 0,
     "filePath" TEXT NOT NULL,
     "statusValidasi" "StatusValidasi" NOT NULL DEFAULT 'PENDING',
@@ -223,7 +218,6 @@ CREATE TABLE "Pendidikan" (
 CREATE TABLE "PendidikanFormal" (
     "id" SERIAL NOT NULL,
     "pendidikanId" INTEGER NOT NULL,
-    "jenjang" TEXT NOT NULL,
     "prodi" TEXT NOT NULL,
     "fakultas" TEXT NOT NULL,
     "perguruanTinggi" TEXT NOT NULL,
@@ -254,6 +248,7 @@ CREATE TABLE "PendidikanDiklat" (
 -- CreateTable
 CREATE TABLE "Semester" (
     "id" SERIAL NOT NULL,
+    "externalId" INTEGER,
     "kode" INTEGER NOT NULL,
     "nama" TEXT NOT NULL,
     "tipe" "NamaSemester" NOT NULL,
@@ -269,9 +264,12 @@ CREATE TABLE "Semester" (
 -- CreateTable
 CREATE TABLE "PelaksanaanPendidikan" (
     "id" SERIAL NOT NULL,
+    "externalId" INTEGER,
     "dosenId" INTEGER NOT NULL,
     "semesterId" INTEGER,
-    "kategori" "KategoriKegiatan" NOT NULL,
+    "kategori" "KategoriPelaksanaanPendidikan" NOT NULL,
+    "jenisKategori" "JenisKategoriPelaksanaan",
+    "subJenis" "subJenisPelaksanaan",
     "nilaiPak" DOUBLE PRECISION NOT NULL DEFAULT 0,
     "filePath" TEXT NOT NULL,
     "statusValidasi" "StatusValidasi" NOT NULL DEFAULT 'PENDING',
@@ -279,6 +277,8 @@ CREATE TABLE "PelaksanaanPendidikan" (
     "catatan" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "fakultasId" INTEGER,
+    "prodiId" INTEGER,
 
     CONSTRAINT "PelaksanaanPendidikan_pkey" PRIMARY KEY ("id")
 );
@@ -298,47 +298,14 @@ CREATE TABLE "Perkuliahan" (
 );
 
 -- CreateTable
-CREATE TABLE "BimbinganSeminar" (
+CREATE TABLE "BimbingPengujiMhs" (
     "id" SERIAL NOT NULL,
     "pelaksanaanId" INTEGER NOT NULL,
     "prodiId" INTEGER,
     "fakultasId" INTEGER,
     "jumlahMhs" INTEGER NOT NULL,
 
-    CONSTRAINT "BimbinganSeminar_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "BimbinganKknPknPkl" (
-    "id" SERIAL NOT NULL,
-    "pelaksanaanId" INTEGER NOT NULL,
-    "jenis" "JenisKKNPKNPKL" NOT NULL,
-    "prodiId" INTEGER,
-    "fakultasId" INTEGER,
-    "jumlahMhs" INTEGER NOT NULL,
-
-    CONSTRAINT "BimbinganKknPknPkl_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "BimbinganTugasAkhir" (
-    "id" SERIAL NOT NULL,
-    "pelaksanaanId" INTEGER NOT NULL,
-    "jenis" TEXT NOT NULL,
-    "peran" TEXT NOT NULL,
-    "jumlahMhs" INTEGER NOT NULL,
-
-    CONSTRAINT "BimbinganTugasAkhir_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "PengujiUjianAkhir" (
-    "id" SERIAL NOT NULL,
-    "pelaksanaanId" INTEGER NOT NULL,
-    "peran" TEXT NOT NULL,
-    "jumlahMhs" INTEGER NOT NULL,
-
-    CONSTRAINT "PengujiUjianAkhir_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "BimbingPengujiMhs_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -367,14 +334,12 @@ CREATE TABLE "PengembanganProgramKuliah" (
 CREATE TABLE "BahanPengajaran" (
     "id" SERIAL NOT NULL,
     "pelaksanaanId" INTEGER NOT NULL,
-    "jenis" "JenisBahanPengajaran" NOT NULL,
     "judul" TEXT,
     "jumlahHalaman" INTEGER,
     "mataKuliah" TEXT,
     "penerbit" TEXT,
     "tglTerbit" TIMESTAMP(3),
     "isbn" TEXT,
-    "jenisProduk" TEXT,
     "prodiId" INTEGER,
     "fakultasId" INTEGER,
 
@@ -387,7 +352,7 @@ CREATE TABLE "OrasiIlmiah" (
     "pelaksanaanId" INTEGER NOT NULL,
     "namaKegiatan" TEXT NOT NULL,
     "deskripsi" TEXT,
-    "tingkat" "Tingkat" NOT NULL,
+    "tingkat" TEXT NOT NULL,
     "penyelenggara" TEXT NOT NULL,
     "tgl" TIMESTAMP(3) NOT NULL,
 
@@ -398,7 +363,6 @@ CREATE TABLE "OrasiIlmiah" (
 CREATE TABLE "JabatanStruktural" (
     "id" SERIAL NOT NULL,
     "pelaksanaanId" INTEGER NOT NULL,
-    "namaJabatan" TEXT NOT NULL,
     "prodiId" INTEGER,
     "fakultasId" INTEGER,
     "afiliasi" TEXT NOT NULL,
@@ -413,8 +377,7 @@ CREATE TABLE "BimbingDosen" (
     "prodiId" INTEGER,
     "tglMulai" TIMESTAMP(3) NOT NULL,
     "tglSelesai" TIMESTAMP(3) NOT NULL,
-    "jenisBimbingan" "JenisBimbingan" NOT NULL,
-    "jabatan" "JabatanFungsional" NOT NULL,
+    "jabatan" TEXT NOT NULL,
     "bidangAhli" TEXT NOT NULL,
     "deskripsi" TEXT,
     "jumlahDsn" INTEGER NOT NULL,
@@ -423,16 +386,15 @@ CREATE TABLE "BimbingDosen" (
 );
 
 -- CreateTable
-CREATE TABLE "DataseringPencakokan" (
+CREATE TABLE "DataseringPencangkokan" (
     "id" SERIAL NOT NULL,
     "pelaksanaanId" INTEGER NOT NULL,
     "perguruanTinggi" TEXT NOT NULL,
-    "jenis" "JenisDatasering" NOT NULL,
     "tglMulai" TIMESTAMP(3) NOT NULL,
     "tglSelesai" TIMESTAMP(3) NOT NULL,
     "bidangAhli" TEXT NOT NULL,
 
-    CONSTRAINT "DataseringPencakokan_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "DataseringPencangkokan_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -445,7 +407,6 @@ CREATE TABLE "PengembanganDiri" (
     "tglSelesai" TIMESTAMP(3) NOT NULL,
     "penyelenggara" TEXT NOT NULL,
     "tempat" TEXT NOT NULL,
-    "lamaJam" INTEGER NOT NULL,
     "prodiId" INTEGER,
     "fakultasId" INTEGER,
 
@@ -455,6 +416,7 @@ CREATE TABLE "PengembanganDiri" (
 -- CreateTable
 CREATE TABLE "Penelitian" (
     "id" SERIAL NOT NULL,
+    "externalId" INTEGER,
     "dosenId" INTEGER NOT NULL,
     "semesterId" INTEGER,
     "kategori" "KategoriPenelitian" NOT NULL,
@@ -465,7 +427,7 @@ CREATE TABLE "Penelitian" (
     "nilaiPak" DOUBLE PRECISION NOT NULL DEFAULT 0,
     "filePath" TEXT NOT NULL,
     "statusValidasi" "StatusValidasi" NOT NULL DEFAULT 'PENDING',
-    "meta" JSONB NOT NULL DEFAULT '{}',
+    "detail" JSONB NOT NULL DEFAULT '{}',
     "reviewerId" INTEGER,
     "catatan" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -477,6 +439,7 @@ CREATE TABLE "Penelitian" (
 -- CreateTable
 CREATE TABLE "Pengabdian" (
     "id" SERIAL NOT NULL,
+    "externalId" INTEGER,
     "dosenId" INTEGER NOT NULL,
     "semesterId" INTEGER,
     "kategori" "KategoriPengabdian" NOT NULL,
@@ -485,7 +448,7 @@ CREATE TABLE "Pengabdian" (
     "nilaiPak" DOUBLE PRECISION NOT NULL DEFAULT 0,
     "filePath" TEXT NOT NULL,
     "statusValidasi" "StatusValidasi" NOT NULL DEFAULT 'PENDING',
-    "meta" JSONB NOT NULL DEFAULT '{}',
+    "detail" JSONB NOT NULL DEFAULT '{}',
     "reviewerId" INTEGER,
     "catatan" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -497,14 +460,17 @@ CREATE TABLE "Pengabdian" (
 -- CreateTable
 CREATE TABLE "Penunjang" (
     "id" SERIAL NOT NULL,
+    "externalId" INTEGER,
     "dosenId" INTEGER NOT NULL,
     "semesterId" INTEGER,
     "kategori" "KategoriPenunjang" NOT NULL,
-    "jenisKategori" "JenisKategoriPenunjang",
+    "jenisKegiatan" "JenisKegiatanPenunjang",
+    "namaKegiatan" TEXT NOT NULL,
+    "instansi" TEXT NOT NULL,
     "nilaiPak" DOUBLE PRECISION NOT NULL DEFAULT 0,
     "filePath" TEXT NOT NULL,
     "statusValidasi" "StatusValidasi" NOT NULL DEFAULT 'PENDING',
-    "meta" JSONB NOT NULL DEFAULT '{}',
+    "detail" JSONB NOT NULL DEFAULT '{}',
     "reviewerId" INTEGER,
     "catatan" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -513,17 +479,8 @@ CREATE TABLE "Penunjang" (
     CONSTRAINT "Penunjang_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "ActivityLog" (
-    "id" SERIAL NOT NULL,
-    "userId" INTEGER NOT NULL,
-    "targetType" TEXT NOT NULL,
-    "targetId" INTEGER NOT NULL,
-    "action" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "ActivityLog_pkey" PRIMARY KEY ("id")
-);
+-- CreateIndex
+CREATE UNIQUE INDEX "User_externalId_key" ON "User"("externalId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
@@ -535,10 +492,13 @@ CREATE UNIQUE INDEX "User_username_key" ON "User"("username");
 CREATE UNIQUE INDEX "Role_name_key" ON "Role"("name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Validator_nip_key" ON "Validator"("nip");
+CREATE UNIQUE INDEX "Validator_nik_key" ON "Validator"("nik");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Validator_no_hp_key" ON "Validator"("no_hp");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Fakultas_externalId_key" ON "Fakultas"("externalId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Fakultas_kode_key" ON "Fakultas"("kode");
@@ -547,13 +507,22 @@ CREATE UNIQUE INDEX "Fakultas_kode_key" ON "Fakultas"("kode");
 CREATE UNIQUE INDEX "Fakultas_nama_key" ON "Fakultas"("nama");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Prodi_externalId_key" ON "Prodi"("externalId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Prodi_kode_key" ON "Prodi"("kode");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Prodi_kodeFp_key" ON "Prodi"("kodeFp");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Prodi_nama_key" ON "Prodi"("nama");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Dosen_nip_key" ON "Dosen"("nip");
+CREATE UNIQUE INDEX "Dosen_externalId_key" ON "Dosen"("externalId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Dosen_nik_key" ON "Dosen"("nik");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Dosen_nuptk_key" ON "Dosen"("nuptk");
@@ -565,10 +534,16 @@ CREATE UNIQUE INDEX "Dosen_no_hp_key" ON "Dosen"("no_hp");
 CREATE UNIQUE INDEX "PendingUpdateDosen_dosenId_key" ON "PendingUpdateDosen"("dosenId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Pendidikan_externalId_key" ON "Pendidikan"("externalId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "PendidikanFormal_pendidikanId_key" ON "PendidikanFormal"("pendidikanId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "PendidikanDiklat_pendidikanId_key" ON "PendidikanDiklat"("pendidikanId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Semester_externalId_key" ON "Semester"("externalId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Semester_kode_key" ON "Semester"("kode");
@@ -583,19 +558,13 @@ CREATE INDEX "Semester_tipe_idx" ON "Semester"("tipe");
 CREATE INDEX "Semester_tahunMulai_tahunSelesai_idx" ON "Semester"("tahunMulai", "tahunSelesai");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "PelaksanaanPendidikan_externalId_key" ON "PelaksanaanPendidikan"("externalId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Perkuliahan_pelaksanaanId_key" ON "Perkuliahan"("pelaksanaanId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "BimbinganSeminar_pelaksanaanId_key" ON "BimbinganSeminar"("pelaksanaanId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "BimbinganKknPknPkl_pelaksanaanId_key" ON "BimbinganKknPknPkl"("pelaksanaanId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "BimbinganTugasAkhir_pelaksanaanId_key" ON "BimbinganTugasAkhir"("pelaksanaanId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "PengujiUjianAkhir_pelaksanaanId_key" ON "PengujiUjianAkhir"("pelaksanaanId");
+CREATE UNIQUE INDEX "BimbingPengujiMhs_pelaksanaanId_key" ON "BimbingPengujiMhs"("pelaksanaanId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "PembinaKegiatanMhs_pelaksanaanId_key" ON "PembinaKegiatanMhs"("pelaksanaanId");
@@ -616,10 +585,19 @@ CREATE UNIQUE INDEX "JabatanStruktural_pelaksanaanId_key" ON "JabatanStruktural"
 CREATE UNIQUE INDEX "BimbingDosen_pelaksanaanId_key" ON "BimbingDosen"("pelaksanaanId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "DataseringPencakokan_pelaksanaanId_key" ON "DataseringPencakokan"("pelaksanaanId");
+CREATE UNIQUE INDEX "DataseringPencangkokan_pelaksanaanId_key" ON "DataseringPencangkokan"("pelaksanaanId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "PengembanganDiri_pelaksanaanId_key" ON "PengembanganDiri"("pelaksanaanId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Penelitian_externalId_key" ON "Penelitian"("externalId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Pengabdian_externalId_key" ON "Pengabdian"("externalId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Penunjang_externalId_key" ON "Penunjang"("externalId");
 
 -- AddForeignKey
 ALTER TABLE "UserRole" ADD CONSTRAINT "UserRole_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -679,6 +657,12 @@ ALTER TABLE "PelaksanaanPendidikan" ADD CONSTRAINT "PelaksanaanPendidikan_semest
 ALTER TABLE "PelaksanaanPendidikan" ADD CONSTRAINT "PelaksanaanPendidikan_reviewerId_fkey" FOREIGN KEY ("reviewerId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "PelaksanaanPendidikan" ADD CONSTRAINT "PelaksanaanPendidikan_fakultasId_fkey" FOREIGN KEY ("fakultasId") REFERENCES "Fakultas"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PelaksanaanPendidikan" ADD CONSTRAINT "PelaksanaanPendidikan_prodiId_fkey" FOREIGN KEY ("prodiId") REFERENCES "Prodi"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "Perkuliahan" ADD CONSTRAINT "Perkuliahan_pelaksanaanId_fkey" FOREIGN KEY ("pelaksanaanId") REFERENCES "PelaksanaanPendidikan"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -688,28 +672,13 @@ ALTER TABLE "Perkuliahan" ADD CONSTRAINT "Perkuliahan_prodiId_fkey" FOREIGN KEY 
 ALTER TABLE "Perkuliahan" ADD CONSTRAINT "Perkuliahan_fakultasId_fkey" FOREIGN KEY ("fakultasId") REFERENCES "Fakultas"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "BimbinganSeminar" ADD CONSTRAINT "BimbinganSeminar_pelaksanaanId_fkey" FOREIGN KEY ("pelaksanaanId") REFERENCES "PelaksanaanPendidikan"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "BimbingPengujiMhs" ADD CONSTRAINT "BimbingPengujiMhs_pelaksanaanId_fkey" FOREIGN KEY ("pelaksanaanId") REFERENCES "PelaksanaanPendidikan"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "BimbinganSeminar" ADD CONSTRAINT "BimbinganSeminar_prodiId_fkey" FOREIGN KEY ("prodiId") REFERENCES "Prodi"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "BimbingPengujiMhs" ADD CONSTRAINT "BimbingPengujiMhs_prodiId_fkey" FOREIGN KEY ("prodiId") REFERENCES "Prodi"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "BimbinganSeminar" ADD CONSTRAINT "BimbinganSeminar_fakultasId_fkey" FOREIGN KEY ("fakultasId") REFERENCES "Fakultas"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "BimbinganKknPknPkl" ADD CONSTRAINT "BimbinganKknPknPkl_pelaksanaanId_fkey" FOREIGN KEY ("pelaksanaanId") REFERENCES "PelaksanaanPendidikan"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "BimbinganKknPknPkl" ADD CONSTRAINT "BimbinganKknPknPkl_prodiId_fkey" FOREIGN KEY ("prodiId") REFERENCES "Prodi"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "BimbinganKknPknPkl" ADD CONSTRAINT "BimbinganKknPknPkl_fakultasId_fkey" FOREIGN KEY ("fakultasId") REFERENCES "Fakultas"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "BimbinganTugasAkhir" ADD CONSTRAINT "BimbinganTugasAkhir_pelaksanaanId_fkey" FOREIGN KEY ("pelaksanaanId") REFERENCES "PelaksanaanPendidikan"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "PengujiUjianAkhir" ADD CONSTRAINT "PengujiUjianAkhir_pelaksanaanId_fkey" FOREIGN KEY ("pelaksanaanId") REFERENCES "PelaksanaanPendidikan"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "BimbingPengujiMhs" ADD CONSTRAINT "BimbingPengujiMhs_fakultasId_fkey" FOREIGN KEY ("fakultasId") REFERENCES "Fakultas"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "PembinaKegiatanMhs" ADD CONSTRAINT "PembinaKegiatanMhs_pelaksanaanId_fkey" FOREIGN KEY ("pelaksanaanId") REFERENCES "PelaksanaanPendidikan"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -751,7 +720,7 @@ ALTER TABLE "BimbingDosen" ADD CONSTRAINT "BimbingDosen_pelaksanaanId_fkey" FORE
 ALTER TABLE "BimbingDosen" ADD CONSTRAINT "BimbingDosen_prodiId_fkey" FOREIGN KEY ("prodiId") REFERENCES "Prodi"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "DataseringPencakokan" ADD CONSTRAINT "DataseringPencakokan_pelaksanaanId_fkey" FOREIGN KEY ("pelaksanaanId") REFERENCES "PelaksanaanPendidikan"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "DataseringPencangkokan" ADD CONSTRAINT "DataseringPencangkokan_pelaksanaanId_fkey" FOREIGN KEY ("pelaksanaanId") REFERENCES "PelaksanaanPendidikan"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "PengembanganDiri" ADD CONSTRAINT "PengembanganDiri_pelaksanaanId_fkey" FOREIGN KEY ("pelaksanaanId") REFERENCES "PelaksanaanPendidikan"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -788,6 +757,3 @@ ALTER TABLE "Penunjang" ADD CONSTRAINT "Penunjang_semesterId_fkey" FOREIGN KEY (
 
 -- AddForeignKey
 ALTER TABLE "Penunjang" ADD CONSTRAINT "Penunjang_reviewerId_fkey" FOREIGN KEY ("reviewerId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "ActivityLog" ADD CONSTRAINT "ActivityLog_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;

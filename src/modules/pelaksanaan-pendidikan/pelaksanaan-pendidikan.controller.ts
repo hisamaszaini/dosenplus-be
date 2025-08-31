@@ -6,7 +6,6 @@ import { Roles } from '@/modules/auth/decorators/roles.decorator';
 import { TypeUserRole } from '@prisma/client';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CreatePelaksanaanPendidikanDto } from './dto/create-pelaksanaan-pendidikan.dto';
-import { UpdatePelaksanaanPendidikanDto } from './dto/update-pelaksanaan-pendidikan.dto';
 import { ParseJsonStringPipe } from '@/common/pipes/parse-json-string.pipe';
 
 @Controller('pelaksanaan-pendidikan')
@@ -62,7 +61,7 @@ export class PelaksanaanPendidikanController {
     )
     file: Express.Multer.File,
 
-    @Body('data') dataRaw: UpdatePelaksanaanPendidikanDto,
+    @Body('data') dataRaw: CreatePelaksanaanPendidikanDto,
     @Req() req: any
   ) {
     let data: CreatePelaksanaanPendidikanDto;
@@ -171,7 +170,7 @@ export class PelaksanaanPendidikanController {
     )
     file: Express.Multer.File,
 
-    @Body('data', new ParseJsonStringPipe) data: UpdatePelaksanaanPendidikanDto,
+    @Body('data', new ParseJsonStringPipe) data: CreatePelaksanaanPendidikanDto,
     @Req() req: any,
   ) {
     const dosenId = req.user.sub;

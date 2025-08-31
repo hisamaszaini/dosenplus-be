@@ -15,6 +15,7 @@ import { PenelitianModule } from './modules/penelitian/penelitian.module';
 import { PengabdianModule } from './modules/pengabdian/pengabdian.module';
 import { PenunjangModule } from './modules/penunjang/penunjang.module';
 import { KesimpulanModule } from './modules/kesimpulan/kesimpulan.module';
+import { SyncModule } from './modules/sync/sync.module';
 
 @Module({
   imports: [
@@ -44,6 +45,8 @@ import { KesimpulanModule } from './modules/kesimpulan/kesimpulan.module';
     PenunjangModule,
 
     KesimpulanModule,
+
+    SyncModule,
   ],
   controllers: [
     AppController],
