@@ -282,7 +282,7 @@ enum SemesterStatus {
 
 model Semester {
   id           Int            @id @default(autoincrement())
-  externalId   Int            @unique
+  externalId   Int?            @unique
   kode         Int            @unique
   nama         String         @unique
   tipe         NamaSemester
