@@ -20,7 +20,6 @@ export class SyncController {
     return this.syncService.syncFakultas();
   }
 
-
   @Get('prodi')
   @Roles(TypeUserRole.ADMIN)
   syncProdi() {

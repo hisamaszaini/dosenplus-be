@@ -8,7 +8,7 @@ import {
 import { Prisma, PrismaClient, TypeUserRole, UserStatus } from '@prisma/client';
 import { BaseUpdateUserSchema, ChangePasswordDto, ChangePasswordSchema, CreateFlexibleUserSchema, CreatePendingUpdateDto, CreatePendingUpdateSchema, CreateValidatorBiodataSchema, UpdateDosenProfileSchema, UpdateFlexibleUserDto, UpdateFlexibleUserSchema, UpdateValidatorProfileSchema, ValidatePendingUpdateDto, ValidatePendingUpdateSchema, type CreateFlexibleUserDto } from './dto/user.dto';
 import z, { ZodError } from 'zod';
-import { LogActivityService } from '@/utils/logActivity';
+// import { LogActivityService } from '@/utils/logActivity';
 import { handleFindError, handlePrismaError, handleUpdateError } from '@/common/utils/prisma-error-handler';
 import { parseAndThrow } from '@/common/utils/zod-helper';
 import { PrismaService } from '../../../prisma/prisma.service';
@@ -21,7 +21,7 @@ type TransactionClient = Omit<PrismaClient, '$connect' | '$disconnect' | '$on' |
 export class UsersService {
     private readonly UPLOAD_PATH = 'profil';
 
-    constructor(private prisma: PrismaService, private logActivityUtil: LogActivityService
+    constructor(private prisma: PrismaService
     ) { }
 
     private async validateFakultasProdi(fakultasId: number, prodiId: number) {
@@ -964,12 +964,12 @@ export class UsersService {
                 },
             });
 
-            await this.logActivityUtil.createLog(
-                dosenId,
-                'UPDATE_PROFILE',
-                saved.id,
-                'CREATE',
-            );
+            // await this.logActivityUtil.createLog(
+            //     dosenId,
+            //     'UPDATE_PROFILE',
+            //     saved.id,
+            //     'CREATE',
+            // );
 
             return {
                 success: true,
@@ -1096,12 +1096,12 @@ export class UsersService {
             },
         });
 
-        await this.logActivityUtil.createLog(
-            dosenId,
-            'VALIDASI_PROFILE',
-            pending.id,
-            status,
-        );
+        // await this.logActivityUtil.createLog(
+        //     dosenId,
+        //     'VALIDASI_PROFILE',
+        //     pending.id,
+        //     status,
+        // );
 
         return {
             success: true,
