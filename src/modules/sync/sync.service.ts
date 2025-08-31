@@ -69,60 +69,94 @@ export class SyncService {
         return `${items.length} prodi berhasil disinkronkan`;
     }
 
-    async syncDosen() {
-        // const res = await this.httpService.axiosRef.get(
-        //     'https://apikey.umpo.ac.id/lpsi/api/vdosen/find-all-kodefp',
-        // );
-        const res = await this.httpService.axiosRef.get('http://154.26.131.207:3444/api/dosenByProdi');
-        const items = res.data?.data || [];
+    async syncDosen(): Promise<string> {
+        const res = await this.httpService.axiosRef.get(
+            'http://154.26.131.207:3444/api/dosenByProdi',
+        );
+
+        const items: Array<{
+            id: string;
+            nama: string;
+            nik?: string | null;
+            email?: string | null;
+            genderId: 1 | 2;
+            kodeSync: string;
+        }> = res.data?.data || [];
 
         const DEFAULT_PASSWORD = await hashPassword('dosen123');
+        let success = 0;
 
         for (const item of items) {
-            const prodi = await this.prisma.prodi.findUnique({
-                where: { kodeFp: item.kodeSync },
-                include: { fakultas: true },
-            });
-
-            if (!prodi) {
-                console.warn(`Prodi dengan kodeFp ${item.kodeSync} tidak ditemukan. Skip dosen: ${item.nama}`);
+            if (!item.nik) {
+                console.warn(`nik kosong – skip dosen ${item.nama}`);
                 continue;
             }
 
-            // Buat atau update User
-            const user = await this.prisma.user.upsert({
-                where: { externalId: item.id },
-                update: {},
-                create: {
-                    email: item.email ?? `${item.nik}@umpo.ac.id`,
-                    username: item.nik,
-                    name: item.nama,
-                    password: DEFAULT_PASSWORD,
-                },
-            });
+            try {
+                await this.prisma.$transaction(async (tx) => {
+                    const prodi = await tx.prodi.findUnique({
+                        where: { kodeFp: item.kodeSync },
+                        include: { fakultas: true },
+                    });
+                    if (!prodi) {
+                        console.warn(
+                            `Prodi ${item.kodeSync} tidak ditemukan – skip ${item.nama}`,
+                        );
+                        return;
+                    }
 
-            await this.prisma.dosen.upsert({
-                where: { externalId: item.id },
-                update: {
-                    nama: item.nama,
-                    nik: item.nik || null,
-                    jenis_kelamin: item.genderId === 1 ? 'Laki-laki' : 'Perempuan',
-                    prodiId: prodi.id,
-                    fakultasId: prodi.fakultasId,
-                },
-                create: {
-                    id: user.id,
-                    externalId: item.id,
-                    nama: item.nama,
-                    nik: item.nik || null,
-                    jenis_kelamin: item.genderId === 1 ? 'Laki-laki' : 'Perempuan',
-                    prodiId: prodi.id,
-                    fakultasId: prodi.fakultasId,
-                },
-            });
+                    const roleDosen = await tx.role.findUnique({
+                        where: { name: 'DOSEN' },
+                    });
+                    if (!roleDosen) throw new Error('Role DOSEN tidak ditemukan');
+
+                    const user = await tx.user.upsert({
+                        where: { externalId: Number(item.id) },
+                        update: {},
+                        create: {
+                            email: item.email ?? `${item.nik}@umpo.ac.id`,
+                            username: item.nik as string,
+                            name: item.nama,
+                            password: DEFAULT_PASSWORD,
+                        },
+                    });
+
+                    const exists = await tx.userRole.findFirst({
+                        where: { userId: user.id, roleId: roleDosen.id },
+                    });
+                    if (!exists) {
+                        await tx.userRole.create({
+                            data: { userId: user.id, roleId: roleDosen.id },
+                        });
+                    }
+
+                    await tx.dosen.upsert({
+                        where: { externalId: Number(item.id) },
+                        update: {
+                            nama: item.nama,
+                            nik: item.nik,
+                            jenis_kelamin: item.genderId === 1 ? 'Laki-laki' : 'Perempuan',
+                            prodiId: prodi.id,
+                            fakultasId: prodi.fakultasId,
+                        },
+                        create: {
+                            id: user.id,
+                            externalId: Number(item.id),
+                            nama: item.nama,
+                            nik: item.nik,
+                            jenis_kelamin: item.genderId === 1 ? 'Laki-laki' : 'Perempuan',
+                            prodiId: prodi.id,
+                            fakultasId: prodi.fakultasId,
+                        },
+                    });
+                });
+
+                success++;
+            } catch (err) {
+                console.error(`Gagal sync dosen ${item.nama}:`, err.message);
+            }
         }
 
-        return `${items.length} dosen berhasil disinkronkan`;
+        return `${success} dari ${items.length} dosen berhasil disinkronkan`;
     }
-
 }
