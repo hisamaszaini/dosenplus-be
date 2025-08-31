@@ -1,7 +1,6 @@
 import { BadRequestException, ForbiddenException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
-import { JenisBahanPengajaran, KategoriKegiatan, Prisma, Role, StatusValidasi, TypeUserRole } from '@prisma/client';
-import { fullPelaksanaanPendidikanSchema, UpdateStatusValidasiDto, updateStatusValidasiSchema } from './dto/create-pelaksanaan-pendidikan.dto';
-import { fullUpdatePelaksanaanSchema } from './dto/update-pelaksanaan-pendidikan.dto';
+import { JenisKategoriPelaksanaan, KategoriPelaksanaanPendidikan, Prisma, Role, StatusValidasi, subJenisPelaksanaan, TypeUserRole } from '@prisma/client';
+import { fullPelaksanaanPendidikanSchema, fullUpdatePelaksanaanSchema, jenisKategoriBahanPengajaranEnum, UpdateStatusValidasiDto, updateStatusValidasiSchema } from './dto/create-pelaksanaan-pendidikan.dto';
 import { parseAndThrow } from '@/common/utils/zod-helper';
 import { handleCreateError, handleDeleteError, handleFindError, handleUpdateError } from '@/common/utils/prisma-error-handler';
 import { PrismaService } from '../../../prisma/prisma.service';
@@ -15,20 +14,20 @@ export class PelaksanaanPendidikanService {
   constructor(private readonly prisma: PrismaService) {
   }
 
-  private kategoriToRelationKey(kategori: KategoriKegiatan): string {
-    const map: Record<KategoriKegiatan, string> = {
+  private kategoriToRelationKey(kategori: KategoriPelaksanaanPendidikan): string {
+    const map: Record<KategoriPelaksanaanPendidikan, string> = {
       PERKULIAHAN: 'perkuliahan',
-      BIMBINGAN_SEMINAR: 'bimbinganSeminar',
-      BIMBINGAN_TUGAS_AKHIR: 'bimbinganTugasAkhir',
-      BIMBINGAN_KKN_PKN_PKL: 'bimbinganKknPknPkl',
-      PENGUJI_UJIAN_AKHIR: 'pengujiUjianAkhir',
-      PEMBINA_KEGIATAN_MHS: 'pembinaKegiatanMhs',
-      PENGEMBANGAN_PROGRAM: 'pengembanganProgram',
+      MEMBIMBING_SEMINAR: 'bimbingPengujiMhs',
+      MEMBIMBING_KKN_PKN_PKL: 'bimbingPengujiMhs',
+      MEMBIMBING_TUGAS_AKHIR: 'bimbingPengujiMhs',
+      PENGUJI_UJIAN_AKHIR: 'bimbingPengujiMhs',
+      MEMBINA_KEGIATAN_MHS: 'pembinaKegiatanMhs',
+      MENGEMBANGKAN_PROGRAM: 'pengembanganProgram',
       BAHAN_PENGAJARAN: 'bahanPengajaran',
       ORASI_ILMIAH: 'orasiIlmiah',
-      JABATAN_STRUKTURAL: 'jabatanStruktural',
-      BIMBING_DOSEN: 'bimbingDosen',
-      DATA_SERING_PENCAKOKAN: 'dataseringPencakokan',
+      MENDUDUKI_JABATAN: 'jabatanStruktural',
+      MEMBIMBING_DOSEN: 'bimbingDosen',
+      DATASERING_PENCANGKOKAN: 'dataseringPencangkokan',
       PENGEMBANGAN_DIRI: 'pengembanganDiri',
     };
     return map[kategori];
@@ -115,40 +114,40 @@ export class PelaksanaanPendidikanService {
         });
       }
 
-      case 'BIMBINGAN_SEMINAR':
-      case 'BIMBINGAN_KKN_PKN_PKL':
+      case 'MEMBIMBING_SEMINAR':
+      case 'MEMBIMBING_KKN_PKN_PKL':
         return data.jumlahMhs * 1
 
 
-      case 'BIMBINGAN_TUGAS_AKHIR': {
+      case 'MEMBIMBING_TUGAS_AKHIR': {
         let nilaiPak = 0;
         const { peran, jenis, jumlahMhs } = data;
 
-        if (peran === 'Pembimbing Utama') {
+        if (peran === 'PEMBIMBING_UTAMA') {
           switch (jenis) {
-            case 'Disertasi':
+            case 'DISERTASI':
               nilaiPak = 8 * jumlahMhs;
               break;
-            case 'Tesis':
+            case 'TESIS':
               nilaiPak = 3 * jumlahMhs;
               break;
-            case 'Skripsi':
-            case 'Laporan Akhir Studi':
+            case 'SKRIPSI':
+            case 'LAPORAN_AKHIR_STUDI':
               nilaiPak = 1 * jumlahMhs;
               break;
             default:
               nilaiPak = 0;
           }
-        } else if (peran === 'Pembimbing Pendamping') {
+        } else if (peran === 'PEMBIMBING_PENDAMPING') {
           switch (jenis) {
-            case 'Disertasi':
+            case 'DISERTASI':
               nilaiPak = 6 * jumlahMhs;
               break;
-            case 'Tesis':
+            case 'TESIS':
               nilaiPak = 2 * jumlahMhs;
               break;
-            case 'Skripsi':
-            case 'Laporan Akhir Studi':
+            case 'SKRIPSI':
+            case 'LAPORAN_AKHIR_STUDI':
               nilaiPak = 0.5 * jumlahMhs;
               break;
             default:
@@ -162,10 +161,10 @@ export class PelaksanaanPendidikanService {
       case 'PENGUJI_UJIAN_AKHIR':
         return data.peran === 'Ketua Penguji' ? 1 * data.jumlahMhs : 0.5 * data.jumlahMhs
 
-      case 'PEMBINA_KEGIATAN_MHS':
+      case 'MEMBINA_KEGIATAN_MHS':
         return 2
 
-      case 'PENGEMBANGAN_PROGRAM':
+      case 'MENGEMBANGKAN_PROGRAM':
         return 2
 
       case 'BAHAN_PENGAJARAN':
@@ -174,35 +173,35 @@ export class PelaksanaanPendidikanService {
       case 'ORASI_ILMIAH':
         return 5
 
-      case 'JABATAN_STRUKTURAL': {
+      case 'MENDUDUKI_JABATAN': {
         const map = {
-          'Rektor': 6,
-          'Wakil Rektor': 5,
-          'Ketua Sekolah': 4,
-          'Pembantu Ketua Sekolah': 4,
-          'Direktur Akademi': 4,
-          'Pembantu Direktur': 3,
-          'Sekretaris Jurusan': 3,
+          'REKTOR': 6,
+          'WAKIL': 5,
+          'KETUA_SEKOLAH': 4,
+          'PEMBANTU_KETUA_SEKOLAH': 4,
+          'DIREKTUR_AKADEMI': 4,
+          'PEMBANTU_DIREKTUR': 3,
+          'SEKRETARIS_JURUSAN': 3,
         }
         return map[data.namaJabatan] || 0
       }
 
-      case 'BIMBING_DOSEN':
-        return data.jenisBimbingan === 'Pencangkokan' ? 2 : 1
+      case 'MEMBIMBING_DOSEN':
+        return data.jenisMEMBIMBING === 'PEMBIMBING_PENCANGKOKAN' ? 2 : 1
 
-      case 'DATA_SERING_PENCAKOKAN':
-        return data.jenis === 'Datasering' ? 5 : 4
+      case 'DATASERING_PENCANGKOKAN':
+        return data.jenis === 'DATASERING' ? 5 : 4
 
       case 'PENGEMBANGAN_DIRI': {
-        const jam = data.lamaJam
-        if (jam > 960) return 15
-        else if (jam >= 641) return 9
-        else if (jam >= 481) return 6
-        else if (jam >= 161) return 3
-        else if (jam >= 81) return 2
-        else if (jam >= 30) return 1
-        else if (jam >= 10) return 0.5
-        return 0
+        switch(data.lamaJam){
+          case 'LEBIH_DARI_960': return 15;
+          case 'ANTARA_641_960': return 9;
+          case 'ANTARA_481_640': return 6;
+          case 'ANTARA_161_480': return 3;
+          case 'ANTARA_81_160': return 2;
+          case 'ANTARA_30_80': return 1;
+          case 'ANTARA_10_30': return 0.5
+        }
       }
 
       default:
@@ -210,56 +209,94 @@ export class PelaksanaanPendidikanService {
     }
   }
 
-  private async createBahanPengajaran(
-    dosenId: number,
-    semesterId: number,
-    kategori: KategoriKegiatan,
-    relativePath: string,
-    nilaiPak: number,
-    data: any
-  ) {
-    const { jenis, ...restData } = data;
-
-    let bahanPengajaranData: any = { jenis };
-
-    if (jenis === JenisBahanPengajaran.BUKU_AJAR) {
-      const { judul, tglTerbit, penerbit, jumlahHalaman, isbn } = restData;
-      bahanPengajaranData.bukuAjar = {
-        create: { judul, tglTerbit, penerbit, jumlahHalaman, isbn }
-      };
-    } else if (jenis === JenisBahanPengajaran.PRODUK_LAIN) {
-      const { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId } = restData;
-      bahanPengajaranData.produkLain = {
-        create: { jenisProduk, judul, jumlahHalaman, mataKuliah, prodiId, fakultasId }
-      };
-    } else {
-      throw new Error(`Jenis bahan pengajaran tidak valid: ${jenis}`);
+    private async aggregateByDosenRaw(
+      dosenId: number,
+      filter: Prisma.PelaksanaanPendidikanWhereInput = {},
+      deepKategori = true,
+      deepJenis = false,
+      deepSub = false,
+    ): Promise<any> {
+      // base condition
+      const baseWhere = Prisma.sql`"dosenId" = ${dosenId}`;
+      const parts: Prisma.Sql[] = [baseWhere];
+  
+      // handle filter manual di sini
+      if (filter.statusValidasi) {
+        parts.push(
+          Prisma.sql`"statusValidasi" = ${filter.statusValidasi}::"StatusValidasi"`
+        );
+      }
+  
+      if (filter.semesterId) {
+        parts.push(
+          Prisma.sql`"semesterId" = ${filter.semesterId}`
+        );
+      }
+  
+      if (filter.kategori) {
+        parts.push(
+          Prisma.sql`"kategori" = ${filter.kategori}::"KategoriPelaksanaanPendidikan"`
+        );
+      }
+  
+      const fullWhere = Prisma.join(parts, ' AND ');
+  
+      // tentukan grouping
+      const groupCols: string[] = [];
+      if (deepKategori) groupCols.push('"kategori"');
+      if (deepJenis) groupCols.push('"jenisKategori"');
+      if (deepSub) groupCols.push('"subJenis"');
+  
+      if (groupCols.length === 0) return {};
+  
+      // query raw dengan casting yang sudah benar
+      const raw = await this.prisma.$queryRaw<any[]>`
+      SELECT
+        ${Prisma.raw(groupCols.join(', '))},
+        SUM("nilaiPak")::float AS total
+      FROM "Penelitian"
+      WHERE ${fullWhere}
+      GROUP BY ${Prisma.raw(groupCols.join(', '))}
+      ORDER BY ${Prisma.raw(groupCols.join(', '))}
+    `;
+  
+      // mapping hasil ke nested object
+      const result: any = {};
+      for (const row of raw) {
+        let cursor = result;
+  
+        if (deepKategori) {
+          const k = row.kategori;
+          cursor[k] = cursor[k] || { total: 0 };
+          cursor[k].total += row.total;
+          if (deepJenis) cursor = cursor[k];
+        }
+  
+        if (deepJenis) {
+          const jk = row.jenisKategori ?? '_null';
+          cursor.jenis = cursor.jenis || {};
+          cursor.jenis[jk] = cursor.jenis[jk] || { total: 0 };
+          cursor.jenis[jk].total += row.total;
+          if (deepSub) cursor = cursor.jenis[jk];
+        }
+  
+        if (deepSub) {
+          const sj = row.subJenis ?? '_null';
+          cursor.sub = cursor.sub || {};
+          cursor.sub[sj] = (cursor.sub[sj] || 0) + row.total;
+        }
+      }
+  
+      return result;
     }
 
-    return {
-      success: true,
-      message: 'Data bahan pengajaran berhasil ditambahkan',
-      data: await this.prisma.pelaksanaanPendidikan.create({
-        data: {
-          dosenId,
-          semesterId,
-          kategori,
-          filePath: relativePath,
-          nilaiPak,
-          bahanPengajaran: {
-            create: bahanPengajaranData
-          }
-        },
-      }),
-    };
-  }
 
   async create(dosenId: number, rawData: any, file: Express.Multer.File) {
     const data = parseAndThrow(fullPelaksanaanPendidikanSchema, rawData);
     console.log(`[CREATE] Data setelah parse: ${JSON.stringify(data, null, 2)}`);
     console.log(`dosenId: ${dosenId}`);
 
-    if (data.kategori === KategoriKegiatan.PERKULIAHAN) {
+    if (data.kategori === KategoriPelaksanaanPendidikan.PERKULIAHAN) {
       data.totalSks = data.jumlahKelas * data.sks;
     }
 
@@ -283,7 +320,10 @@ export class PelaksanaanPendidikanService {
       console.log(`Nilai PAK: ${nilaiPak}`);
 
       const { kategori, semesterId, ...kategoriFields } = data;
-
+      const jenisKategori: JenisKategoriPelaksanaan | null =
+        "jenisKategori" in data ? (data.jenisKategori as JenisKategoriPelaksanaan) : null;
+      const subJenis: subJenisPelaksanaan | null =
+        "subJenis" in data ? (data.subJenis as subJenisPelaksanaan) : null;
       // Kategori lain
       const relationKey = this.kategoriToRelationKey(data.kategori);
 
@@ -295,6 +335,8 @@ export class PelaksanaanPendidikanService {
             dosenId,
             semesterId,
             kategori: data.kategori,
+            jenisKategori: jenisKategori ?? undefined,
+            subJenis: subJenis ?? undefined,
             filePath: relativePath,
             nilaiPak,
             [relationKey]: {
@@ -351,7 +393,7 @@ export class PelaksanaanPendidikanService {
 
         // Hitung total SKS untuk kategori PERKULIAHAN
         if (
-          data.kategori === KategoriKegiatan.PERKULIAHAN &&
+          data.kategori === KategoriPelaksanaanPendidikan.PERKULIAHAN &&
           data.jumlahKelas &&
           data.sks
         ) {
@@ -371,6 +413,10 @@ export class PelaksanaanPendidikanService {
         );
 
         const { kategori, semesterId, ...kategoriFields } = data;
+        const jenisKategori: JenisKategoriPelaksanaan | null =
+          "jenisKategori" in data ? (data.jenisKategori as JenisKategoriPelaksanaan) : null;
+        const subJenis: subJenisPelaksanaan | null =
+          "subJenis" in data ? (data.subJenis as subJenisPelaksanaan) : null;
 
         const relationKey = this.kategoriToRelationKey(kategori);
         const updated = await tx.pelaksanaanPendidikan.update({
@@ -378,6 +424,8 @@ export class PelaksanaanPendidikanService {
           data: {
             dosenId,
             semesterId,
+            jenisKategori: jenisKategori ?? undefined,
+            subJenis: subJenis ?? undefined,
             filePath: newFilePath ?? existing.filePath,
             nilaiPak,
             statusValidasi: StatusValidasi.PENDING,
@@ -462,8 +510,8 @@ export class PelaksanaanPendidikanService {
     }
 
     if (kategori) {
-      if (kategori && Object.values(KategoriKegiatan).includes(kategori as KategoriKegiatan)) {
-        where.kategori = kategori as KategoriKegiatan;
+      if (kategori && Object.values(KategoriPelaksanaanPendidikan).includes(kategori as KategoriPelaksanaanPendidikan)) {
+        where.kategori = kategori as KategoriPelaksanaanPendidikan;
       } else if (kategori) {
         throw new BadRequestException(`Kategori tidak valid: ${kategori}`);
       }
@@ -485,17 +533,14 @@ export class PelaksanaanPendidikanService {
           semester: true,
 
           perkuliahan: true,
-          bimbinganSeminar: true,
-          bimbinganKknPknPkl: true,
-          bimbinganTugasAkhir: true,
-          pengujiUjianAkhir: true,
+          bimbingPengujiMhs: true,
           pembinaKegiatanMhs: true,
           pengembanganProgram: true,
           bahanPengajaran: true,
           orasiIlmiah: true,
           jabatanStruktural: true,
           bimbingDosen: true,
-          dataseringPencakokan: true,
+          dataseringPencangkokan: true,
           pengembanganDiri: true,
         },
       }),
@@ -530,17 +575,14 @@ export class PelaksanaanPendidikanService {
           semester: true,
 
           perkuliahan: true,
-          bimbinganSeminar: true,
-          bimbinganKknPknPkl: true,
-          bimbinganTugasAkhir: true,
-          pengujiUjianAkhir: true,
+          bimbingPengujiMhs: true,
           pembinaKegiatanMhs: true,
           pengembanganProgram: true,
           bahanPengajaran: true,
           orasiIlmiah: true,
           jabatanStruktural: true,
           bimbingDosen: true,
-          dataseringPencakokan: true,
+          dataseringPencangkokan: true,
           pengembanganDiri: true,
         },
       });

@@ -61,6 +61,9 @@ export class PendidikanService {
         data: {
           dosenId,
           kategori: parsedData.kategori,
+          ...(parsedData.kategori === 'FORMAL'
+            ? { jenjang: parsedData.jenjang }
+            : {}),
           filePath: relativePath,
           nilaiPak,
         },
@@ -70,7 +73,6 @@ export class PendidikanService {
         await this.prisma.pendidikanFormal.create({
           data: {
             pendidikanId: pendidikan.id,
-            jenjang: parsedData.jenjang,
             prodi: parsedData.prodi,
             fakultas: parsedData.fakultas,
             perguruanTinggi: parsedData.perguruanTinggi,

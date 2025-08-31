@@ -1,13 +1,15 @@
 import z from "zod";
 
 export const createFakultasSchema = z.object({
-    kode: z.string().min(2, { message: 'Kode fakultas minimal 2 karakter' }),
-    nama: z.string().min(5, { message: 'Nama fakultas minimal 5 karakter' }),
+  externalId: z.number().nullable().optional(),
+  kode: z.string().min(1, { message: 'Kode fakultas minimal 1 karakter' }),
+  nama: z.string().min(5, { message: 'Nama fakultas minimal 5 karakter' }),
 });
 
 export const updateFakultasSchema = z.object({
-    kode: z.string().min(2, { message: 'Kode fakultas minimal 2 karakter' }).optional(),
-    nama: z.string().min(5, { message: 'Nama fakultas minimal 5 karakter' }).optional(),
+  externalId: z.number().nullable().optional(),
+  kode: z.string().min(1, { message: 'Kode fakultas minimal 1 karakter' }).optional(),
+  nama: z.string().min(5, { message: 'Nama fakultas minimal 5 karakter' }).optional(),
 });
 
 export const fakultasResponseSchema = createFakultasSchema.extend({

@@ -73,13 +73,13 @@ export class UsersService {
         const errors: Record<string, string> = {};
 
         if (dto.dosenBiodata) {
-            const { nip, nuptk, no_hp } = dto.dosenBiodata;
+            const { nik, nuptk, no_hp } = dto.dosenBiodata;
 
-            if (nip) {
+            if (nik) {
                 const existing = await this.prisma.dosen.findFirst({
-                    where: { nip, ...(userId ? { NOT: { id: userId } } : {}) },
+                    where: { nik, ...(userId ? { NOT: { id: userId } } : {}) },
                 });
-                if (existing) errors['dosenBiodata.nip'] = 'NIP sudah digunakan oleh dosen lain.';
+                if (existing) errors['dosenBiodata.nik'] = 'NIK sudah digunakan oleh dosen lain.';
             }
 
             if (nuptk) {
@@ -98,13 +98,13 @@ export class UsersService {
         }
 
         if (dto.validatorBiodata) {
-            const { nip, no_hp } = dto.validatorBiodata;
+            const { nik, no_hp } = dto.validatorBiodata;
 
-            if (nip) {
+            if (nik) {
                 const existing = await this.prisma.validator.findFirst({
-                    where: { nip, ...(userId ? { NOT: { id: userId } } : {}) },
+                    where: { nik, ...(userId ? { NOT: { id: userId } } : {}) },
                 });
-                if (existing) errors['validatorBiodata.nip'] = 'NIP sudah digunakan oleh validator lain.';
+                if (existing) errors['validatorBiodata.nik'] = 'NIK sudah digunakan oleh validator lain.';
             }
 
             if (no_hp) {
@@ -180,8 +180,8 @@ export class UsersService {
         if (dto.dosenBiodata) {
             dto.dosenBiodata.nama = dto.dataUser.name;
 
-            if (dto.dosenBiodata.nip === undefined) {
-                dto.dosenBiodata.nip = null;
+            if (dto.dosenBiodata.nik === undefined) {
+                dto.dosenBiodata.nik = null;
             }
             await tx.dosen.create({ data: { ...dto.dosenBiodata, id: userId } });
             if (dto.dataKepegawaian) {
@@ -356,8 +356,12 @@ export class UsersService {
                         if (validated.dosenBiodata) {
                             await tx.dosen.update({
                                 where: { id: userId },
-                                data: validated.dosenBiodata,
+                                data: {
+                                    ...validated.dosenBiodata,
+                                    tmt: validated.dosenBiodata?.tmt ?? undefined,
+                                },
                             });
+
                         } else if (validated.dataUser.name) {
                             await tx.dosen.update({
                                 where: { id: userId },
@@ -366,7 +370,13 @@ export class UsersService {
                         }
                     } else if (validated.dosenBiodata) {
                         await tx.dosen.create({
-                            data: { ...validated.dosenBiodata, id: userId },
+                            data: {
+                                ...validated.dosenBiodata,
+                                ...(validated.dosenBiodata.tmt
+                                    ? { tmt: new Date(validated.dosenBiodata.tmt) }
+                                    : {}),
+                                id: userId,
+                            },
                         });
                     }
 
@@ -542,14 +552,14 @@ export class UsersService {
                 update: {
                     nama: finalNama,
                     jenis_kelamin: validatorBiodata.jenis_kelamin,
-                    nip: validatorBiodata?.nip ?? null,
+                    nik: validatorBiodata?.nik ?? null,
                     no_hp: validatorBiodata?.no_hp ?? null,
                 },
                 create: {
                     id: userId,
                     nama: finalNama,
                     jenis_kelamin: validatorBiodata.jenis_kelamin,
-                    nip: validatorBiodata?.nip ?? null,
+                    nik: validatorBiodata?.nik ?? null,
                     no_hp: validatorBiodata?.no_hp ?? null,
                 },
             });
@@ -560,7 +570,7 @@ export class UsersService {
                     where: { id: userId },
                     data: {
                         nama: finalNama,
-                        ...(validatorBiodata.nip && { nip: validatorBiodata.nip }),
+                        ...(validatorBiodata.nik && { nik: validatorBiodata.nik }),
                         ...(validatorBiodata.no_hp && { no_hp: validatorBiodata.no_hp }),
                     },
                 });
@@ -768,7 +778,7 @@ export class UsersService {
         const take = Number(limit) || 20;
         const skip = (page - 1) * take;
 
-        const allowedSortFields = ['nama', 'nip', 'nuptk', 'jabatan', 'createdAt'];
+        const allowedSortFields = ['nama', 'nik', 'nuptk', 'jabatan', 'createdAt'];
         const safeSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'nama';
         const safeSortOrder: 'asc' | 'desc' = sortOrder === 'desc' ? 'desc' : 'asc';
 
@@ -778,7 +788,7 @@ export class UsersService {
             where.AND.push({
                 OR: [
                     { nama: { contains: search, mode: 'insensitive' } },
-                    { nip: { contains: search, mode: 'insensitive' } },
+                    { nik: { contains: search, mode: 'insensitive' } },
                     { nuptk: { contains: search, mode: 'insensitive' } },
                 ],
             });
@@ -815,9 +825,10 @@ export class UsersService {
         const result = data.map((d) => ({
             id: d.id,
             nama: d.nama,
-            nip: d.nip ?? '-',
+            nik: d.nik ?? '-',
             nuptk: d.nuptk ?? '-',
             jabatan: d.jabatan ?? '-',
+            tmt: d.tmt ?? '-',
             prodi: d.prodi?.nama ?? '-',
             fakultas: d.fakultas?.nama ?? '-',
         }));
@@ -853,7 +864,7 @@ export class UsersService {
         const take = Math.min(Number(limit) || 20, 100);
         const skip = (Number(page) - 1) * take;
 
-        const allowedSortFields = ['nama', 'nip', 'no_hp', 'createdAt'];
+        const allowedSortFields = ['nama', 'nik', 'no_hp', 'createdAt'];
         const safeSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'nama';
         const safeSortOrder: 'asc' | 'desc' = sortOrder === 'desc' ? 'desc' : 'asc';
 
@@ -862,7 +873,7 @@ export class UsersService {
         if (search) {
             where.OR = [
                 { nama: { contains: search, mode: 'insensitive' } },
-                { nip: { contains: search, mode: 'insensitive' } },
+                { nik: { contains: search, mode: 'insensitive' } },
                 { no_hp: { contains: search, mode: 'insensitive' } },
             ];
         }
@@ -880,7 +891,7 @@ export class UsersService {
         const data = validators.map(v => ({
             id: v.id,
             nama: v.nama,
-            nip: v.nip ?? '-',
+            nik: v.nik ?? '-',
             jenis_kelamin: v.jenis_kelamin,
             no_hp: v.no_hp ?? '-',
         }));
@@ -1010,13 +1021,14 @@ export class UsersService {
                 where: { id: dosenId },
                 data: {
                     nama: pending.nama,
-                    nip: pending.nip,
+                    nik: pending.nik,
                     nuptk: pending.nuptk,
                     jenis_kelamin: pending.jenis_kelamin,
                     no_hp: pending.no_hp,
                     prodiId: pending.prodiId,
                     fakultasId: pending.fakultasId,
                     jabatan: pending.jabatan,
+                    tmt: pending.tmt ?? undefined,
                 },
             });
 
@@ -1067,7 +1079,7 @@ export class UsersService {
                     where: { id: pending.dosen.user.id },
                     data: {
                         nama: pending.nama,
-                        nip: pending.nip,
+                        nik: pending.nik,
                         no_hp: pending.no_hp,
                     },
                 });
@@ -1105,26 +1117,4 @@ export class UsersService {
         }
         return result;
     }
-
-    // private translateP2002Error(targets: string[] | undefined): Record<string, string> {
-    //     const errors: Record<string, string> = {};
-    //     const defaultMessage = (field: string) => `${field} sudah digunakan.`;
-    //     const FIELD_TO_PATH_MAP: Record<string, string[]> = {
-    //         nip: ['dosenBiodata.nip', 'validatorBiodata.nip'],
-    //         no_hp: ['dosenBiodata.no_hp', 'validatorBiodata.no_hp'],
-    //         nuptk: ['dosenBiodata.nuptk'],
-    //         email: ['email'],
-    //         username: ['username'],
-    //     };
-
-    //     targets?.forEach((field) => {
-    //         const paths = FIELD_TO_PATH_MAP[field] ?? [field];
-    //         paths.forEach((path) => {
-    //             errors[path] = defaultMessage(field);
-    //         });
-    //     });
-
-    //     return errors;
-    // }
-
 }

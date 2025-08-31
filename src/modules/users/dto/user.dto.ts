@@ -31,13 +31,14 @@ export const LoginSchema = z.object({
 
 export const CreateDosenBiodataSchema = z.object({
   nama: z.string().nonempty('Nama wajib diisi'),
-  nip: z.string().nullable().optional().transform(val => val?.trim() === '' ? null : val),
+  nik: z.string().nullable().optional().transform(val => val?.trim() === '' ? null : val),
   nuptk: z.string().nullable().optional().transform(val => val?.trim() === '' ? null : val),
   jenis_kelamin: z.string().refine((val): val is 'Laki-laki' | 'Perempuan' => val === 'Laki-laki' || val === 'Perempuan', { message: 'Jenis kelamin wajib dipilih' }),
   no_hp: z.string().nullable().optional().transform(val => val?.trim() === '' ? null : val),
   prodiId: z.preprocess(val => { const num = Number(val); return isNaN(num) || num <= 0 ? undefined : num }, z.number().int().refine(val => val > 0, { message: 'Program studi wajib dipilih' })),
   fakultasId: z.preprocess(val => { const num = Number(val); return isNaN(num) || num <= 0 ? undefined : num }, z.number().int().refine(val => val > 0, { message: 'Fakultas wajib dipilih' })),
   jabatan: z.string().refine((val): val is 'Asisten Ahli' | 'Lektor' | 'Lektor Kepala' | 'Guru Besar' => ['Asisten Ahli', 'Lektor', 'Lektor Kepala', 'Guru Besar'].includes(val), { message: 'Jabatan wajib dipilih' }),
+  tmt: z .union([ z.literal('').transform(() => null), z.coerce.date({ message: 'TMT / Tanggal Terhitung Mulai tidak valid' })]).nullable().optional()
 });
 
 export const CreateDataKepegawaianSchema = z.object({
@@ -51,7 +52,7 @@ export const CreateDataKepegawaianSchema = z.object({
 
 export const CreateValidatorBiodataSchema = z.object({
   nama: z.string().nonempty('Nama wajib diisi'),
-  nip: z.string().nullable().optional().transform(val => val?.trim() === '' ? null : val),
+  nik: z.string().nullable().optional().transform(val => val?.trim() === '' ? null : val),
   jenis_kelamin: z.string().refine((val): val is 'Laki-laki' | 'Perempuan' => val === 'Laki-laki' || val === 'Perempuan', { message: 'Jenis kelamin wajib dipilih' }),
   no_hp: z.string().nullable().optional().transform(val => val?.trim() === '' ? null : val),
 });
@@ -247,10 +248,6 @@ export type LoginDto = z.infer<typeof LoginSchema>;
 
 export type CreateFlexibleUserDto = z.infer<typeof CreateFlexibleUserSchema>;
 
-// export type CreateAdminUserDto = z.infer<typeof CreateAdminUserSchema>;
-// export type CreateValidatorUserDto = z.infer<typeof CreateValidatorUserSchema>;
-// export type CreateDosenUserDto = z.infer<typeof CreateDosenUserSchema>;
-
 export type UpdateDosenProfileDto = z.infer<typeof UpdateDosenProfileSchema>;
 export type UpdateAdminProfileDto = z.infer<typeof UpdateAdminProfileSchema>;
 export type UpdateValidatorProfileDto = z.infer<typeof UpdateValidatorProfileSchema>;
@@ -270,7 +267,7 @@ export enum StatusValidationEnum {
 export const CreatePendingUpdateSchema = z.object({
   // Biodata
   nama: z.string().nonempty(),
-  nip: z.string().optional().nullable(),
+  nik: z.string().optional().nullable(),
   nuptk: z.string().optional().nullable(),
   jenis_kelamin: z.enum(['Laki-laki', 'Perempuan']),
   no_hp: z.string().optional().nullable(),

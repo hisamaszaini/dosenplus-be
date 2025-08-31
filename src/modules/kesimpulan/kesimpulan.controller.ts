@@ -27,7 +27,7 @@ export class KesimpulanController {
     ) {
         const role = req.user.roles;
 
-        return this.kesimpulanService.findById(id, role);
+        return this.kesimpulanService.findById(id);
     }
 
     @Get()

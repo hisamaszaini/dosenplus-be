@@ -1,6 +1,6 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { JenisKegiatanPengabdian, KategoriPengabdian, Pengabdian, Prisma, StatusValidasi, Tingkat, TingkatPengabdian, TypeUserRole } from '@prisma/client';
+import { JenisKegiatanPengabdian, KategoriPengabdian, Prisma, StatusValidasi, TingkatPengabdian, TypeUserRole } from '@prisma/client';
 import { fullCreatePengabdianSchema, UpdateStatusValidasiDto, updateStatusValidasiSchema } from './dto/create-pengabdian.dto';
 import { parseAndThrow } from '@/common/utils/zod-helper';
 import { deleteFileFromDisk, handleUpload } from '@/common/utils/dataFile';
@@ -346,7 +346,7 @@ export class PengabdianService {
             break;
           case KategoriPengabdian.PENYULUHAN_MASYARAKAT_SEMESTER:
           case KategoriPengabdian.PENYULUHAN_MASYARAKAT_KURANG_SEMESTER:
-            sortKey = 'judulMakalah';
+            sortKey = 'judulSeminar';
             break;
           case KategoriPengabdian.PELAYANAN_MASYARAKAT:
             sortKey = 'namaKegiatan';

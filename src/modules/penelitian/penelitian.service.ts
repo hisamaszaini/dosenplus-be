@@ -3,11 +3,9 @@ import { handleCreateError, handleDeleteError, handleFindError, handleUpdateErro
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { JenisKategoriPenelitian, KategoriPenelitian, Prisma, StatusValidasi, SubJenisPenelitian, TypeUserRole } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { cleanRelasi } from '@/common/utils/cleanRelasi';
 import { parseAndThrow } from '@/common/utils/zod-helper';
 import { fullCreatePenelitianSchema, UpdateStatusValidasiDto, updateStatusValidasiSchema } from './dto/create-penelitian.dto';
 import { fullUpdatePenelitianSchema } from './dto/update-penelitian.dto';
-import { buildWhereClause } from '@/common/utils/buildWhere';
 
 @Injectable()
 export class PenelitianService {
