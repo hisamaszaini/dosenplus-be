@@ -26,4 +26,10 @@ export class SyncController {
     return this.syncService.syncProdi();
   }
 
+  @Get('dosen')
+  @Roles(TypeUserRole.ADMIN)
+  syncDosen() {
+    return this.syncService.syncDosen();
+  }
+
 }

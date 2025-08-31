@@ -32,6 +32,9 @@ export class SyncService {
         const items = res.data?.data || [];
 
         for (const item of items) {
+            if (!item.kelas) {
+                throw new Error(`Data prodi ${item.programStudi} tidak punya kelas`);
+            }
             const fakultas = await this.prisma.fakultas.findUnique({
                 where: { kode: item.kodeFakultas },
             });
@@ -49,6 +52,7 @@ export class SyncService {
                     nama: item.programStudi,
                     jenjang: item.jenjang,
                     fakultasId: fakultas.id,
+                    kelas: item.kelas
                 },
                 create: {
                     externalId: item.idJurusan,
@@ -57,6 +61,7 @@ export class SyncService {
                     nama: item.programStudi,
                     jenjang: item.jenjang,
                     fakultasId: fakultas.id,
+                    kelas: item.kelas
                 },
             });
         }
@@ -68,19 +73,19 @@ export class SyncService {
         // const res = await this.httpService.axiosRef.get(
         //     'https://apikey.umpo.ac.id/lpsi/api/vdosen/find-all-kodefp',
         // );
-        const res = await this.httpService.axiosRef.get('http://154.26.131.207:3444/api/dosen');
+        const res = await this.httpService.axiosRef.get('http://154.26.131.207:3444/api/dosenByProdi');
         const items = res.data?.data || [];
 
         const DEFAULT_PASSWORD = await hashPassword('dosen123');
 
         for (const item of items) {
             const prodi = await this.prisma.prodi.findUnique({
-                where: { kodeFp: item.kodeFp },
+                where: { kodeFp: item.kodeSync },
                 include: { fakultas: true },
             });
 
             if (!prodi) {
-                console.warn(`Prodi dengan kodeFp ${item.kodeFp} tidak ditemukan. Skip dosen: ${item.nama}`);
+                console.warn(`Prodi dengan kodeFp ${item.kodeSync} tidak ditemukan. Skip dosen: ${item.nama}`);
                 continue;
             }
 
@@ -113,7 +118,6 @@ export class SyncService {
                     jenis_kelamin: item.genderId === 1 ? 'Laki-laki' : 'Perempuan',
                     prodiId: prodi.id,
                     fakultasId: prodi.fakultasId,
-                    jabatan: ''
                 },
             });
         }

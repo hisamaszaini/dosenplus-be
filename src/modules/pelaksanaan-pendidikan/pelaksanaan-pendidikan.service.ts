@@ -193,7 +193,7 @@ export class PelaksanaanPendidikanService {
         return data.jenis === 'DATASERING' ? 5 : 4
 
       case 'PENGEMBANGAN_DIRI': {
-        switch(data.lamaJam){
+        switch (data.lamaJam) {
           case 'LEBIH_DARI_960': return 15;
           case 'ANTARA_641_960': return 9;
           case 'ANTARA_481_640': return 6;
@@ -209,48 +209,48 @@ export class PelaksanaanPendidikanService {
     }
   }
 
-    private async aggregateByDosenRaw(
-      dosenId: number,
-      filter: Prisma.PelaksanaanPendidikanWhereInput = {},
-      deepKategori = true,
-      deepJenis = false,
-      deepSub = false,
-    ): Promise<any> {
-      // base condition
-      const baseWhere = Prisma.sql`"dosenId" = ${dosenId}`;
-      const parts: Prisma.Sql[] = [baseWhere];
-  
-      // handle filter manual di sini
-      if (filter.statusValidasi) {
-        parts.push(
-          Prisma.sql`"statusValidasi" = ${filter.statusValidasi}::"StatusValidasi"`
-        );
-      }
-  
-      if (filter.semesterId) {
-        parts.push(
-          Prisma.sql`"semesterId" = ${filter.semesterId}`
-        );
-      }
-  
-      if (filter.kategori) {
-        parts.push(
-          Prisma.sql`"kategori" = ${filter.kategori}::"KategoriPelaksanaanPendidikan"`
-        );
-      }
-  
-      const fullWhere = Prisma.join(parts, ' AND ');
-  
-      // tentukan grouping
-      const groupCols: string[] = [];
-      if (deepKategori) groupCols.push('"kategori"');
-      if (deepJenis) groupCols.push('"jenisKategori"');
-      if (deepSub) groupCols.push('"subJenis"');
-  
-      if (groupCols.length === 0) return {};
-  
-      // query raw dengan casting yang sudah benar
-      const raw = await this.prisma.$queryRaw<any[]>`
+  private async aggregateByDosenRaw(
+    dosenId: number,
+    filter: Prisma.PelaksanaanPendidikanWhereInput = {},
+    deepKategori = true,
+    deepJenis = false,
+    deepSub = false,
+  ): Promise<any> {
+    // base condition
+    const baseWhere = Prisma.sql`"dosenId" = ${dosenId}`;
+    const parts: Prisma.Sql[] = [baseWhere];
+
+    // handle filter manual di sini
+    if (filter.statusValidasi) {
+      parts.push(
+        Prisma.sql`"statusValidasi" = ${filter.statusValidasi}::"StatusValidasi"`
+      );
+    }
+
+    if (filter.semesterId) {
+      parts.push(
+        Prisma.sql`"semesterId" = ${filter.semesterId}`
+      );
+    }
+
+    if (filter.kategori) {
+      parts.push(
+        Prisma.sql`"kategori" = ${filter.kategori}::"KategoriPelaksanaanPendidikan"`
+      );
+    }
+
+    const fullWhere = Prisma.join(parts, ' AND ');
+
+    // tentukan grouping
+    const groupCols: string[] = [];
+    if (deepKategori) groupCols.push('"kategori"');
+    if (deepJenis) groupCols.push('"jenisKategori"');
+    if (deepSub) groupCols.push('"subJenis"');
+
+    if (groupCols.length === 0) return {};
+
+    // query raw dengan casting yang sudah benar
+    const raw = await this.prisma.$queryRaw<any[]>`
       SELECT
         ${Prisma.raw(groupCols.join(', '))},
         SUM("nilaiPak")::float AS total
@@ -259,37 +259,36 @@ export class PelaksanaanPendidikanService {
       GROUP BY ${Prisma.raw(groupCols.join(', '))}
       ORDER BY ${Prisma.raw(groupCols.join(', '))}
     `;
-  
-      // mapping hasil ke nested object
-      const result: any = {};
-      for (const row of raw) {
-        let cursor = result;
-  
-        if (deepKategori) {
-          const k = row.kategori;
-          cursor[k] = cursor[k] || { total: 0 };
-          cursor[k].total += row.total;
-          if (deepJenis) cursor = cursor[k];
-        }
-  
-        if (deepJenis) {
-          const jk = row.jenisKategori ?? '_null';
-          cursor.jenis = cursor.jenis || {};
-          cursor.jenis[jk] = cursor.jenis[jk] || { total: 0 };
-          cursor.jenis[jk].total += row.total;
-          if (deepSub) cursor = cursor.jenis[jk];
-        }
-  
-        if (deepSub) {
-          const sj = row.subJenis ?? '_null';
-          cursor.sub = cursor.sub || {};
-          cursor.sub[sj] = (cursor.sub[sj] || 0) + row.total;
-        }
+
+    // mapping hasil ke nested object
+    const result: any = {};
+    for (const row of raw) {
+      let cursor = result;
+
+      if (deepKategori) {
+        const k = row.kategori;
+        cursor[k] = cursor[k] || { total: 0 };
+        cursor[k].total += row.total;
+        if (deepJenis) cursor = cursor[k];
       }
-  
-      return result;
+
+      if (deepJenis) {
+        const jk = row.jenisKategori ?? '_null';
+        cursor.jenis = cursor.jenis || {};
+        cursor.jenis[jk] = cursor.jenis[jk] || { total: 0 };
+        cursor.jenis[jk].total += row.total;
+        if (deepSub) cursor = cursor.jenis[jk];
+      }
+
+      if (deepSub) {
+        const sj = row.subJenis ?? '_null';
+        cursor.sub = cursor.sub || {};
+        cursor.sub[sj] = (cursor.sub[sj] || 0) + row.total;
+      }
     }
 
+    return result;
+  }
 
   async create(dosenId: number, rawData: any, file: Express.Multer.File) {
     const data = parseAndThrow(fullPelaksanaanPendidikanSchema, rawData);
@@ -307,6 +306,14 @@ export class PelaksanaanPendidikanService {
         where: { id: dosenId },
         select: { jabatan: true },
       });
+
+      if (!dosen.jabatan) {
+        throw new BadRequestException({
+          success: false,
+          message: { jabatan: 'Jabatan harus diisi terlebih dahulu, mohon lengkapi biodata.' },
+          data: null,
+        });
+      }
 
       relativePath = await handleUpload({
         file,
