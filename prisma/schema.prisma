@@ -145,7 +145,7 @@ model Dosen {
   prodi           Prodi?           @relation(fields: [prodiId], references: [id], onDelete: SetNull)
   fakultasId      Int?
   fakultas        Fakultas?        @relation(fields: [fakultasId], references: [id], onDelete: SetNull)
-  jabatan         String
+  jabatan         String?
   tmt             DateTime?
   dataKepegawaian DataKepegawaian?
 
