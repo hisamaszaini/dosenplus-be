@@ -94,7 +94,7 @@ export class SyncService {
                 where: { externalId: item.id },
                 update: {},
                 create: {
-                    email: item.email,
+                    email: item.email ?? `${item.nik}@umpo.ac.id`,
                     username: item.nik,
                     name: item.nama,
                     password: DEFAULT_PASSWORD,
