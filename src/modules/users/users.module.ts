@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
-import { LogActivityModule } from '@/utils/logActivity.module';
+// import { LogActivityModule } from '@/utils.local/logActivity.module';
 
 @Module({
-  imports: [LogActivityModule],
+  // imports: [LogActivityModule],
   controllers: [UsersController],
   providers: [UsersService],
   exports: [UsersService],  
