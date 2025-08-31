@@ -39,6 +39,7 @@ enum StatusValidasi {
 
 model User {
   id                    Int                     @id @default(autoincrement())
+  externalId            Int?                    @unique
   email                 String                  @unique
   username              String                  @unique
   name                  String
@@ -281,6 +282,7 @@ enum SemesterStatus {
 
 model Semester {
   id           Int            @id @default(autoincrement())
+  externalId   Int            @unique
   kode         Int            @unique
   nama         String         @unique
   tipe         NamaSemester
