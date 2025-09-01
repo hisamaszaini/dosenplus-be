@@ -169,20 +169,19 @@ export class PendidikanService {
             where: { id },
             data: {
               ...baseUpdate,
+              jenjang,
               statusValidasi: 'PENDING',
               reviewerId: null,
               catatan: null,
               Formal: {
                 upsert: {
                   update: {
-                    ...(jenjang && { jenjang }),
                     ...(prodi && { prodi }),
                     ...(fakultas && { fakultas }),
                     ...(perguruanTinggi && { perguruanTinggi }),
                     ...(lulusTahun && { lulusTahun }),
                   },
                   create: {
-                    jenjang: jenjang!,
                     prodi: prodi!,
                     fakultas: fakultas!,
                     perguruanTinggi: perguruanTinggi!,

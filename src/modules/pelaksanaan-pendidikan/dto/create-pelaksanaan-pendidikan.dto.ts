@@ -78,9 +78,8 @@ export const subJenisTugasAkhir = z.enum([
   'LAPORAN_AKHIR_STUDI',
 ]);
 
-
 export const pelaksanaanPendidikanBaseSchema = z.object({
-  dosenId: z.coerce.number().positive({ message: 'ID Dosen diisi' }).optional(),
+  dosenId: z.coerce.number().positive({ message: 'ID Dosen wajib diisi' }).optional(),
   semesterId: z.coerce.number().positive({ message: 'ID Semester wajib diisi' }),
   // nilaiPak: z.coerce.number().positive({ message: 'Nilai Pak wajib diisi' }),
   // filePath: z.string().min(6),

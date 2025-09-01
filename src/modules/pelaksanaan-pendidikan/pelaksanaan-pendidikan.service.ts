@@ -326,13 +326,18 @@ export class PelaksanaanPendidikanService {
       });
       console.log(`Nilai PAK: ${nilaiPak}`);
 
-      const { kategori, semesterId, ...kategoriFields } = data;
-      const jenisKategori: JenisKategoriPelaksanaan | null =
-        "jenisKategori" in data ? (data.jenisKategori as JenisKategoriPelaksanaan) : null;
-      const subJenis: subJenisPelaksanaan | null =
-        "subJenis" in data ? (data.subJenis as subJenisPelaksanaan) : null;
-      // Kategori lain
       const relationKey = this.kategoriToRelationKey(data.kategori);
+
+      const { kategori, semesterId, ...rest } = data;
+
+      const jenisKategori = 'jenisKategori' in rest ? rest.jenisKategori : undefined;
+      const subJenis = 'subJenis' in rest ? rest.subJenis : undefined;
+
+      const kategoriFields = Object.fromEntries(
+        Object.entries(rest).filter(
+          ([key]) => !['jenisKategori', 'subJenis'].includes(key)
+        )
+      );
 
       return {
         success: true,
@@ -342,8 +347,8 @@ export class PelaksanaanPendidikanService {
             dosenId,
             semesterId,
             kategori: data.kategori,
-            jenisKategori: jenisKategori ?? undefined,
-            subJenis: subJenis ?? undefined,
+            jenisKategori,
+            subJenis,
             filePath: relativePath,
             nilaiPak,
             [relationKey]: {
@@ -352,7 +357,7 @@ export class PelaksanaanPendidikanService {
           },
           include: {
             [relationKey]: true,
-          }
+          },
         }),
       };
     } catch (error) {
