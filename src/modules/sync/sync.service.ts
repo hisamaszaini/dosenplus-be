@@ -2,6 +2,8 @@ import { HttpService } from "@nestjs/axios";
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../../prisma/prisma.service";
 import { hashPassword } from "@/common/utils/hashAndEncrypt";
+import { getDosenByProdiResponse, getFakultasResponse, getProdiResponse } from "./dto/sync.dto";
+import { parse } from "path";
 
 @Injectable()
 export class SyncService {
@@ -13,8 +15,11 @@ export class SyncService {
     async syncFakultas() {
         // const res = await this.httpService.axiosRef.get('https://apikey.umpo.ac.id/lpsi/api/fakultas/find-all');
         const res = await this.httpService.axiosRef.get('http://154.26.131.207:3444/api/fakultas');
-        console.log(res.data);
-        const items = res.data?.data || [];
+
+        const parsed = getFakultasResponse.parse(res.data);
+
+        const items = parsed.data;
+
         for (const item of items) {
             await this.prisma.fakultas.upsert({
                 where: { externalId: item.idFakultas },
@@ -28,8 +33,10 @@ export class SyncService {
     async syncProdi() {
         // const res = await this.httpService.axiosRef.get('https://apikey.umpo.ac.id/lpsi/api/jurusan/find-All');
         const res = await this.httpService.axiosRef.get('http://154.26.131.207:3444/api/prodi');
-        console.log(res);
-        const items = res.data?.data || [];
+
+        const parsed = getProdiResponse.parse(res.data);
+
+        const items = parsed.data;
 
         for (const item of items) {
             if (!item.kelas) {
@@ -74,14 +81,8 @@ export class SyncService {
             'http://154.26.131.207:3444/api/dosenByProdi',
         );
 
-        const items: Array<{
-            id: string;
-            nama: string;
-            nik?: string | null;
-            email?: string | null;
-            genderId: 1 | 2;
-            kodeSync: string;
-        }> = res.data?.data || [];
+        const parsed = getDosenByProdiResponse.parse(res.data);
+        const items = parsed.data;
 
         const DEFAULT_PASSWORD = await hashPassword('dosen123');
         let success = 0;
@@ -95,12 +96,12 @@ export class SyncService {
             try {
                 await this.prisma.$transaction(async (tx) => {
                     const prodi = await tx.prodi.findUnique({
-                        where: { kodeFp: item.kodeSync },
+                        where: { kodeFp: item.kodeFp },
                         include: { fakultas: true },
                     });
                     if (!prodi) {
                         console.warn(
-                            `Prodi ${item.kodeSync} tidak ditemukan – skip ${item.nama}`,
+                            `Prodi ${item.kodeFp} tidak ditemukan – skip ${item.nama}`,
                         );
                         return;
                     }
