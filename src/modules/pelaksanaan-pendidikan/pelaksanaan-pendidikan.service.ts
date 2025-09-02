@@ -209,81 +209,106 @@ export class PelaksanaanPendidikanService {
     }
   }
 
+  private buildWhereClause(
+    filter: Record<string, any>,
+    tableName: string = 'PelaksanaanPendidikan',
+  ): Prisma.Sql {
+    const parts: Prisma.Sql[] = [];
+
+    // 1. kategori
+    if (filter.kategori) {
+      parts.push(
+        Prisma.sql`"${Prisma.raw(tableName)}"."kategori" = ${filter.kategori}::"KategoriPelaksanaanPendidikan"`,
+      );
+    }
+
+    // 2. jenisKategori
+    if (filter.jenisKategori) {
+      parts.push(
+        Prisma.sql`"${Prisma.raw(tableName)}"."jenisKategori" = ${filter.jenisKategori}::"JenisKategoriPelaksanaan"`,
+      );
+    }
+
+    // 3. subJenis
+    if (filter.subJenis) {
+      parts.push(
+        Prisma.sql`"${Prisma.raw(tableName)}"."subJenis" = ${filter.subJenis}::"subJenisPelaksanaan"`,
+      );
+    }
+
+    // 4. dosenId
+    if (filter.dosenId) {
+      parts.push(Prisma.sql`"${Prisma.raw(tableName)}"."dosenId" = ${filter.dosenId}`);
+    }
+
+    // 5. semesterId
+    if (filter.semesterId) {
+      parts.push(Prisma.sql`"${Prisma.raw(tableName)}"."semesterId" = ${filter.semesterId}`);
+    }
+
+    // 6. statusValidasi
+    if (filter.statusValidasi) {
+      parts.push(
+        Prisma.sql`"${Prisma.raw(tableName)}"."statusValidasi" = ${filter.statusValidasi}::"StatusValidasi"`,
+      );
+    }
+
+    // 7. createdAt / updatedAt (opsional)
+    if (filter.createdAt) {
+      parts.push(Prisma.sql`"${Prisma.raw(tableName)}"."createdAt" = ${filter.createdAt}`);
+    }
+    if (filter.updatedAt) {
+      parts.push(Prisma.sql`"${Prisma.raw(tableName)}"."updatedAt" = ${filter.updatedAt}`);
+    }
+
+    return parts.length === 0 ? Prisma.empty : Prisma.join(parts, ' AND ');
+  }
+
   private async aggregateByDosenRaw(
     dosenId: number,
     filter: Prisma.PelaksanaanPendidikanWhereInput = {},
-    deepKategori = true,
-    deepJenis = false,
-    deepSub = false,
-  ): Promise<any> {
-    // base condition
-    const baseWhere = Prisma.sql`"dosenId" = ${dosenId}`;
-    const parts: Prisma.Sql[] = [baseWhere];
+  ) {
+    const whereClause = Prisma.sql`"PelaksanaanPendidikan"."dosenId" = ${dosenId}`;
+    const additional = this.buildWhereClause(filter, 'PelaksanaanPendidikan');
+    const fullWhere = additional === Prisma.empty
+      ? whereClause
+      : Prisma.sql`${whereClause} AND ${additional}`;
 
-    // handle filter manual di sini
-    if (filter.statusValidasi) {
-      parts.push(
-        Prisma.sql`"statusValidasi" = ${filter.statusValidasi}::"StatusValidasi"`
-      );
-    }
+    const raw = await this.prisma.$queryRaw<Array<{
+      kategori: string;
+      jenisKategori: string | null;
+      subJenis: string | null;
+      total: number;
+    }>>`
+    SELECT
+      "kategori",
+      "jenisKategori",
+      "subJenis",
+      SUM("nilaiPak")::float AS total
+    FROM "PelaksanaanPendidikan"
+    WHERE ${fullWhere}
+    GROUP BY "kategori", "jenisKategori", "subJenis"
+    ORDER BY "kategori", "jenisKategori", "subJenis"
+  `;
 
-    if (filter.semesterId) {
-      parts.push(
-        Prisma.sql`"semesterId" = ${filter.semesterId}`
-      );
-    }
-
-    if (filter.kategori) {
-      parts.push(
-        Prisma.sql`"kategori" = ${filter.kategori}::"KategoriPelaksanaanPendidikan"`
-      );
-    }
-
-    const fullWhere = Prisma.join(parts, ' AND ');
-
-    // tentukan grouping
-    const groupCols: string[] = [];
-    if (deepKategori) groupCols.push('"kategori"');
-    if (deepJenis) groupCols.push('"jenisKategori"');
-    if (deepSub) groupCols.push('"subJenis"');
-
-    if (groupCols.length === 0) return {};
-
-    // query raw dengan casting yang sudah benar
-    const raw = await this.prisma.$queryRaw<any[]>`
-      SELECT
-        ${Prisma.raw(groupCols.join(', '))},
-        SUM("nilaiPak")::float AS total
-      FROM "Penelitian"
-      WHERE ${fullWhere}
-      GROUP BY ${Prisma.raw(groupCols.join(', '))}
-      ORDER BY ${Prisma.raw(groupCols.join(', '))}
-    `;
-
-    // mapping hasil ke nested object
     const result: any = {};
+
     for (const row of raw) {
-      let cursor = result;
+      const { kategori, jenisKategori, subJenis, total } = row;
 
-      if (deepKategori) {
-        const k = row.kategori;
-        cursor[k] = cursor[k] || { total: 0 };
-        cursor[k].total += row.total;
-        if (deepJenis) cursor = cursor[k];
-      }
+      result[kategori] ??= { total: 0 };
+      result[kategori].total += total;
 
-      if (deepJenis) {
-        const jk = row.jenisKategori ?? '_null';
-        cursor.jenis = cursor.jenis || {};
-        cursor.jenis[jk] = cursor.jenis[jk] || { total: 0 };
-        cursor.jenis[jk].total += row.total;
-        if (deepSub) cursor = cursor.jenis[jk];
-      }
+      if (jenisKategori) {
+        result[kategori].jenis ??= {};
+        result[kategori].jenis[jenisKategori] ??= { total: 0 };
+        result[kategori].jenis[jenisKategori].total += total;
 
-      if (deepSub) {
-        const sj = row.subJenis ?? '_null';
-        cursor.sub = cursor.sub || {};
-        cursor.sub[sj] = (cursor.sub[sj] || 0) + row.total;
+        if (subJenis) {
+          result[kategori].jenis[jenisKategori].sub ??= {};
+          result[kategori].jenis[jenisKategori].sub[subJenis] =
+            (result[kategori].jenis[jenisKategori].sub[subJenis] || 0) + total;
+        }
       }
     }
 
@@ -493,6 +518,7 @@ export class PelaksanaanPendidikanService {
 
     const kategori = query.kategori as string | undefined;
     const semesterId = query.semesterId ? Number(query.semesterId) : undefined;
+    const finalDosenId = dosenId ?? (query.dosenId ? Number(query.dosenId) : undefined);
 
     const sortField = query.sortBy || 'createdAt';
     const sortOrder = query.sortOrder === 'asc' ? 'asc' : 'desc';
@@ -505,8 +531,8 @@ export class PelaksanaanPendidikanService {
 
     const where: Prisma.PelaksanaanPendidikanWhereInput = {};
 
-    if (dosenId) {
-      where.dosenId = dosenId;
+    if (finalDosenId) {
+      where.dosenId = finalDosenId;
     }
 
     if (query.search) {
@@ -564,6 +590,14 @@ export class PelaksanaanPendidikanService {
       )
     );
 
+    let aggregate: any = null;
+    if (finalDosenId) {
+      aggregate = await this.aggregateByDosenRaw(
+        finalDosenId,
+        where
+      );
+    }
+
     return {
       success: true,
       meta: {
@@ -573,6 +607,7 @@ export class PelaksanaanPendidikanService {
         totalPages: Math.ceil(total / limit),
       },
       data: removeNullData,
+      ...(aggregate && { aggregate }),
     };
   }
 
