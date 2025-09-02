@@ -424,7 +424,7 @@ export class PelaksanaanPendidikanService {
           id
         );
 
-        const { kategori, semesterId, ...kategoriFields } = data;
+        const { kategori, semesterId, dosenId: _, ...kategoriFields } = data;
         const jenisKategori: JenisKategoriPelaksanaan | null =
           "jenisKategori" in data ? (data.jenisKategori as JenisKategoriPelaksanaan) : null;
         const subJenis: subJenisPelaksanaan | null =
