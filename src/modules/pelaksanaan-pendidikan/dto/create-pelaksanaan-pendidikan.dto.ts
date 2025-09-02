@@ -143,7 +143,7 @@ export const bahanPengajaranSchema = z.discriminatedUnion("jenisKategori", [
     kategori: z.literal(KategoriPelaksanaanPendidikan.BAHAN_PENGAJARAN),
     jenisKategori: z.literal(jenisKategoriBahanPengajaranEnum.enum.BUKU_AJAR),
     judul: z.string().min(1, { message: "Judul buku ajar wajib diisi." }),
-    tglSelesai: z.coerce.date({ message: "Tanggal terbit wajib diisi." }),
+    tglTerbit: z.coerce.date({ message: "Tanggal terbit wajib diisi." }),
     penerbit: z.string().min(1, { message: "Penerbit wajib diisi." }),
     jumlahHalaman: z.coerce.number().int().positive({ message: "Jumlah halaman harus angka positif." }),
     isbn: z.string().optional(),
