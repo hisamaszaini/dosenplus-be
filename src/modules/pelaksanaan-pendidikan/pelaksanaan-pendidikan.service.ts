@@ -179,7 +179,7 @@ export class PelaksanaanPendidikanService {
           'PEMBANTU_DIREKTUR': 3,
           'SEKRETARIS_JURUSAN': 3,
         }
-        return map[data.namaJabatan] || 0
+        return map[data.jenisKategori] || 0
       }
 
       case 'MEMBIMBING_DOSEN':
