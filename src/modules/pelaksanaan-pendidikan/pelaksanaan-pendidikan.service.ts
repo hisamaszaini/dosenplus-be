@@ -53,10 +53,6 @@ export class PelaksanaanPendidikanService {
   private async getNilaiPakByKategori(kategori: string, dosenId: number, data: any, id?: number): Promise<number> {
     console.log(`PelaksanaanPendidikan: ${kategori}`);
     console.log(`dosenId: ${dosenId}, semester: ${data.semesterId}`);
-    // const dosen = await this.prisma.dosen.findUniqueOrThrow({
-    //   where: { id: dosenId },
-    //   select: { jabatan: true },
-    // });
 
     switch (kategori) {
       case 'PERKULIAHAN': {
@@ -121,10 +117,10 @@ export class PelaksanaanPendidikanService {
 
       case 'MEMBIMBING_TUGAS_AKHIR': {
         let nilaiPak = 0;
-        const { peran, jenis, jumlahMhs } = data;
+        const { jenisKategori, subJenis, jumlahMhs } = data;
 
-        if (peran === 'PEMBIMBING_UTAMA') {
-          switch (jenis) {
+        if (jenisKategori === 'PEMBIMBING_UTAMA') {
+          switch (subJenis) {
             case 'DISERTASI':
               nilaiPak = 8 * jumlahMhs;
               break;
@@ -138,8 +134,8 @@ export class PelaksanaanPendidikanService {
             default:
               nilaiPak = 0;
           }
-        } else if (peran === 'PEMBIMBING_PENDAMPING') {
-          switch (jenis) {
+        } else if (jenisKategori === 'PEMBIMBING_PENDAMPING') {
+          switch (subJenis) {
             case 'DISERTASI':
               nilaiPak = 6 * jumlahMhs;
               break;
@@ -159,7 +155,7 @@ export class PelaksanaanPendidikanService {
       }
 
       case 'PENGUJI_UJIAN_AKHIR':
-        return data.peran === 'Ketua Penguji' ? 1 * data.jumlahMhs : 0.5 * data.jumlahMhs
+        return data.peran === 'KETUA_PENGUJI' ? 1 * data.jumlahMhs : 0.5 * data.jumlahMhs
 
       case 'MEMBINA_KEGIATAN_MHS':
         return 2
@@ -168,7 +164,7 @@ export class PelaksanaanPendidikanService {
         return 2
 
       case 'BAHAN_PENGAJARAN':
-        return data.jenisProduk === 'Buku Ajar' ? 20 : 5
+        return data.subJenis === 'BUKU_AJAR' ? 20 : 5
 
       case 'ORASI_ILMIAH':
         return 5
@@ -187,13 +183,13 @@ export class PelaksanaanPendidikanService {
       }
 
       case 'MEMBIMBING_DOSEN':
-        return data.jenisMEMBIMBING === 'PEMBIMBING_PENCANGKOKAN' ? 2 : 1
+        return data.jenisKategori === 'PEMBIMBING_PENCANGKOKAN' ? 2 : 1
 
       case 'DATASERING_PENCANGKOKAN':
-        return data.jenis === 'DATASERING' ? 5 : 4
+        return data.jenisKategori === 'DATASERING' ? 5 : 4
 
       case 'PENGEMBANGAN_DIRI': {
-        switch (data.lamaJam) {
+        switch (data.jenisKategori) {
           case 'LEBIH_DARI_960': return 15;
           case 'ANTARA_641_960': return 9;
           case 'ANTARA_481_640': return 6;
