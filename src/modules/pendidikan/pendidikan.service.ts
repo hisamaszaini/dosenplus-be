@@ -5,7 +5,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { KategoriPendidikan, StatusValidasi, TypeUserRole } from '@prisma/client';
+import { KategoriPendidikan, Prisma, StatusValidasi, TypeUserRole } from '@prisma/client';
 import { CreatePendidikanDto, fullPendidikanSchema, UpdateStatusValidasiDto, updateStatusValidasiSchema } from './dto/create-pendidikan.dto';
 import { fullUpdatePendidikanSchema, UpdatePendidikanDto } from './dto/update-pendidikan.dto';
 import { handleDeleteError, handleFindError, handlePrismaError, handleUpdateError } from '@/common/utils/prisma-error-handler';
@@ -30,6 +30,79 @@ export class PendidikanService {
     }
 
     return 0;
+  }
+
+  private buildWhereClause(
+    filter: Record<string, any>,
+  ): Prisma.Sql {
+    const parts: Prisma.Sql[] = [];
+
+    if (filter.kategori) {
+      parts.push(Prisma.sql`"Pendidikan"."kategori" = ${filter.kategori}::"KategoriPendidikan"`);
+    }
+
+    // Handle dosenId filter
+    if (filter.dosenId) {
+      parts.push(Prisma.sql`"Pendidikan"."dosenId" = ${filter.dosenId}`);
+    }
+
+    // Handle createdAt filter
+    if (filter.createdAt) {
+      parts.push(Prisma.sql`"Pendidikan"."createdAt" = ${filter.createdAt}`);
+    }
+
+    // Handle updatedAt filter
+    if (filter.updatedAt) {
+      parts.push(Prisma.sql`"Pendidikan"."updatedAt" = ${filter.updatedAt}`);
+    }
+
+    // Handle reviewerId filter
+    if (filter.reviewerId) {
+      parts.push(Prisma.sql`"Pendidikan"."reviewerId" = ${filter.reviewerId}`);
+    }
+
+    return parts.length === 0 ? Prisma.empty : Prisma.join(parts, ' AND ');
+  }
+
+  async aggregateByDosenRaw(
+    dosenId: number,
+    filter: Record<string, any> = {},
+  ): Promise<Record<string, any>> {
+    const whereClause = Prisma.sql`"Pendidikan"."dosenId" = ${dosenId}`;
+    const additional = this.buildWhereClause(filter);
+    const fullWhere =
+      additional === Prisma.empty
+        ? whereClause
+        : Prisma.sql`${whereClause} AND ${additional}`;
+
+    const raw = await this.prisma.$queryRaw<Array<{
+      kategori: string;
+      jenjang: string | null;
+      total: number;
+    }>>`
+      SELECT
+        "kategori",
+        "jenjang",
+        SUM("nilaiPak")::float AS total
+      FROM "Pendidikan"
+      WHERE ${fullWhere}
+      GROUP BY "kategori", "jenjang"
+      ORDER BY "kategori", "jenjang"
+    `;
+
+    const result: Record<string, any> = {};
+
+    for (const { kategori, jenjang, total } of raw) {
+      result[kategori] ??= { total: 0 };
+      result[kategori].total += total;
+
+      if (kategori === 'FORMAL' && jenjang) {
+        result[kategori].jenjang ??= {};
+        result[kategori].jenjang[jenjang] = total;
+      }
+    }
+
+    return result;
   }
 
   async create(dosenId: number, rawData: any, file: Express.Multer.File) {
@@ -288,8 +361,10 @@ export class PendidikanService {
 
     const where: any = {};
 
-    if (dosenId) {
-      where.dosenId = dosenId;
+    const finalDosenId = dosenId ?? (query.dosenId ? Number(query.dosenId) : undefined);
+
+    if (finalDosenId) {
+      where.dosenId = finalDosenId;
     }
 
     if (query.filterType && query.filterValue) {
@@ -367,6 +442,14 @@ export class PendidikanService {
       this.prisma.pendidikan.count({ where }),
     ]);
 
+    let aggregate: any = null;
+    if (finalDosenId) {
+      aggregate = await this.aggregateByDosenRaw(
+        finalDosenId,
+        where,
+      );
+    }
+
     return {
       success: true,
       meta: {
@@ -376,6 +459,7 @@ export class PendidikanService {
         totalPages: Math.ceil(total / limit),
       },
       data,
+      ...(aggregate && { aggregate }),
     };
   }
 
