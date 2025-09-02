@@ -377,7 +377,7 @@ export class PelaksanaanPendidikanService {
     dosenId: number,
     rawData: any,
     roles: TypeUserRole,
-    file?: Express.Multer.File
+    file?: Express.Multer.File,
   ) {
     const data = parseAndThrow(fullUpdatePelaksanaanSchema, rawData);
     console.log(`[UPDATE] Data setelah parse: ${JSON.stringify(data, null, 2)}`);
@@ -385,7 +385,6 @@ export class PelaksanaanPendidikanService {
     let newFilePath: string | undefined;
 
     try {
-      // Upload file di luar transaksi (karena file system operation)
       if (file) {
         newFilePath = await handleUpload({
           file,
@@ -393,7 +392,6 @@ export class PelaksanaanPendidikanService {
         });
       }
 
-      // Gunakan transaction untuk operasi database
       const result = await this.prisma.$transaction(async (tx) => {
         const existing = await tx.pelaksanaanPendidikan.findUniqueOrThrow({
           where: { id },
@@ -403,7 +401,6 @@ export class PelaksanaanPendidikanService {
           throw new ForbiddenException('Anda tidak diizinkan mengakses data ini');
         }
 
-        // Hitung total SKS untuk kategori PERKULIAHAN
         if (
           data.kategori === KategoriPelaksanaanPendidikan.PERKULIAHAN &&
           data.jumlahKelas &&
@@ -412,25 +409,29 @@ export class PelaksanaanPendidikanService {
           data.totalSks = data.jumlahKelas * data.sks;
         }
 
-        // Hitung nilai PAK
         const dosen = await tx.dosen.findUnique({
           where: { id: dosenId },
           select: { jabatan: true },
         });
+
         const nilaiPak = await this.getNilaiPakByKategori(
           data.kategori,
           existing.dosenId,
           { ...data, jabatanFungsional: dosen?.jabatan },
-          id
+          id,
         );
 
-        const { kategori, semesterId, dosenId: _, ...kategoriFields } = data;
-        const jenisKategori: JenisKategoriPelaksanaan | null =
-          "jenisKategori" in data ? (data.jenisKategori as JenisKategoriPelaksanaan) : null;
-        const subJenis: subJenisPelaksanaan | null =
-          "subJenis" in data ? (data.subJenis as subJenisPelaksanaan) : null;
+        const {
+          kategori,
+          semesterId,
+          dosenId: _,
+          jenisKategori,
+          subJenis,
+          ...kategoriFields
+        } = data as any; // aman karena sudah divalidasi
 
         const relationKey = this.kategoriToRelationKey(kategori);
+
         const updated = await tx.pelaksanaanPendidikan.update({
           where: { id },
           data: {
@@ -446,13 +447,12 @@ export class PelaksanaanPendidikanService {
           },
           include: {
             [relationKey]: true,
-          }
+          },
         });
 
         return { updated, existing };
       });
 
-      // Hapus file lama setelah transaksi berhasil
       if (newFilePath && result.existing.filePath) {
         await deleteFileFromDisk(result.existing.filePath);
       }
@@ -468,10 +468,10 @@ export class PelaksanaanPendidikanService {
         console.error('UPDATE PelaksanaanPendidikan FAILED:', error);
       }
 
-      // Hapus file baru jika transaksi gagal
       if (newFilePath) {
         await deleteFileFromDisk(newFilePath);
       }
+
       handleUpdateError(error, 'Pelaksanaan Pendidikan');
     }
   }
