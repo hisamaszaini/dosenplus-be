@@ -97,7 +97,7 @@ export class PenunjangAggregator {
         ? Prisma.sql`"jenisKegiatan"::text as "jenisKegiatan"`
         : Prisma.sql`NULL::text as "jenisKegiatan"`
       },
-        SUM("nilaiPak")::float as total,
+        SUM("nilaiPak")::float as totalNilai,
         COUNT(*)::int as count,
         COUNT(CASE WHEN "statusValidasi" = 'PENDING' THEN 1 END)::int as pending,
         COUNT(CASE WHEN "statusValidasi" = 'APPROVED' THEN 1 END)::int as approved,
