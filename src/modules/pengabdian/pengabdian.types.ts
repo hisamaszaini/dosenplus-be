@@ -5,7 +5,7 @@ export interface StatusCounts {
 }
 
 export interface AggregationNode {
-  total: number;
+  totalNilai: number;
   count: number;
   statusCounts: StatusCounts;
 }

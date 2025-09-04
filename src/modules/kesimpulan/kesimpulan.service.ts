@@ -183,7 +183,7 @@ export class KesimpulanService {
         ];
 
         return {
-            totalNilai: p.totalNilai + pp.totalNilai + pe.total + pg.total + pn.totalNilai,
+            totalNilai: p.totalNilai + pp.totalNilai + pe.total + pg.totalNilai + pn.totalNilai,
             count: p.count + pp.count + pe.count + pg.count + pn.count,
             statusCounts: {
                 pending: p.statusCounts.pending + pp.statusCounts.pending + pe.statusCounts.pending + pg.statusCounts.pending + pn.statusCounts.pending,
