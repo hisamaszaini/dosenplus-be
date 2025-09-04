@@ -143,15 +143,15 @@ export class PenelitianAggregator {
       }
 
       // Update jenis level
-      if (options.includeJenis && jenisKategori && result[kategori]?.jenis?.[jenisKategori]) {
+      if (options.includeJenis && jenisKategori && result[kategori]?.detail?.[jenisKategori]) {
         Object.assign(
-          result[kategori].jenis![jenisKategori], 
-          this.mergeNodes(result[kategori].jenis![jenisKategori], nodeData)
+          result[kategori].detail![jenisKategori], 
+          this.mergeNodes(result[kategori].detail![jenisKategori], nodeData)
         );
 
         // Update sub level
-        if (options.includeSub && subJenis && result[kategori].jenis![jenisKategori].sub?.[subJenis]) {
-          result[kategori].jenis![jenisKategori].sub![subJenis] = nodeData;
+        if (options.includeSub && subJenis && result[kategori].detail![jenisKategori].subDetail?.[subJenis]) {
+          result[kategori].detail![jenisKategori].subDetail![subJenis] = nodeData;
         }
       }
     }
@@ -170,20 +170,20 @@ export class PenelitianAggregator {
       };
 
       if (options.includeJenis && Object.keys(config.jenis).length > 0) {
-        result[kategori].jenis = {};
+        result[kategori].detail = {};
         
         Object.entries(config.jenis).forEach(([jenis, subList]) => {
-          result[kategori].jenis![jenis] = {
+          result[kategori].detail![jenis] = {
             totalNilai: 0,
             count: 0,
             statusCounts: { pending: 0, approved: 0, rejected: 0 }
           };
 
           if (options.includeSub && subList.length > 0) {
-            result[kategori].jenis![jenis].sub = {};
+            result[kategori].detail![jenis].subDetail = {};
             
             subList.forEach(sub => {
-              result[kategori].jenis![jenis].sub![sub] = {
+              result[kategori].detail![jenis].subDetail![sub] = {
                 totalNilai: 0,
                 count: 0,
                 statusCounts: { pending: 0, approved: 0, rejected: 0 }
