@@ -1,20 +1,38 @@
+// export interface AggregationNode {
+//   total: number;
+//   count: number;
+//   statusCounts: {
+//     pending: number;
+//     approved: number;
+//     rejected: number;
+//   };
+// }
+
+// export interface AggregationResult {
+//   [kategori: string]: AggregationNode & {
+//     jenjang?: {
+//       [jenjang: string]: AggregationNode;
+//     };
+//     jenis?: {
+//       [jenis: string]: AggregationNode;
+//     };
+//   };
+// }
+
+// base node
 export interface AggregationNode {
-  total: number;
-  count: number;
-  statusCounts: {
-    pending: number;
-    approved: number;
-    rejected: number;
-  };
+    count: number;
+    statusCounts: {
+        pending: number;
+        approved: number;
+        rejected: number;
+    };
+    totalNilai?: number;
 }
 
 export interface AggregationResult {
-  [kategori: string]: AggregationNode & {
-    jenjang?: {
-      [jenjang: string]: AggregationNode;
+    [kategori: string]: AggregationNode & {
+        jenjang?: Record<string, AggregationNode>;
+        jenis?: Record<string, AggregationNode>;
     };
-    jenis?: {
-      [jenis: string]: AggregationNode;
-    };
-  };
 }

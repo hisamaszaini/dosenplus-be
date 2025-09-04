@@ -16,7 +16,7 @@ export class KesimpulanController {
         @Req() req: any,
     ) {
         const dosenId = req.user.sub;
-        return this.kesimpulanService.findById(dosenId, { includeDetails: false });
+        return this.kesimpulanService.findByIdSimple(dosenId);
     }
 
     @Get(':id')
@@ -25,8 +25,6 @@ export class KesimpulanController {
         @Param('id', ParseIntPipe) id: number,
         @Req() req: any,
     ) {
-        const role = req.user.roles;
-
         return this.kesimpulanService.findById(id);
     }
 
@@ -36,8 +34,7 @@ export class KesimpulanController {
         @Req() req: any,
     ) {
         const dosenId = req.user.sub;
-        const role = req.user.roles;
 
-        return this.kesimpulanService.findById(dosenId, role);
+        return this.kesimpulanService.findById(dosenId);
     }
 }

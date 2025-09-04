@@ -94,13 +94,74 @@ export class KesimpulanService {
         }
     }
 
-    private extractNodeData(aggregator: any): { total: number; count: number; statusCounts: { pending: number; approved: number; rejected: number } } {
+    async findByIdSimple(
+        dosenId: number,
+        options: {
+            semesterId?: number;
+            tahun?: number;
+            status?: string;
+        } = {}
+    ) {
+        const dosen = await this.prisma.dosen.findUniqueOrThrow({
+            where: { id: dosenId },
+        });
+
+        const filter: any = {};
+        if (options.semesterId) filter.semesterId = options.semesterId;
+        if (options.tahun) filter.tahun = options.tahun;
+        if (options.status) filter.statusValidasi = options.status;
+
+        const [pendidikan, pelaksanaanPendidikan, penelitian, pengabdian, penunjang] =
+            await Promise.all([
+                this.pendidikanAggregator.aggregateByDosen(dosenId, {
+                    includeDetail: false,
+                    includeStatus: true,
+                    filter,
+                }),
+                this.pelaksanaanPendidikanAggregator.aggregateByDosen(dosenId, {
+                    includeDetail: false,
+                    includeStatus: true,
+                    filter,
+                }),
+                this.penelitianAggregator.aggregateByDosen(dosenId, {
+                    includeJenis: false,
+                    includeSub: false,
+                    includeStatus: true,
+                    filter,
+                }),
+                this.pengabdianAggregator.aggregateByDosen(dosenId, {
+                    includeDetail: false,
+                    includeStatus: true,
+                    filter,
+                }),
+                this.penunjangAggregator.aggregateByDosen(dosenId, {
+                    includeJenis: false,
+                    includeStatus: true,
+                    filter,
+                }),
+            ]);
+
+        const summary = this.calculateTotalSummary(
+            pendidikan,
+            pelaksanaanPendidikan,
+            penelitian,
+            pengabdian,
+            penunjang
+        );
+
+        return {
+            dosen,
+            summary,
+        };
+    }
+
+    private extractNodeData(aggregator: any): { totalNilai: number; count: number; statusCounts: { pending: number; approved: number; rejected: number } } {
         const summary = 'calculateSummary' in aggregator
             ? aggregator.calculateSummary(aggregator)
             : aggregator;
 
         return {
-            total: summary.total,
+            totalNilai: summary.total,
             count: summary.count,
             statusCounts: summary.statusCounts
         };
@@ -122,7 +183,7 @@ export class KesimpulanService {
         ];
 
         return {
-            total: p.total + pp.total + pe.total + pg.total + pn.total,
+            totalNilai: p.totalNilai + pp.totalNilai + pe.total + pg.total + pn.total,
             count: p.count + pp.count + pe.count + pg.count + pn.count,
             statusCounts: {
                 pending: p.statusCounts.pending + pp.statusCounts.pending + pe.statusCounts.pending + pg.statusCounts.pending + pn.statusCounts.pending,
@@ -147,13 +208,13 @@ export class KesimpulanService {
         const [pendidikan, pelaksanaanPendidikan, penelitian, pengabdian, penunjang] = await Promise.all([
             this.pendidikanAggregator.aggregateByDosen(dosenId, { includeDetail: false, filter }),
             this.pelaksanaanPendidikanAggregator.aggregateByDosen(dosenId, { includeDetail: false, filter }),
-            this.penelitianAggregator.getSummary(dosenId, filter),
+            this.penelitianAggregator.aggregateByDosen(dosenId, { includeJenis: true, includeSub: true, includeStatus: true }),
             this.pengabdianAggregator.aggregateByDosen(dosenId, { includeDetail: false, filter }),
             this.penunjangAggregator.aggregateByDosen(dosenId, { includeJenis: false, filter })
         ]);
 
         return {
-            total: this.calculateTotalSummary(pendidikan, pelaksanaanPendidikan, penelitian, pengabdian, penunjang),
+            totalNilai: this.calculateTotalSummary(pendidikan, pelaksanaanPendidikan, penelitian, pengabdian, penunjang),
             breakdown: { pendidikan, pelaksanaanPendidikan, penelitian, pengabdian, penunjang }
         };
     }

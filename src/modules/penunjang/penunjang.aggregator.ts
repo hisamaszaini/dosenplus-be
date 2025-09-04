@@ -67,7 +67,7 @@ export const PENUNJANG_MAPPING = {
 } as const;
 
 export class PenunjangAggregator {
-  constructor(private prisma: PrismaClient) {}
+  constructor(private prisma: PrismaClient) { }
 
   async aggregateByDosen(
     dosenId: number,
@@ -93,10 +93,10 @@ export class PenunjangAggregator {
     }>>`
       SELECT 
         "kategori",
-        ${includeJenis 
-          ? Prisma.sql`"jenisKegiatan"::text as "jenisKegiatan"` 
-          : Prisma.sql`NULL::text as "jenisKegiatan"`
-        },
+        ${includeJenis
+        ? Prisma.sql`"jenisKegiatan"::text as "jenisKegiatan"`
+        : Prisma.sql`NULL::text as "jenisKegiatan"`
+      },
         SUM("nilaiPak")::float as total,
         COUNT(*)::int as count,
         COUNT(CASE WHEN "statusValidasi" = 'PENDING' THEN 1 END)::int as pending,
@@ -104,8 +104,7 @@ export class PenunjangAggregator {
         COUNT(CASE WHEN "statusValidasi" = 'REJECTED' THEN 1 END)::int as rejected
       FROM "Penunjang"
       WHERE ${whereClause}
-      GROUP BY "kategori", ${includeJenis ? Prisma.sql`"jenisKegiatan"` : Prisma.empty}
-      ORDER BY "kategori"
+      GROUP BY "kategori" ${includeJenis ? Prisma.sql`, "jenisKegiatan"` : Prisma.empty} ORDER BY "kategori"
     `;
 
     return this.buildStructuredResult(rawData, includeJenis);
@@ -179,19 +178,19 @@ export class PenunjangAggregator {
 
   private buildWhereClause(dosenId: number, filter: any): Prisma.Sql {
     let conditions = Prisma.sql`"dosenId" = ${dosenId}`;
-    
+
     if (filter.semesterId) {
       conditions = Prisma.sql`${conditions} AND "semesterId" = ${filter.semesterId}`;
     }
-    
+
     if (filter.tahun) {
       conditions = Prisma.sql`${conditions} AND EXTRACT(YEAR FROM "tglMulai") = ${filter.tahun}`;
     }
-    
+
     if (filter.statusValidasi) {
       conditions = Prisma.sql`${conditions} AND "statusValidasi" = ${filter.statusValidasi}`;
     }
-    
+
     return conditions;
   }
 

@@ -37,7 +37,7 @@ export const PENGABDIAN_MAPPING = {
 } as const;
 
 export class PengabdianAggregator {
-  constructor(private prisma: PrismaClient) {}
+  constructor(private prisma: PrismaClient) { }
 
   async aggregateByDosen(
     dosenId: number,
@@ -62,16 +62,16 @@ export class PengabdianAggregator {
       WITH pengabdian_data AS (
         SELECT
           "kategori",
-          ${includeDetail 
-            ? Prisma.sql`
+          ${includeDetail
+        ? Prisma.sql`
               CASE 
                 WHEN "jenisKegiatan" IS NOT NULL THEN "jenisKegiatan"::text
                 WHEN "tingkat" IS NOT NULL THEN "tingkat"::text
                 ELSE NULL
               END as detail
             `
-            : Prisma.sql`NULL::text as detail`
-          },
+        : Prisma.sql`NULL::text as detail`
+      },
           "nilaiPak",
           "statusValidasi"
         FROM "Pengabdian"
@@ -86,8 +86,7 @@ export class PengabdianAggregator {
         COUNT(CASE WHEN "statusValidasi" = 'APPROVED' THEN 1 END)::int as approved,
         COUNT(CASE WHEN "statusValidasi" = 'REJECTED' THEN 1 END)::int as rejected
       FROM pengabdian_data
-      GROUP BY "kategori", ${includeDetail ? Prisma.sql`"detail"` : Prisma.empty}
-      ORDER BY "kategori"
+      GROUP BY "kategori" ${includeDetail ? Prisma.sql`, "detail"` : Prisma.empty} ORDER BY "kategori"
     `;
 
     return this.buildStructuredResult(rawData, includeDetail);
@@ -95,19 +94,19 @@ export class PengabdianAggregator {
 
   private buildWhereClause(dosenId: number, filter: any): Prisma.Sql {
     let conditions = Prisma.sql`"dosenId" = ${dosenId}`;
-    
+
     if (filter.semesterId) {
       conditions = Prisma.sql`${conditions} AND "semesterId" = ${filter.semesterId}`;
     }
-    
+
     if (filter.tahun) {
       conditions = Prisma.sql`${conditions} AND EXTRACT(YEAR FROM "tglMulai") = ${filter.tahun}`;
     }
-    
+
     if (filter.statusValidasi) {
       conditions = Prisma.sql`${conditions} AND "statusValidasi" = ${filter.statusValidasi}`;
     }
-    
+
     return conditions;
   }
 
@@ -119,7 +118,7 @@ export class PengabdianAggregator {
 
     for (const row of rawData) {
       const { kategori, detail, total, count, pending, approved, rejected } = row;
-      
+
       const nodeData: AggregationNode = {
         total,
         count,
@@ -140,7 +139,7 @@ export class PengabdianAggregator {
 
   private prefillStructure(includeDetail: boolean): AggregationResult {
     const result: AggregationResult = {};
-    
+
     Object.entries(PENGABDIAN_MAPPING).forEach(([kategori, config]) => {
       result[kategori] = {
         total: 0,

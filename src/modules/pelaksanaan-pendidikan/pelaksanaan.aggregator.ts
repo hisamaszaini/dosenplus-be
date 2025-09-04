@@ -1,178 +1,236 @@
 import { Prisma, PrismaClient } from "@prisma/client";
-import { AggregationResult } from "./pelaksanaan.types";
-
-const PELAKSANAAN_DETAIL_MAPPING = {
-    PERKULIAHAN: { hasDetail: false },
-    BIMBINGAN_SEMINAR: { hasDetail: false },
-    BIMBINGAN_TUGAS_AKHIR: { table: 'BimbinganTugasAkhir', detailField: 'jenis', hasDetail: true },
-    BIMBINGAN_KKN_PKN_PKL: { hasDetail: false },
-    PENGUJI_UJIAN_AKHIR: { table: 'PengujiUjianAkhir', detailField: 'peran', hasDetail: true },
-    PEMBINA_KEGIATAN_MHS: { hasDetail: false },
-    PENGEMBANGAN_PROGRAM: { hasDetail: false },
-    BAHAN_PENGAJARAN: { table: 'BahanPengajaran', detailField: 'jenis', hasDetail: true },
-    ORASI_ILMIAH: { hasDetail: false },
-    JABATAN_STRUKTURAL: { table: 'JabatanStruktural', detailField: 'namaJabatan', hasDetail: true },
-    BIMBING_DOSEN: { table: 'BimbingDosen', detailField: 'bidangAhli', hasDetail: true },
-    DATA_SERING_PENCAKOKAN: { table: 'DataseringPencakokan', detailField: 'jenis', hasDetail: true },
-    PENGEMBANGAN_DIRI: { table: 'PengembanganDiri', detailField: 'namaKegiatan', hasDetail: true }
-} as const;
+import { AggregationResult, AggregationNode } from "./pelaksanaan.types";
 
 export class PelaksanaanPendidikanAggregator {
     constructor(private prisma: PrismaClient) { }
 
-    async aggregateByDosen(
-        dosenId: number,
-        options: {
-            includeDetail?: boolean;
-            includeStatus?: boolean;
-            filter?: any;
-        } = {}
-    ): Promise<AggregationResult> {
+    /* ---------- public ---------- */
+    async aggregateGlobal(options: {
+        includeDetail?: boolean;
+        includeStatus?: boolean;
+        filter?: any;
+    } = {}): Promise<AggregationResult> {
         const { includeDetail = true, includeStatus = true, filter = {} } = options;
-
-        const whereClause = this.buildWhereClause(dosenId, filter);
-
-        // --- variabel bagian conditional ---
-        const selectDetail = includeDetail
-            ? Prisma.sql`
-        CASE 
-          WHEN p."kategori" = 'BIMBINGAN_TUGAS_AKHIR' THEN bta."jenis"::text
-          WHEN p."kategori" = 'PENGUJI_UJIAN_AKHIR' THEN pu."peran"::text
-          WHEN p."kategori" = 'BAHAN_PENGAJARAN' THEN bp."jenis"::text
-          WHEN p."kategori" = 'JABATAN_STRUKTURAL' THEN js."namaJabatan"::text
-          WHEN p."kategori" = 'BIMBING_DOSEN' THEN bd."bidangAhli"::text
-          WHEN p."kategori" = 'DATA_SERING_PENCAKOKAN' THEN dp."jenis"::text
-          WHEN p."kategori" = 'PENGEMBANGAN_DIRI' THEN pd."namaKegiatan"::text
-          ELSE NULL
-        END as detail
-      `
-            : Prisma.sql`NULL as detail`;
-
-        const joinDetail = includeDetail
-            ? Prisma.sql`
-        LEFT JOIN "BimbinganTugasAkhir" bta ON p."id" = bta."pelaksanaanId" AND p."kategori" = 'BIMBINGAN_TUGAS_AKHIR'
-        LEFT JOIN "PengujiUjianAkhir" pu ON p."id" = pu."pelaksanaanId" AND p."kategori" = 'PENGUJI_UJIAN_AKHIR'
-        LEFT JOIN "BahanPengajaran" bp ON p."id" = bp."pelaksanaanId" AND p."kategori" = 'BAHAN_PENGAJARAN'
-        LEFT JOIN "JabatanStruktural" js ON p."id" = js."pelaksanaanId" AND p."kategori" = 'JABATAN_STRUKTURAL'
-        LEFT JOIN "BimbingDosen" bd ON p."id" = bd."pelaksanaanId" AND p."kategori" = 'BIMBING_DOSEN'
-        LEFT JOIN "DataseringPencakokan" dp ON p."id" = dp."pelaksanaanId" AND p."kategori" = 'DATA_SERING_PENCAKOKAN'
-        LEFT JOIN "PengembanganDiri" pd ON p."id" = pd."pelaksanaanId" AND p."kategori" = 'PENGEMBANGAN_DIRI'
-      `
-            : Prisma.empty;
-
-        const groupByClause = includeDetail
-            ? Prisma.sql`GROUP BY "kategori", "detail"`
-            : Prisma.sql`GROUP BY "kategori"`;
-
-        // --- query utama ---
-        const rawData = await this.prisma.$queryRaw<Array<{
-            kategori: string;
-            detail?: string;
-            total: number;
-            count: number;
-            pending: number;
-            approved: number;
-            rejected: number;
-        }>>`
-    WITH pelaksanaan_summary AS (
-      SELECT 
-        p."kategori",
-        p."nilaiPak",
-        p."statusValidasi",
-        ${selectDetail}
-      FROM "PelaksanaanPendidikan" p
-      ${joinDetail}
-      WHERE ${whereClause}
-    )
-    SELECT
-      "kategori",
-      ${includeDetail ? Prisma.sql`"detail"` : Prisma.sql`NULL as detail`},
-      SUM("nilaiPak")::float as total,
-      COUNT(*)::int as count,
-      COUNT(CASE WHEN "statusValidasi" = 'PENDING' THEN 1 END)::int as pending,
-      COUNT(CASE WHEN "statusValidasi" = 'APPROVED' THEN 1 END)::int as approved,
-      COUNT(CASE WHEN "statusValidasi" = 'REJECTED' THEN 1 END)::int as rejected
-    FROM pelaksanaan_summary
-    ${groupByClause}
-    ORDER BY "kategori"
-  `;
-
-        return this.buildStructuredResult(rawData, includeDetail);
+        const whereClause = this.buildWhereClause(undefined, filter);
+        return this.executeAggregation(whereClause, includeDetail, includeStatus, false);
     }
 
-    private buildWhereClause(dosenId: number, filter: any): Prisma.Sql {
-        let conditions = Prisma.sql`"dosenId" = ${dosenId}`;
+    async aggregateByDosen(
+        dosenId: number,
+        options: { includeDetail?: boolean; includeStatus?: boolean; filter?: any } = {}
+    ): Promise<AggregationResult> {
+        const { includeDetail = true, includeStatus = true, filter = {} } = options;
+        const whereClause = this.buildWhereClause(dosenId, filter);
+        return this.executeAggregation(whereClause, includeDetail, includeStatus, true);
+    }
 
-        if (filter.semesterId) {
-            conditions = Prisma.sql`${conditions} AND "semesterId" = ${filter.semesterId}`;
-        }
+    /* ---------- internal ---------- */
+    private async executeAggregation(
+        whereClause: Prisma.Sql,
+        includeDetail: boolean,
+        includeStatus: boolean,
+        includeTotal: boolean
+    ): Promise<AggregationResult> {
+        const detailField = includeDetail
+            ? Prisma.sql`
+      CASE 
+        WHEN p.kategori = 'MEMBIMBING_TUGAS_AKHIR' THEN p."subJenis"::TEXT
+        ELSE p."jenisKategori"::TEXT
+      END AS detail,
+      CASE 
+        WHEN p.kategori = 'MEMBIMBING_TUGAS_AKHIR' THEN p."jenisKategori"::TEXT
+        ELSE NULL
+      END AS detail2`
+            : Prisma.sql`NULL::TEXT AS detail, NULL::TEXT AS detail2`;
 
-        if (filter.tahun) {
-            conditions = Prisma.sql`${conditions} AND EXTRACT(YEAR FROM "createdAt") = ${filter.tahun}`;
-        }
+        const statusFields = includeStatus
+            ? Prisma.sql`
+          SUM(CASE WHEN p."statusValidasi" = 'PENDING' THEN 1 ELSE 0 END) as pending,
+          SUM(CASE WHEN p."statusValidasi" = 'APPROVED' THEN 1 ELSE 0 END) as approved,
+          SUM(CASE WHEN p."statusValidasi" = 'REJECTED' THEN 1 ELSE 0 END) as rejected`
+            : Prisma.sql`0 as pending, 0 as approved, 0 as rejected`;
 
-        if (filter.statusValidasi) {
-            conditions = Prisma.sql`${conditions} AND "statusValidasi" = ${filter.statusValidasi}`;
-        }
+        const query = Prisma.sql`
+      SELECT
+        p.kategori,
+        ${detailField},
+        ${includeTotal ? Prisma.sql`COALESCE(SUM(p."nilaiPak"), 0) as "totalNilai"` : Prisma.sql`0 as "totalNilai"`},
+        COUNT(*) as count,
+        ${statusFields}
+      FROM "PelaksanaanPendidikan" p
+      WHERE ${whereClause}
+      GROUP BY p.kategori, detail, detail2
+    `;
 
-        return conditions;
+        const rawData = (await this.prisma.$queryRaw(query)) as any[];
+        return this.buildStructuredResult(rawData, includeDetail, includeStatus, includeTotal);
+    }
+
+    private buildWhereClause(
+        dosenId?: number,
+        filter: any = {}
+    ): Prisma.Sql {
+        const conditions: Prisma.Sql[] = [];
+
+        if (dosenId !== undefined) conditions.push(Prisma.sql`"dosenId" = ${dosenId}`);
+        if (filter.semesterId) conditions.push(Prisma.sql`"semesterId" = ${filter.semesterId}`);
+        if (filter.tahun) conditions.push(Prisma.sql`EXTRACT(YEAR FROM "createdAt") = ${filter.tahun}`);
+        if (filter.statusValidasi) conditions.push(Prisma.sql`"statusValidasi" = ${filter.statusValidasi}`);
+        if (filter.kategori) conditions.push(Prisma.sql`kategori = ${filter.kategori}`);
+        if (filter.prodiId) conditions.push(Prisma.sql`"prodiId" = ${filter.prodiId}`);
+        if (filter.fakultasId) conditions.push(Prisma.sql`"fakultasId" = ${filter.fakultasId}`);
+
+        return conditions.length ? Prisma.join(conditions, ' AND ') : Prisma.sql`TRUE`;
     }
 
     private buildStructuredResult(
         rawData: any[],
-        includeDetail: boolean
+        includeDetail: boolean,
+        includeStatus: boolean,
+        includeTotal: boolean
     ): AggregationResult {
         const result: AggregationResult = {};
 
-        for (const row of rawData) {
-            const { kategori, detail, total, count, pending, approved, rejected } = row;
+        // Inisialisasi semua kategori
+        const kategoriList = [
+            'PERKULIAHAN',
+            'MEMBIMBING_SEMINAR',
+            'MEMBIMBING_KKN_PKN_PKL',
+            'MEMBIMBING_TUGAS_AKHIR',
+            'PENGUJI_UJIAN_AKHIR',
+            'MEMBINA_KEGIATAN_MHS',
+            'MENGEMBANGKAN_PROGRAM',
+            'BAHAN_PENGAJARAN',
+            'ORASI_ILMIAH',
+            'MENDUDUKI_JABATAN',
+            'MEMBIMBING_DOSEN',
+            'DATASERING_PENCANGKOKAN',
+            'PENGEMBANGAN_DIRI'
+        ];
 
-            if (!result[kategori]) {
-                result[kategori] = {
-                    total: 0,
-                    count: 0,
-                    statusCounts: { pending: 0, approved: 0, rejected: 0 }
-                };
+        kategoriList.forEach(kat => {
+            result[kat] = {
+                count: 0,
+                statusCounts: { pending: 0, approved: 0, rejected: 0 },
+                ...(includeTotal && { totalNilai: 0 }),
+                ...(includeDetail && { detail: {} })
+            };
+        });
+
+        // Proses data
+        for (const row of rawData) {
+            const { kategori, detail, detail2, totalNilai, count, pending, approved, rejected } = row;
+
+            if (!result[kategori]) continue;
+
+            const nilai = Number(totalNilai);
+            const cnt = Number(count);
+            const pend = Number(pending);
+            const appr = Number(approved);
+            const rej = Number(rejected);
+
+            result[kategori].count += cnt;
+            result[kategori].statusCounts.pending += pend;
+            result[kategori].statusCounts.approved += appr;
+            result[kategori].statusCounts.rejected += rej;
+            if (includeTotal && result[kategori].totalNilai !== undefined) {
+                result[kategori].totalNilai += nilai;
             }
 
-            result[kategori].total += total;
-            result[kategori].count += count;
-            result[kategori].statusCounts.pending += pending;
-            result[kategori].statusCounts.approved += approved;
-            result[kategori].statusCounts.rejected += rejected;
+            if (includeDetail && detail !== null) {
+                const detailMap = result[kategori].detail as Record<string, any>;
 
-            if (includeDetail && detail && result[kategori]) {
-                if (!result[kategori].detail) {
-                    result[kategori].detail = {};
+                if (kategori === 'MEMBIMBING_TUGAS_AKHIR') {
+                    // detail = subJenis, detail2 = jenisKategori
+                    if (!detailMap[detail]) detailMap[detail] = {};
+                    const subMap = detailMap[detail];
+
+                    if (!subMap[detail2]) {
+                        subMap[detail2] = {
+                            count: 0,
+                            statusCounts: { pending: 0, approved: 0, rejected: 0 },
+                            ...(includeTotal && { totalNilai: 0 })
+                        };
+                    }
+
+                    const node = subMap[detail2];
+                    node.count += cnt;
+                    node.statusCounts.pending += pend;
+                    node.statusCounts.approved += appr;
+                    node.statusCounts.rejected += rej;
+                    if (includeTotal && node.totalNilai !== undefined) {
+                        node.totalNilai += nilai;
+                    }
+                } else {
+                    // detail = jenisKategori
+                    if (!detailMap[detail]) {
+                        detailMap[detail] = {
+                            count: 0,
+                            statusCounts: { pending: 0, approved: 0, rejected: 0 },
+                            ...(includeTotal && { totalNilai: 0 })
+                        };
+                    }
+
+                    const node = detailMap[detail];
+                    node.count += cnt;
+                    node.statusCounts.pending += pend;
+                    node.statusCounts.approved += appr;
+                    node.statusCounts.rejected += rej;
+                    if (includeTotal && node.totalNilai !== undefined) {
+                        node.totalNilai += nilai;
+                    }
                 }
-                result[kategori].detail![detail] = { total, count, statusCounts: { pending, approved, rejected } };
             }
         }
 
         return result;
     }
 
-    formatForAPI(result: AggregationResult) {
+    /* ---------- utilities ---------- */
+    formatForAPI(result: AggregationResult): any {
         return {
             data: result,
             summary: this.calculateSummary(result),
-            lastUpdated: new Date().toISOString()
+            lastUpdated: new Date().toISOString(),
         };
     }
 
-    calculateSummary(result: AggregationResult) {
+    calculateSummary(result: AggregationResult): any {
         const summary = {
-            total: 0,
             count: 0,
-            statusCounts: { pending: 0, approved: 0, rejected: 0 }
+            totalNilai: 0,
+            statusCounts: { pending: 0, approved: 0, rejected: 0 },
         };
 
-        Object.values(result).forEach(kategori => {
-            summary.total += kategori.total;
-            summary.count += kategori.count;
-            summary.statusCounts.pending += kategori.statusCounts.pending;
-            summary.statusCounts.approved += kategori.statusCounts.approved;
-            summary.statusCounts.rejected += kategori.statusCounts.rejected;
+        Object.values(result).forEach((k) => {
+            summary.count += k.count;
+            summary.totalNilai += k.totalNilai || 0;
+            summary.statusCounts.pending += k.statusCounts.pending;
+            summary.statusCounts.approved += k.statusCounts.approved;
+            summary.statusCounts.rejected += k.statusCounts.rejected;
+
+            // Include detail counts
+            if (k.detail) {
+                Object.values(k.detail).forEach((d) => {
+                    if (typeof d.count === 'number') {
+                        // Level 2: non-tugas akhir
+                        summary.count += d.count;
+                        summary.totalNilai += d.totalNilai || 0;
+                        summary.statusCounts.pending += d.statusCounts.pending;
+                        summary.statusCounts.approved += d.statusCounts.approved;
+                        summary.statusCounts.rejected += d.statusCounts.rejected;
+                    } else {
+                        // Level 3: tugas akhir (subJenis → jenisKategori)
+                        Object.values(d).forEach((jd: any) => {
+                            summary.count += jd.count;
+                            summary.totalNilai += jd.totalNilai || 0;
+                            summary.statusCounts.pending += jd.statusCounts.pending;
+                            summary.statusCounts.approved += jd.statusCounts.approved;
+                            summary.statusCounts.rejected += jd.statusCounts.rejected;
+                        });
+                    }
+                });
+            }
         });
 
         return summary;
