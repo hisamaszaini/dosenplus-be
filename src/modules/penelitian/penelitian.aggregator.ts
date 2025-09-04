@@ -98,7 +98,7 @@ export class PenelitianAggregator {
       kategori: string;
       jenisKategori?: string;
       subJenis?: string;
-      total: number;
+      totalNilai: number;
       count: number;
       pending: number;
       approved: number;
@@ -108,7 +108,7 @@ export class PenelitianAggregator {
         "kategori",
         ${includeJenis ? Prisma.sql`"jenisKategori",` : Prisma.sql`NULL as "jenisKategori",`}
         ${includeSub ? Prisma.sql`"subJenis",` : Prisma.sql`NULL as "subJenis",`}
-        SUM("nilaiPak")::float as total,
+        SUM("nilaiPak")::float as "totalNilai",
         COUNT(*)::int as count,
         COUNT(CASE WHEN "statusValidasi" = 'PENDING' THEN 1 END)::int as pending,
         COUNT(CASE WHEN "statusValidasi" = 'APPROVED' THEN 1 END)::int as approved,
@@ -129,10 +129,10 @@ export class PenelitianAggregator {
     const result = this.prefillStructure(options);
 
     for (const row of rawData) {
-      const { kategori, jenisKategori, subJenis, total, count, pending, approved, rejected } = row;
+      const { kategori, jenisKategori, subJenis, totalNilai, count, pending, approved, rejected } = row;
       
       const nodeData: AggregationNode = {
-        total,
+        totalNilai,
         count,
         statusCounts: { pending, approved, rejected }
       };
@@ -164,7 +164,7 @@ export class PenelitianAggregator {
     
     Object.entries(KATEGORI_MAPPING).forEach(([kategori, config]) => {
       result[kategori] = {
-        total: 0,
+        totalNilai: 0,
         count: 0,
         statusCounts: { pending: 0, approved: 0, rejected: 0 }
       };
@@ -174,7 +174,7 @@ export class PenelitianAggregator {
         
         Object.entries(config.jenis).forEach(([jenis, subList]) => {
           result[kategori].jenis![jenis] = {
-            total: 0,
+            totalNilai: 0,
             count: 0,
             statusCounts: { pending: 0, approved: 0, rejected: 0 }
           };
@@ -184,7 +184,7 @@ export class PenelitianAggregator {
             
             subList.forEach(sub => {
               result[kategori].jenis![jenis].sub![sub] = {
-                total: 0,
+                totalNilai: 0,
                 count: 0,
                 statusCounts: { pending: 0, approved: 0, rejected: 0 }
               };
@@ -199,7 +199,7 @@ export class PenelitianAggregator {
 
   private mergeNodes(existing: AggregationNode, incoming: Partial<AggregationNode>): AggregationNode {
     return {
-      total: existing.total + (incoming.total || 0),
+      totalNilai: existing.totalNilai + (incoming.totalNilai || 0),
       count: existing.count + (incoming.count || 0),
       statusCounts: {
         pending: existing.statusCounts.pending + (incoming.statusCounts?.pending || 0),
@@ -240,13 +240,13 @@ export class PenelitianAggregator {
 
   calculateSummary(result: AggregationResult) {
     const summary = {
-      total: 0,
+      totalNilai: 0,
       count: 0,
       statusCounts: { pending: 0, approved: 0, rejected: 0 }
     };
 
     Object.values(result).forEach(kategori => {
-      summary.total += kategori.total;
+      summary.totalNilai += kategori.totalNilai;
       summary.count += kategori.count;
       summary.statusCounts.pending += kategori.statusCounts.pending;
       summary.statusCounts.approved += kategori.statusCounts.approved;
