@@ -31,16 +31,16 @@ export class PelaksanaanPendidikanAggregator {
         includeStatus: boolean,
         includeTotal: boolean
     ): Promise<AggregationResult> {
-        const detailField = includeDetail
+            const detailField = includeDetail
             ? Prisma.sql`
-      CASE 
-        WHEN p.kategori = 'MEMBIMBING_TUGAS_AKHIR' THEN p."subJenis"::TEXT
-        ELSE p."jenisKategori"::TEXT
-      END AS detail,
-      CASE 
-        WHEN p.kategori = 'MEMBIMBING_TUGAS_AKHIR' THEN p."jenisKategori"::TEXT
-        ELSE NULL
-      END AS detail2`
+        CASE
+            WHEN p.kategori = 'MEMBIMBING_TUGAS_AKHIR' THEN p."jenisKategori"::TEXT   -- PEMBIMBING_UTAMA
+            ELSE p."jenisKategori"::TEXT
+        END AS detail,
+        CASE
+            WHEN p.kategori = 'MEMBIMBING_TUGAS_AKHIR' THEN p."subJenis"::TEXT        -- DISERTASI
+            ELSE NULL
+        END AS subDetail`
             : Prisma.sql`NULL::TEXT AS detail, NULL::TEXT AS detail2`;
 
         const statusFields = includeStatus
@@ -119,7 +119,7 @@ export class PelaksanaanPendidikanAggregator {
 
         // Proses data
         for (const row of rawData) {
-            const { kategori, detail, detail2, totalNilai, count, pending, approved, rejected } = row;
+            const { kategori, detail, subDetail, totalNilai, count, pending, approved, rejected } = row;
 
             if (!result[kategori]) continue;
 
@@ -141,19 +141,18 @@ export class PelaksanaanPendidikanAggregator {
                 const detailMap = result[kategori].detail as Record<string, any>;
 
                 if (kategori === 'MEMBIMBING_TUGAS_AKHIR') {
-                    // detail = subJenis, detail2 = jenisKategori
-                    if (!detailMap[detail]) detailMap[detail] = {};
-                    const subMap = detailMap[detail];
+                     if (!detailMap[detail]) detailMap[detail] = {};
+                     const subMap = detailMap[detail];
 
-                    if (!subMap[detail2]) {
-                        subMap[detail2] = {
+                    if (!subMap[subDetail]) {
+                        subMap[subDetail] = {
                             count: 0,
                             statusCounts: { pending: 0, approved: 0, rejected: 0 },
                             ...(includeTotal && { totalNilai: 0 })
                         };
                     }
 
-                    const node = subMap[detail2];
+                    const node = subMap[subDetail];
                     node.count += cnt;
                     node.statusCounts.pending += pend;
                     node.statusCounts.approved += appr;
