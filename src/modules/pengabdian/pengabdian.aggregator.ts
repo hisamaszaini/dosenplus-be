@@ -53,7 +53,7 @@ export class PengabdianAggregator {
     const rawData = await this.prisma.$queryRaw<Array<{
       kategori: string;
       detail?: string;
-      total: number;
+      totalNilai: number;
       count: number;
       pending: number;
       approved: number;
@@ -80,7 +80,7 @@ export class PengabdianAggregator {
       SELECT
         "kategori",
         ${includeDetail ? Prisma.sql`"detail"` : Prisma.sql`NULL as detail`},
-        SUM("nilaiPak")::float as total,
+        SUM("nilaiPak")::float as "totalNilai",
         COUNT(*)::int as count,
         COUNT(CASE WHEN "statusValidasi" = 'PENDING' THEN 1 END)::int as pending,
         COUNT(CASE WHEN "statusValidasi" = 'APPROVED' THEN 1 END)::int as approved,
@@ -117,10 +117,10 @@ export class PengabdianAggregator {
     const result = this.prefillStructure(includeDetail);
 
     for (const row of rawData) {
-      const { kategori, detail, total, count, pending, approved, rejected } = row;
+      const { kategori, detail, totalNilai, count, pending, approved, rejected } = row;
 
       const nodeData: AggregationNode = {
-        total,
+        totalNilai,
         count,
         statusCounts: { pending, approved, rejected }
       };
@@ -142,7 +142,7 @@ export class PengabdianAggregator {
 
     Object.entries(PENGABDIAN_MAPPING).forEach(([kategori, config]) => {
       result[kategori] = {
-        total: 0,
+        totalNilai: 0,
         count: 0,
         statusCounts: { pending: 0, approved: 0, rejected: 0 }
       };
@@ -151,7 +151,7 @@ export class PengabdianAggregator {
         result[kategori].detail = {};
         config.values.forEach(value => {
           result[kategori].detail![value] = {
-            total: 0,
+            totalNilai: 0,
             count: 0,
             statusCounts: { pending: 0, approved: 0, rejected: 0 }
           };
@@ -164,7 +164,7 @@ export class PengabdianAggregator {
 
   private mergeNodes(existing: AggregationNode, incoming: Partial<AggregationNode>): AggregationNode {
     return {
-      total: existing.total + (incoming.total || 0),
+      totalNilai: existing.totalNilai + (incoming.totalNilai || 0),
       count: existing.count + (incoming.count || 0),
       statusCounts: {
         pending: existing.statusCounts.pending + (incoming.statusCounts?.pending || 0),
@@ -184,13 +184,13 @@ export class PengabdianAggregator {
 
   calculateSummary(result: AggregationResult) {
     const summary = {
-      total: 0,
+      totalNilai: 0,
       count: 0,
       statusCounts: { pending: 0, approved: 0, rejected: 0 }
     };
 
     Object.values(result).forEach(kategori => {
-      summary.total += kategori.total;
+      summary.totalNilai += kategori.totalNilai;
       summary.count += kategori.count;
       summary.statusCounts.pending += kategori.statusCounts.pending;
       summary.statusCounts.approved += kategori.statusCounts.approved;
