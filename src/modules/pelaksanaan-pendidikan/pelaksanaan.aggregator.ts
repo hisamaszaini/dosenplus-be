@@ -41,7 +41,7 @@ export class PelaksanaanPendidikanAggregator {
             WHEN p.kategori = 'MEMBIMBING_TUGAS_AKHIR' THEN p."subJenis"::TEXT        -- DISERTASI
             ELSE NULL
         END AS subDetail`
-            : Prisma.sql`NULL::TEXT AS detail, NULL::TEXT AS detail2`;
+            : Prisma.sql`NULL::TEXT AS detail, NULL::TEXT AS "subDetail"`;
 
         const statusFields = includeStatus
             ? Prisma.sql`
@@ -59,7 +59,7 @@ export class PelaksanaanPendidikanAggregator {
         ${statusFields}
       FROM "PelaksanaanPendidikan" p
       WHERE ${whereClause}
-      GROUP BY p.kategori, detail, detail2
+      GROUP BY p.kategori, detail, "subDetail"
     `;
 
         const rawData = (await this.prisma.$queryRaw(query)) as any[];
