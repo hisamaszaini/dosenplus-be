@@ -59,7 +59,7 @@ export class PelaksanaanPendidikanAggregator {
         ${statusFields}
       FROM "PelaksanaanPendidikan" p
       WHERE ${whereClause}
-      GROUP BY p.kategori, detail, "subDetail"
+      GROUP BY p.kategori, detail, subDetail
     `;
 
         const rawData = (await this.prisma.$queryRaw(query)) as any[];
