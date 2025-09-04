@@ -85,7 +85,7 @@ export class PenunjangAggregator {
     const rawData = await this.prisma.$queryRaw<Array<{
       kategori: string;
       jenisKegiatan?: string;
-      total: number;
+      totalNilai: number;
       count: number;
       pending: number;
       approved: number;
@@ -117,10 +117,10 @@ export class PenunjangAggregator {
     const result = this.prefillStructure(includeJenis);
 
     for (const row of rawData) {
-      const { kategori, jenisKegiatan, total, count, pending, approved, rejected } = row;
+      const { kategori, jenisKegiatan, totalNilai, count, pending, approved, rejected } = row;
 
       const nodeData = {
-        total,
+        totalNilai,
         count,
         statusCounts: { pending, approved, rejected }
       };
@@ -131,8 +131,8 @@ export class PenunjangAggregator {
       }
 
       // Update jenisKegiatan level
-      if (includeJenis && jenisKegiatan && result[kategori]?.jenisKegiatan?.[jenisKegiatan]) {
-        result[kategori].jenisKegiatan![jenisKegiatan] = nodeData;
+      if (includeJenis && jenisKegiatan && result[kategori]?.detail?.[jenisKegiatan]) {
+        result[kategori].detail![jenisKegiatan] = nodeData;
       }
     }
 
@@ -144,16 +144,16 @@ export class PenunjangAggregator {
 
     Object.entries(PENUNJANG_MAPPING).forEach(([kategori, config]) => {
       result[kategori] = {
-        total: 0,
+        totalNilai: 0,
         count: 0,
         statusCounts: { pending: 0, approved: 0, rejected: 0 }
       };
 
       if (includeJenis && config.hasJenis) {
-        result[kategori].jenisKegiatan = {};
+        result[kategori].detail = {};
         config.jenisValues.forEach(jenis => {
-          result[kategori].jenisKegiatan![jenis] = {
-            total: 0,
+          result[kategori].detail![jenis] = {
+            totalNilai: 0,
             count: 0,
             statusCounts: { pending: 0, approved: 0, rejected: 0 }
           };
@@ -166,7 +166,7 @@ export class PenunjangAggregator {
 
   private mergeNodes(existing: AggregationNode, incoming: Partial<AggregationNode>): AggregationNode {
     return {
-      total: existing.total + (incoming.total || 0),
+      totalNilai: existing.totalNilai + (incoming.totalNilai || 0),
       count: existing.count + (incoming.count || 0),
       statusCounts: {
         pending: existing.statusCounts.pending + (incoming.statusCounts?.pending || 0),
@@ -204,13 +204,13 @@ export class PenunjangAggregator {
 
   calculateSummary(result: AggregationResult) {
     const summary = {
-      total: 0,
+      totalNilai: 0,
       count: 0,
       statusCounts: { pending: 0, approved: 0, rejected: 0 }
     };
 
     Object.values(result).forEach(kategori => {
-      summary.total += kategori.total;
+      summary.totalNilai += kategori.totalNilai;
       summary.count += kategori.count;
       summary.statusCounts.pending += kategori.statusCounts.pending;
       summary.statusCounts.approved += kategori.statusCounts.approved;

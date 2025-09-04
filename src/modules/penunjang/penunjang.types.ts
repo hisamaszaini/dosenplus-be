@@ -5,14 +5,14 @@ export interface StatusCounts {
 }
 
 export interface AggregationNode {
-  total: number;
+  totalNilai: number;
   count: number;
   statusCounts: StatusCounts;
 }
 
 export interface AggregationResult {
   [kategori: string]: AggregationNode & {
-    jenisKegiatan?: {
+    detail?: {
       [jenis: string]: AggregationNode;
     };
   };
