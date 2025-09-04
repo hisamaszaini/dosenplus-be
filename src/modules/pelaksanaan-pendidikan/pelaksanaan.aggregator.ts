@@ -31,7 +31,7 @@ export class PelaksanaanPendidikanAggregator {
         includeStatus: boolean,
         includeTotal: boolean
     ): Promise<AggregationResult> {
-            const detailField = includeDetail
+        const detailField = includeDetail
             ? Prisma.sql`
         CASE
             WHEN p.kategori = 'MEMBIMBING_TUGAS_AKHIR' THEN p."jenisKategori"::TEXT   -- PEMBIMBING_UTAMA
@@ -41,7 +41,7 @@ export class PelaksanaanPendidikanAggregator {
             WHEN p.kategori = 'MEMBIMBING_TUGAS_AKHIR' THEN p."subJenis"::TEXT        -- DISERTASI
             ELSE NULL
         END AS subDetail`
-            : Prisma.sql`NULL::TEXT AS detail, NULL::TEXT AS "subDetail"`;
+            : Prisma.sql`NULL::TEXT AS detail, NULL::TEXT AS subDetail`;
 
         const statusFields = includeStatus
             ? Prisma.sql`
@@ -141,24 +141,37 @@ export class PelaksanaanPendidikanAggregator {
                 const detailMap = result[kategori].detail as Record<string, any>;
 
                 if (kategori === 'MEMBIMBING_TUGAS_AKHIR') {
-                     if (!detailMap[detail]) detailMap[detail] = {};
-                     const subMap = detailMap[detail];
+                    if (!detailMap[detail]) {
+                        detailMap[detail] = {
+                            count: 0,
+                            statusCounts: { pending: 0, approved: 0, rejected: 0 },
+                            ...(includeTotal && { totalNilai: 0 }),
+                            subDetail: {}
+                        };
+                    }
+                    const subWrap = detailMap[detail];
 
-                    if (!subMap[subDetail]) {
-                        subMap[subDetail] = {
+                    if (!subWrap.subDetail[subDetail]) {
+                        subWrap.subDetail[subDetail] = {
                             count: 0,
                             statusCounts: { pending: 0, approved: 0, rejected: 0 },
                             ...(includeTotal && { totalNilai: 0 })
                         };
                     }
 
-                    const node = subMap[subDetail];
+                    const node = subWrap.subDetail[subDetail];
                     node.count += cnt;
                     node.statusCounts.pending += pend;
                     node.statusCounts.approved += appr;
                     node.statusCounts.rejected += rej;
-                    if (includeTotal && node.totalNilai !== undefined) {
-                        node.totalNilai += nilai;
+                    if (includeTotal) node.totalNilai += nilai;
+
+                    subWrap.count += cnt;
+                    subWrap.statusCounts.pending += pend;
+                    subWrap.statusCounts.approved += appr;
+                    subWrap.statusCounts.rejected += rej;
+                    if (includeTotal && subWrap.totalNilai !== undefined) {
+                        subWrap.totalNilai += nilai;
                     }
                 } else {
                     // detail = jenisKategori
