@@ -24,9 +24,9 @@ export interface AggregationNode {
 
 export interface AggregationResult {
   [kategori: string]: AggregationNode & {
-    jenis?: {
+    detail?: {
       [jenis: string]: AggregationNode & {
-        sub?: {
+        subDetail?: {
           [sub: string]: AggregationNode;
         };
       };
