@@ -1,0 +1,69 @@
+[33mf7d9736[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mbaru2[m[33m)[m HEAD@{0}: commit: Sketch aggregator
+[33mea3b79f[m[33m ([m[1;31morigin/baru2[m[33m)[m HEAD@{1}: commit: Increase limit findAll for prodi
+[33m210e5db[m HEAD@{2}: commit: tglSelesai to tglTerbit on bahanPengajaran
+[33m924e37e[m HEAD@{3}: commit: Fix getNilaiPak for new schema pelaksanaan
+[33m2a7af81[m HEAD@{4}: commit: Fix getNilaiPak for new schema pelaksanaan
+[33mac8ada5[m HEAD@{5}: commit: Add aggregate by dosen for pelaksanaan
+[33ma686774[m HEAD@{6}: commit: Add aggregate by dosen on pendidikan
+[33m7e3191f[m HEAD@{7}: commit: Fix update pelaksanaan, remove jenisKategori n subJenis on kategoriFields
+[33m5087187[m HEAD@{8}: commit: Fix update pelaksanaan, remove dosenId on kategoriFields
+[33mb88a8ab[m HEAD@{9}: commit: Fix pelaksanaan perkuliahan
+[33mb798c00[m HEAD@{10}: commit: Add sync dosen
+[33m906c013[m HEAD@{11}: commit: Add sync dosen
+[33m5cb60f2[m HEAD@{12}: commit: Add default email for api dosen
+[33mcc3e2e6[m HEAD@{13}: commit: Kelas checkingg on sync
+[33ma55ae13[m HEAD@{14}: commit: Add add kelas for prodi
+[33m5ccf4ff[m HEAD@{15}: commit: Add externalId for Semester
+[33m8d75f31[m HEAD@{16}: commit: Remove logActivity utils
+[33m5cf4690[m HEAD@{17}: commit: Remove logActivity utils
+[33m446a1c8[m HEAD@{18}: commit: Testing api sync fakultas, prodi
+[33mc2e812b[m HEAD@{19}: commit: Testing api sync fakultas, prodi
+[33m8601b57[m HEAD@{20}: commit: Jabatan to non optional on Dosen
+[33m167f9d2[m HEAD@{21}: commit: Jabatan to optional on Dosen
+[33m5189934[m HEAD@{22}: commit: Add externalId for user
+[33m1559d27[m HEAD@{23}: commit: New structure for Pendidikan n Pelaksanaan
+[33m5550d55[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m HEAD@{24}: checkout: moving from main to baru2
+[33m5550d55[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m HEAD@{25}: commit: Fix findOne for Penelitian
+[33md1f5c17[m HEAD@{26}: commit: Sort judul pengabdian
+[33m80926ab[m HEAD@{27}: commit: Sort judul pengabdian
+[33m5294943[m HEAD@{28}: commit: Sort judul pengabdian
+[33mf53f4cf[m HEAD@{29}: commit: Sort judul pengabdian
+[33m4663a56[m HEAD@{30}: commit: Sort judul pengabdian
+[33mf97a6ed[m HEAD@{31}: commit: Sort judul pengabdian
+[33mb985420[m HEAD@{32}: commit: Pendidikan aggregator
+[33m93de410[m HEAD@{33}: commit: Sort judulKarya, judulMakalah, namaKegiatan, namaJurnal, namaJabatan
+[33me7956e3[m HEAD@{34}: commit: Sort judul pengabdian
+[33m92692f6[m HEAD@{35}: commit: Fix filter kategori for penunjang
+[33mc4737c1[m HEAD@{36}: commit: Fix filter by kategori for pengabdian
+[33m4ced07b[m HEAD@{37}: commit: Fix filter by kategori for pengabdian
+[33m24b43a5[m HEAD@{38}: commit: Search by judul for penelitian
+[33ma92e250[m HEAD@{39}: commit: Allow sorting by jenisKategori & subJenis for penelitian
+[33m838018a[m HEAD@{40}: commit: Allow sorting by jenisProduk for penelitian
+[33m1055cab[m HEAD@{41}: commit: Allow sorting by jenisProduk for penelitian
+[33m57bd810[m HEAD@{42}: commit: Casting filter on penelitian aggregate
+[33mc430de3[m HEAD@{43}: commit: Kesimpulan
+[33ma1d81b4[m HEAD@{44}: commit: Kesimpulan
+[33m96e7e6b[m HEAD@{45}: commit: Kesimpulan
+[33mdd02804[m HEAD@{46}: commit: Kesimpulan
+[33m7e22a5f[m HEAD@{47}: commit: Kesimpulan
+[33mc68a301[m HEAD@{48}: commit: Kesimpulan
+[33m8811303[m HEAD@{49}: commit: Kesimpulan
+[33m5e35ce4[m HEAD@{50}: commit: Kesimpulan
+[33me1a32bb[m HEAD@{51}: commit: Kesimpulan
+[33mc161cd3[m HEAD@{52}: commit: Kesimpulan
+[33m508b203[m HEAD@{53}: commit: Kesimpulan
+[33m0b3381a[m HEAD@{54}: commit: Kesimpulan
+[33m98db020[m HEAD@{55}: commit: Fix penelitian by dosen on kesimpulan
+[33m8898a68[m HEAD@{56}: commit: Add kesimpulan
+[33m23c01ee[m HEAD@{57}: commit: Add kesimpulan
+[33m5679838[m HEAD@{58}: commit: Add stats statusValidasi on Penelitian
+[33m56a2f4c[m HEAD@{59}: commit: Add stats statusValidasi on Penelitian
+[33mb351609[m HEAD@{60}: commit: Add stats statusValidasi on Penelitian
+[33mff9b45b[m HEAD@{61}: commit: Remove jenisKegiatan for timPenilaiJabatan on Penunjang
+[33m0687468[m HEAD@{62}: commit: Add field umum for Penunjang
+[33mc369a0d[m HEAD@{63}: commit: Add API Penunjang
+[33m73df5c5[m HEAD@{64}: commit: Full update for penelitian and pengabdian
+[33m23e1221[m HEAD@{65}: commit: From relational to json for detail penelitian, pengabdian
+[33mbd453a6[m HEAD@{66}: checkout: moving from main to main
+[33mbd453a6[m HEAD@{67}: reset: moving to origin/main
+[33mbd453a6[m HEAD@{68}: clone: from https://github.com/hisamaszaini/dosenplus-be.git
