@@ -13,9 +13,21 @@ export interface StatusCounts {
  * - level subJenis → jenisKategori (khusus MEMBIMBING_TUGAS_AKHIR)
  */
 export interface AggregationNode {
+  totalNilai: number;
   count: number;
   statusCounts: StatusCounts;
-  totalNilai?: number; // optional agar bisa dipakai di semua level
+}
+
+export interface AggregationResult {
+  [kategori: string]: AggregationNode & {
+    detail?: {
+      [jenis: string]: AggregationNode & {
+        subDetail?: {
+          [sub: string]: AggregationNode;
+        };
+      };
+    };
+  };
 }
 
 // =============== DETAIL STRUCTURE ===============
@@ -45,7 +57,6 @@ export interface PelaksanaanKategoriNode extends AggregationNode {
  * Root result:
  * key = KategoriPelaksanaanPendidikan
  */
-export type AggregationResult = Record<string, PelaksanaanKategoriNode>;
 
 // =============== API RESPONSE ===============
 
