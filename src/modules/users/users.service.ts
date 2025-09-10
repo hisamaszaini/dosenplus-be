@@ -1195,6 +1195,26 @@ export class UsersService {
         };
     }
 
+    async removePendingUpdate(id: number) {
+        const pendingUpdate = await this.prisma.pendingUpdateDosen.findUnique({
+            where: { id: id }
+        });
+
+        if (!pendingUpdate) {
+            throw new NotFoundException('Data pending update tidak ditemukan.');
+        }
+
+        await this.prisma.pendingUpdateDosen.delete({
+            where: { id: id },
+        });
+
+        return {
+            success: true,
+            message: 'Data pending update berhasil dihapus.',
+        };
+    }
+
+
     private formatZodErrors(error: ZodError) {
         const result: Record<string, string> = {};
         for (const issue of error.issues) {

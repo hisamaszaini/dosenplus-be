@@ -87,7 +87,7 @@ export class UsersController {
     return this.usersService.submitPendingUpdate(dosenId, dto);
   }
 
-  @Patch('dosen/pending/:dosenId')
+  @Patch('dosen/update-data/:dosenId/validasi')
   @Roles(TypeUserRole.ADMIN, TypeUserRole.VALIDATOR)
   handlePendingValidation(
     @Param('dosenId', ParseIntPipe) dosenId: number,
@@ -226,5 +226,12 @@ export class UsersController {
   @UseGuards(RolesGuard)
   async remove(@Param('id', ParseIntPipe) id: number) {
     return this.usersService.remove(id);
+  }
+
+  @Delete('/update-data/:id')
+  @Roles(TypeUserRole.ADMIN)
+  @UseGuards(RolesGuard)
+  async removePendingUpdate(@Param('id', ParseIntPipe) id: number) {
+    return this.usersService.removePendingUpdate(id);
   }
 }

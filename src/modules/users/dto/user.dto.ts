@@ -277,6 +277,7 @@ export const CreatePendingUpdateSchema = z.object({
       ['Asisten Ahli', 'Lektor', 'Lektor Kepala', 'Guru Besar'].includes(val),
     { message: 'Jabatan wajib dipilih dari daftar yang tersedia' },
   ),
+  tmt: z.coerce.date().optional().nullable(),
 
   // Kepegawaian
   npwp: z.string().optional().nullable(),
