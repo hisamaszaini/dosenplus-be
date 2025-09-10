@@ -46,6 +46,17 @@ export class UsersController {
     return this.usersService.updatePhoto(userId, file);
   }
 
+  @Patch('dosen/update-data/:dosenId/validasi')
+  @Roles(TypeUserRole.ADMIN, TypeUserRole.VALIDATOR)
+  handlePendingValidation(
+    @Param('dosenId', ParseIntPipe) dosenId: number,
+    @Body() data: any,
+    @Request() req,
+  ) {
+    const reviewerId = req.user.sub;
+    return this.usersService.validatePendingUpdate(dosenId, reviewerId, data);
+  }
+
   @Post()
   @Roles(TypeUserRole.ADMIN)
   @HttpCode(HttpStatus.CREATED)
@@ -85,17 +96,6 @@ export class UsersController {
   updatePendingData(@Req() req: any, @Body() dto: CreatePendingUpdateDto) {
     const dosenId = req.user.sub;
     return this.usersService.submitPendingUpdate(dosenId, dto);
-  }
-
-  @Patch('dosen/update-data/:dosenId/validasi')
-  @Roles(TypeUserRole.ADMIN, TypeUserRole.VALIDATOR)
-  handlePendingValidation(
-    @Param('dosenId', ParseIntPipe) dosenId: number,
-    @Body() data: any,
-    @Request() req,
-  ) {
-    const reviewerId = req.user.sub;
-    return this.usersService.validatePendingUpdate(dosenId, reviewerId, data);
   }
 
   @Get()
@@ -221,17 +221,18 @@ export class UsersController {
     return this.usersService.findById(userId);
   }
 
-  @Delete(':id')
-  @Roles(TypeUserRole.ADMIN)
-  @UseGuards(RolesGuard)
-  async remove(@Param('id', ParseIntPipe) id: number) {
-    return this.usersService.remove(id);
-  }
-
   @Delete('/update-data/:id')
   @Roles(TypeUserRole.ADMIN)
   @UseGuards(RolesGuard)
   async removePendingUpdate(@Param('id', ParseIntPipe) id: number) {
     return this.usersService.removePendingUpdate(id);
   }
+
+  @Delete(':id')
+  @Roles(TypeUserRole.ADMIN)
+  @UseGuards(RolesGuard)
+  async remove(@Param('id', ParseIntPipe) id: number) {
+    return this.usersService.remove(id);
+  }
+  
 }
