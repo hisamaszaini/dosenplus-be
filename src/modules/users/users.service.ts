@@ -1195,9 +1195,9 @@ export class UsersService {
         };
     }
 
-    async removePendingUpdate(id: number) {
+    async removePendingUpdate(dosenId: number) {
         const pendingUpdate = await this.prisma.pendingUpdateDosen.findUnique({
-            where: { id: id }
+            where: { dosenId: dosenId }
         });
 
         if (!pendingUpdate) {
@@ -1205,7 +1205,7 @@ export class UsersService {
         }
 
         await this.prisma.pendingUpdateDosen.delete({
-            where: { id: id },
+            where: { dosenId: dosenId },
         });
 
         return {

@@ -98,6 +98,50 @@ export class UsersController {
     return this.usersService.submitPendingUpdate(dosenId, dto);
   }
 
+  @Get('update-data')
+  @Roles(TypeUserRole.ADMIN, TypeUserRole.VALIDATOR)
+  async findAllPendingUpdate(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+    @Query('status') status?: StatusValidasi | '',
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
+  ) {
+    return this.usersService.findAllPendingUpdate({
+      page: page ? Number(page) : 1,
+      limit: limit ? Number(limit) : 10,
+      search,
+      status,
+      sortBy,
+      sortOrder,
+    });
+  }
+
+  @Get('dosen/update-data')
+  @Roles(TypeUserRole.DOSEN)
+  getPendingUpdate(@Req() req: any) {
+    const dosenId = req.user.sub;
+    return this.usersService.getPendingUpdateById(dosenId);
+  }
+
+  @Get('dosen/update-data/:dosenId')
+  @Roles(TypeUserRole.ADMIN, TypeUserRole.VALIDATOR)
+  getPendingUpdateById(
+    @Param('dosenId', ParseIntPipe) dosenId: number
+  ) {
+    return this.usersService.getPendingUpdateById(dosenId);
+  }
+
+  @Get(':id')
+  @Roles(TypeUserRole.ADMIN, TypeUserRole.VALIDATOR)
+  @UseGuards(RolesGuard)
+  getProfileById(
+    @Param('id', ParseIntPipe) userId: number
+  ) {
+    return this.usersService.findById(userId);
+  }
+
   @Get()
   @Roles(TypeUserRole.ADMIN)
   @UseGuards(RolesGuard)
@@ -177,55 +221,11 @@ export class UsersController {
     return this.usersService.findAllValidator({ page, limit, search, sortBy, sortOrder });
   }
 
-  @Get('update-data')
-  @Roles(TypeUserRole.ADMIN, TypeUserRole.VALIDATOR)
-  async findAllPendingUpdate(
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
-    @Query('search') search?: string,
-    @Query('status') status?: StatusValidasi | '',
-    @Query('sortBy') sortBy?: string,
-    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
-  ) {
-    return this.usersService.findAllPendingUpdate({
-      page: page ? Number(page) : 1,
-      limit: limit ? Number(limit) : 10,
-      search,
-      status,
-      sortBy,
-      sortOrder,
-    });
-  }
-
-  @Get('dosen/update-data')
-  @Roles(TypeUserRole.DOSEN)
-  getPendingUpdate(@Req() req: any) {
-    const dosenId = req.user.sub;
-    return this.usersService.getPendingUpdateById(dosenId);
-  }
-
-  @Get('dosen/update-data/:dosenId')
-  @Roles(TypeUserRole.ADMIN, TypeUserRole.VALIDATOR)
-  getPendingUpdateById(
-    @Param('dosenId', ParseIntPipe) dosenId: number
-  ) {
-    return this.usersService.getPendingUpdateById(dosenId);
-  }
-
-  @Get(':id')
-  @Roles(TypeUserRole.ADMIN, TypeUserRole.VALIDATOR)
-  @UseGuards(RolesGuard)
-  getProfileById(
-    @Param('id', ParseIntPipe) userId: number
-  ) {
-    return this.usersService.findById(userId);
-  }
-
-  @Delete('/update-data/:id')
+  @Delete('/update-data/:dosenId')
   @Roles(TypeUserRole.ADMIN)
   @UseGuards(RolesGuard)
-  async removePendingUpdate(@Param('id', ParseIntPipe) id: number) {
-    return this.usersService.removePendingUpdate(id);
+  async removePendingUpdate(@Param('dosenId', ParseIntPipe) dosenId: number) {
+    return this.usersService.removePendingUpdate(dosenId);
   }
 
   @Delete(':id')
@@ -234,5 +234,5 @@ export class UsersController {
   async remove(@Param('id', ParseIntPipe) id: number) {
     return this.usersService.remove(id);
   }
-  
+
 }
