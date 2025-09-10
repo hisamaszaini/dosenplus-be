@@ -29,7 +29,7 @@ export const KATEGORI_MAPPING = {
       ] as const,
       SEMINAR_TANPA_PROSIDING: ['INTERNASIONAL', 'NASIONAL'] as const,
       PROSIDING_TANPA_SEMINAR: ['INTERNASIONAL', 'NASIONAL'] as const,
-      KORAN_MAJALAH: [] as const 
+      KORAN_MAJALAH: [] as const
     }
   },
   PENELITIAN_TIDAK_DIPUBLIKASI: {
@@ -69,7 +69,67 @@ export const KATEGORI_MAPPING = {
 } as const;
 
 export class PenelitianAggregator {
-  constructor(private prisma: PrismaClient) {}
+  constructor(private prisma: PrismaClient) { }
+
+  async aggregateGlobal(
+    options: {
+      includeJenis?: boolean;
+      includeSub?: boolean;
+      includeStatus?: boolean;
+      filter?: any;
+    } = {}
+  ): Promise<AggregationResult> {
+    const { includeJenis = true, includeSub = true, includeStatus = true, filter = {} } = options;
+
+    const groupFields = ['"kategori"'];
+    if (includeJenis) groupFields.push('"jenisKategori"');
+    if (includeSub) groupFields.push('"subJenis"');
+
+    const whereClause = this.buildWhereClauseGlobal(filter)
+
+    const rawData = await this.prisma.$queryRaw<Array<{
+      kategori: string;
+      jenisKategori?: string;
+      subJenis?: string;
+      totalNilai: number;
+      count: number;
+      pending: number;
+      approved: number;
+      rejected: number;
+    }>>`
+    SELECT 
+      "kategori",
+      ${includeJenis ? Prisma.sql`"jenisKategori",` : Prisma.sql`NULL as "jenisKategori",`}
+      ${includeSub ? Prisma.sql`"subJenis",` : Prisma.sql`NULL as "subJenis",`}
+      SUM("nilaiPak")::float as "totalNilai",
+      COUNT(*)::int as count,
+      COUNT(CASE WHEN "statusValidasi" = 'PENDING' THEN 1 END)::int as pending,
+      COUNT(CASE WHEN "statusValidasi" = 'APPROVED' THEN 1 END)::int as approved,
+      COUNT(CASE WHEN "statusValidasi" = 'REJECTED' THEN 1 END)::int as rejected
+    FROM "Penelitian"
+    WHERE ${whereClause}
+    GROUP BY ${Prisma.raw(groupFields.join(', '))}
+    ORDER BY "kategori"
+  `;
+
+    return this.buildStructuredResult(rawData, { includeJenis, includeSub });
+  }
+
+  private buildWhereClauseGlobal(filter: any): Prisma.Sql {
+    let conditions = Prisma.sql`TRUE`;
+
+    if (filter.semesterId) {
+      conditions = Prisma.sql`${conditions} AND "semesterId" = ${filter.semesterId}`;
+    }
+    if (filter.tahun) {
+      conditions = Prisma.sql`${conditions} AND EXTRACT(YEAR FROM "tglTerbit") = ${filter.tahun}`;
+    }
+    if (filter.statusValidasi) {
+      conditions = Prisma.sql`${conditions} AND "statusValidasi" = ${filter.statusValidasi}`;
+    }
+
+    return conditions;
+  }
 
   async aggregateByDosen(
     dosenId: number,
@@ -80,11 +140,11 @@ export class PenelitianAggregator {
       filter?: any;
     } = {}
   ): Promise<AggregationResult> {
-    const { 
-      includeJenis = true, 
-      includeSub = true, 
-      includeStatus = true, 
-      filter = {} 
+    const {
+      includeJenis = true,
+      includeSub = true,
+      includeStatus = true,
+      filter = {}
     } = options;
 
     // Build dynamic query
@@ -130,7 +190,7 @@ export class PenelitianAggregator {
 
     for (const row of rawData) {
       const { kategori, jenisKategori, subJenis, totalNilai, count, pending, approved, rejected } = row;
-      
+
       const nodeData: AggregationNode = {
         totalNilai,
         count,
@@ -145,7 +205,7 @@ export class PenelitianAggregator {
       // Update jenis level
       if (options.includeJenis && jenisKategori && result[kategori]?.detail?.[jenisKategori]) {
         Object.assign(
-          result[kategori].detail![jenisKategori], 
+          result[kategori].detail![jenisKategori],
           this.mergeNodes(result[kategori].detail![jenisKategori], nodeData)
         );
 
@@ -161,7 +221,7 @@ export class PenelitianAggregator {
 
   private prefillStructure(options: { includeJenis: boolean; includeSub: boolean }): AggregationResult {
     const result: AggregationResult = {};
-    
+
     Object.entries(KATEGORI_MAPPING).forEach(([kategori, config]) => {
       result[kategori] = {
         totalNilai: 0,
@@ -171,7 +231,7 @@ export class PenelitianAggregator {
 
       if (options.includeJenis && Object.keys(config.jenis).length > 0) {
         result[kategori].detail = {};
-        
+
         Object.entries(config.jenis).forEach(([jenis, subList]) => {
           result[kategori].detail![jenis] = {
             totalNilai: 0,
@@ -181,7 +241,7 @@ export class PenelitianAggregator {
 
           if (options.includeSub && subList.length > 0) {
             result[kategori].detail![jenis].subDetail = {};
-            
+
             subList.forEach(sub => {
               result[kategori].detail![jenis].subDetail![sub] = {
                 totalNilai: 0,
@@ -211,30 +271,30 @@ export class PenelitianAggregator {
 
   private buildWhereClause(dosenId: number, filter: any): Prisma.Sql {
     let conditions = Prisma.sql`"dosenId" = ${dosenId}`;
-    
+
     if (filter.semesterId) {
       conditions = Prisma.sql`${conditions} AND "semesterId" = ${filter.semesterId}`;
     }
-    
+
     if (filter.tahun) {
       conditions = Prisma.sql`${conditions} AND EXTRACT(YEAR FROM "tglTerbit") = ${filter.tahun}`;
     }
-    
+
     if (filter.statusValidasi) {
       conditions = Prisma.sql`${conditions} AND "statusValidasi" = ${filter.statusValidasi}`;
     }
-    
+
     return conditions;
   }
 
   // Additional helper methods
   async getSummary(dosenId: number, filter?: any) {
-    const result = await this.aggregateByDosen(dosenId, { 
-      includeJenis: false, 
-      includeSub: false, 
-      filter 
+    const result = await this.aggregateByDosen(dosenId, {
+      includeJenis: false,
+      includeSub: false,
+      filter
     });
-    
+
     return this.calculateSummary(result);
   }
 

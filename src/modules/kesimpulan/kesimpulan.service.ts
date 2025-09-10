@@ -5,6 +5,7 @@ import { PengabdianAggregator } from '../pengabdian/pengabdian.aggregator';
 import { PenunjangAggregator } from '../penunjang/penunjang.aggregator';
 import { PendidikanAggregator } from '../pendidikan/pendidikan.aggregator';
 import { PelaksanaanPendidikanAggregator } from '../pelaksanaan-pendidikan/pelaksanaan.aggregator';
+import { fa } from 'zod/v4/locales/index.cjs';
 
 @Injectable()
 export class KesimpulanService {
@@ -44,19 +45,19 @@ export class KesimpulanService {
                     includeStatus: true,
                     filter
                 }),
-                this.penelitianAggregator.aggregateByDosen(dosenId, {
-                    includeJenis: options.includeDetails ?? true,
-                    includeSub: options.includeDetails ?? true,
+                this.penelitianAggregator.aggregateGlobal({
+                    includeJenis: false,
+                    includeSub: false,
                     includeStatus: true,
                     filter
                 }),
-                this.pengabdianAggregator.aggregateByDosen(dosenId, {
-                    includeDetail: options.includeDetails ?? true,
+                this.pengabdianAggregator.aggregateGlobal({
+                    includeDetail: false,
                     includeStatus: true,
                     filter
                 }),
-                this.penunjangAggregator.aggregateByDosen(dosenId, {
-                    includeJenis: options.includeDetails ?? true,
+                this.penunjangAggregator.aggregateGlobal({
+                    includeJenis: false,
                     includeStatus: true,
                     filter
                 })

@@ -69,6 +69,62 @@ export const PENUNJANG_MAPPING = {
 export class PenunjangAggregator {
   constructor(private prisma: PrismaClient) { }
 
+  async aggregateGlobal(
+    options: {
+      includeJenis?: boolean;
+      includeStatus?: boolean;
+      filter?: any;
+    } = {}
+  ): Promise<AggregationResult> {
+    const { includeJenis = true, includeStatus = true, filter = {} } = options;
+    const whereClause = this.buildWhereClauseGlobal(filter);
+
+    const rawData = await this.prisma.$queryRaw<Array<{
+      kategori: string;
+      jenisKegiatan?: string;
+      totalNilai: number;
+      count: number;
+      pending: number;
+      approved: number;
+      rejected: number;
+    }>>`
+    SELECT 
+      "kategori",
+      ${includeJenis
+        ? Prisma.sql`"jenisKegiatan"::text as "jenisKegiatan"`
+        : Prisma.sql`NULL::text as "jenisKegiatan"`
+      },
+      SUM("nilaiPak")::float as "totalNilai",
+      COUNT(*)::int as count,
+      COUNT(CASE WHEN "statusValidasi" = 'PENDING' THEN 1 END)::int as pending,
+      COUNT(CASE WHEN "statusValidasi" = 'APPROVED' THEN 1 END)::int as approved,
+      COUNT(CASE WHEN "statusValidasi" = 'REJECTED' THEN 1 END)::int as rejected
+    FROM "Penunjang"
+    WHERE ${whereClause}
+    GROUP BY "kategori" ${includeJenis ? Prisma.sql`, "jenisKegiatan"` : Prisma.empty
+      }
+    ORDER BY "kategori"
+  `;
+
+    return this.buildStructuredResult(rawData, includeJenis);
+  }
+
+  private buildWhereClauseGlobal(filter: any): Prisma.Sql {
+    let conditions = Prisma.sql`TRUE`;
+
+    if (filter.semesterId) {
+      conditions = Prisma.sql`${conditions} AND "semesterId" = ${filter.semesterId}`;
+    }
+    if (filter.tahun) {
+      conditions = Prisma.sql`${conditions} AND EXTRACT(YEAR FROM "tglMulai") = ${filter.tahun}`;
+    }
+    if (filter.statusValidasi) {
+      conditions = Prisma.sql`${conditions} AND "statusValidasi" = ${filter.statusValidasi}`;
+    }
+
+    return conditions;
+  }
+
   async aggregateByDosen(
     dosenId: number,
     options: {

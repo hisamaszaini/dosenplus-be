@@ -39,6 +39,75 @@ export const PENGABDIAN_MAPPING = {
 export class PengabdianAggregator {
   constructor(private prisma: PrismaClient) { }
 
+  async aggregateGlobal(
+    options: {
+      includeDetail?: boolean;
+      includeStatus?: boolean;
+      filter?: any;
+    } = {}
+  ): Promise<AggregationResult> {
+    const { includeDetail = true, includeStatus = true, filter = {} } = options;
+    const whereClause = this.buildWhereClauseGlobal(filter); // ← tanpa dosenId
+
+    const rawData = await this.prisma.$queryRaw<Array<{
+      kategori: string;
+      detail?: string;
+      totalNilai: number;
+      count: number;
+      pending: number;
+      approved: number;
+      rejected: number;
+    }>>`
+    WITH pengabdian_data AS (
+      SELECT
+        "kategori",
+        ${includeDetail
+        ? Prisma.sql`
+              CASE 
+                WHEN "jenisKegiatan" IS NOT NULL THEN "jenisKegiatan"::text
+                WHEN "tingkat" IS NOT NULL THEN "tingkat"::text
+                ELSE NULL
+              END as detail
+            `
+        : Prisma.sql`NULL::text as detail`
+      },
+        "nilaiPak",
+        "statusValidasi"
+      FROM "Pengabdian"
+      WHERE ${whereClause}
+    )
+    SELECT
+      "kategori",
+      ${includeDetail ? Prisma.sql`"detail"` : Prisma.sql`NULL as detail`},
+      SUM("nilaiPak")::float as "totalNilai",
+      COUNT(*)::int as count,
+      COUNT(CASE WHEN "statusValidasi" = 'PENDING' THEN 1 END)::int as pending,
+      COUNT(CASE WHEN "statusValidasi" = 'APPROVED' THEN 1 END)::int as approved,
+      COUNT(CASE WHEN "statusValidasi" = 'REJECTED' THEN 1 END)::int as rejected
+    FROM pengabdian_data
+    GROUP BY "kategori" ${includeDetail ? Prisma.sql`, "detail"` : Prisma.empty}
+    ORDER BY "kategori"
+  `;
+
+    return this.buildStructuredResult(rawData, includeDetail);
+  }
+
+  private buildWhereClauseGlobal(filter: any): Prisma.Sql {
+    let conditions = Prisma.sql`TRUE`;
+
+    if (filter.semesterId) {
+      conditions = Prisma.sql`${conditions} AND "semesterId" = ${filter.semesterId}`;
+    }
+    if (filter.tahun) {
+      conditions = Prisma.sql`${conditions} AND EXTRACT(YEAR FROM "tglMulai") = ${filter.tahun}`;
+    }
+    if (filter.statusValidasi) {
+      conditions = Prisma.sql`${conditions} AND "statusValidasi" = ${filter.statusValidasi}`;
+    }
+
+    return conditions;
+  }
+
   async aggregateByDosen(
     dosenId: number,
     options: {
