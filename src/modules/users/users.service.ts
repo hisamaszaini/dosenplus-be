@@ -1077,7 +1077,7 @@ export class UsersService {
         const { status, catatan } = parseAndThrow(ValidatePendingUpdateSchema, dto);
 
         const pending = await this.prisma.pendingUpdateDosen.findUnique({
-            where: { dosenId },
+            where: { dosenId: dosenId },
             include: {
                 dosen: { include: { user: true } },
             },
