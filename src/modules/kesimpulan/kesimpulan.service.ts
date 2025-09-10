@@ -22,6 +22,69 @@ export class KesimpulanService {
         this.penunjangAggregator = new PenunjangAggregator(prisma);
     }
 
+    async findAll(options: {
+        semesterId?: number;
+        tahun?: number;
+        status?: string;
+    } = {}) {
+        try {
+            const filter: any = {};
+            if (options.semesterId) filter.semesterId = options.semesterId;
+            if (options.tahun) filter.tahun = options.tahun;
+            if (options.status) filter.statusValidasi = options.status;
+
+            const [pendidikan, pelaksanaanPendidikan, penelitian, pengabdian, penunjang] = await Promise.all([
+                this.pendidikanAggregator.aggregateGlobal({
+                    includeDetail: false,
+                    includeStatus: true,
+                    filter
+                }),
+                this.pelaksanaanPendidikanAggregator.aggregateGlobal({
+                    includeDetail: false,
+                    includeStatus: true,
+                    filter
+                }),
+                this.penelitianAggregator.aggregateByDosen(dosenId, {
+                    includeJenis: options.includeDetails ?? true,
+                    includeSub: options.includeDetails ?? true,
+                    includeStatus: true,
+                    filter
+                }),
+                this.pengabdianAggregator.aggregateByDosen(dosenId, {
+                    includeDetail: options.includeDetails ?? true,
+                    includeStatus: true,
+                    filter
+                }),
+                this.penunjangAggregator.aggregateByDosen(dosenId, {
+                    includeJenis: options.includeDetails ?? true,
+                    includeStatus: true,
+                    filter
+                })
+            ]);
+
+            const totalSummary = this.calculateTotalSummary(
+                pendidikan,
+                pelaksanaanPendidikan,
+                penelitian,
+                pengabdian,
+                penunjang
+            );
+
+            return {
+                summary: totalSummary,
+                details: {
+                    pendidikan: this.pendidikanAggregator.formatForAPI(pendidikan),
+                    pelaksanaanPendidikan: this.pelaksanaanPendidikanAggregator.formatForAPI(pelaksanaanPendidikan),
+                    penelitian: this.penelitianAggregator.formatForAPI(penelitian),
+                    pengabdian: this.pengabdianAggregator.formatForAPI(pengabdian),
+                    penunjang: this.penunjangAggregator.formatForAPI(penunjang)
+                }
+            };
+        } catch (error) {
+            throw error;
+        }
+    }
+
     async findById(
         dosenId: number,
         options: {

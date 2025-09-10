@@ -19,6 +19,52 @@ export class AuthService {
     ) { }
 
     // Validasi Login
+    // async validateUser(identifier: string, pass: string): Promise<any> {
+    //     const loginPayload = {
+    //         usernameOrEmail: identifier,
+    //         password: pass,
+    //     };
+
+    //     let apiResult;
+    //     try {
+    //         const response = await fetch('https://apikey.umpo.ac.id/lpsi/api/login-users', {
+    //             method: 'POST',
+    //             headers: { 'Content-Type': 'application/json' },
+    //             body: JSON.stringify(loginPayload),
+    //         });
+
+    //         apiResult = await response.json();
+
+    //         if (!response.ok || apiResult.success !== true) {
+    //             throw new UnauthorizedException('Email/Username atau password salah.');
+    //         }
+    //     } catch (error) {
+    //         if (error instanceof UnauthorizedException) throw error;
+    //         throw new UnauthorizedException('Gagal terhubung ke layanan autentikasi.');
+    //     }
+
+    //     const user = await this.prisma.user.findFirst({
+    //         where: {
+    //             OR: [
+    //                 { email: { equals: identifier, mode: 'insensitive' } },
+    //                 { username: { equals: identifier, mode: 'insensitive' } },
+    //             ],
+    //         },
+    //         include: { userRoles: { include: { role: true } } },
+    //     });
+
+    //     if (!user) {
+    //         throw new UnauthorizedException('Akun tidak ditemukan di sistem lokal.');
+    //     }
+
+    //     if (user.status === 'INACTIVE') {
+    //         throw new ForbiddenException('Akun Anda tidak aktif. Silakan hubungi administrator.');
+    //     }
+
+    //     const { password, ...result } = user;
+    //     return result;
+    // }
+
     async validateUser(identifier: string, pass: string): Promise<any> {
         const user = await this.prisma.user.findFirst({
             where: {

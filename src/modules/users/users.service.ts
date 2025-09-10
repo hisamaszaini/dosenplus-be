@@ -5,11 +5,11 @@ import {
     InternalServerErrorException,
     NotFoundException,
 } from '@nestjs/common';
-import { Prisma, PrismaClient, TypeUserRole, UserStatus } from '@prisma/client';
+import { Prisma, PrismaClient, StatusValidasi, TypeUserRole, UserStatus } from '@prisma/client';
 import { BaseUpdateUserSchema, ChangePasswordDto, ChangePasswordSchema, CreateFlexibleUserSchema, CreatePendingUpdateDto, CreatePendingUpdateSchema, CreateValidatorBiodataSchema, UpdateDosenProfileSchema, UpdateFlexibleUserDto, UpdateFlexibleUserSchema, UpdateValidatorProfileSchema, ValidatePendingUpdateDto, ValidatePendingUpdateSchema, type CreateFlexibleUserDto } from './dto/user.dto';
 import z, { ZodError } from 'zod';
 // import { LogActivityService } from '@/utils/logActivity';
-import { handleFindError, handlePrismaError, handleUpdateError } from '@/common/utils/prisma-error-handler';
+import { handleFindError, handleFindManyError, handlePrismaError, handleUpdateError } from '@/common/utils/prisma-error-handler';
 import { parseAndThrow } from '@/common/utils/zod-helper';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { comparePassword, hashPassword } from '@/common/utils/hashAndEncrypt';
@@ -945,6 +945,91 @@ export class UsersService {
             success: true,
             message: 'User berhasil dihapus.',
         };
+    }
+
+    async findAllPendingUpdate(params: {
+        page?: number;
+        limit?: number;
+        search?: string;
+        status?: StatusValidasi | '';
+        sortBy?: string;
+        sortOrder?: 'asc' | 'desc';
+    }) {
+        const {
+            page = 1,
+            limit = 10,
+            search,
+            status,
+            sortBy = 'createdAt',
+            sortOrder = 'desc',
+        } = params;
+
+        const take = Number(limit) || 10;
+
+        const allowedSortFields = [
+            'nama',
+            'nik',
+            'status',
+            'createdAt',
+            'updatedAt',
+        ];
+        const safeSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'createdAt';
+        const safeSortOrder: 'asc' | 'desc' = sortOrder === 'asc' ? 'asc' : 'desc';
+
+        // build where
+        const where: any = { AND: [] };
+
+        if (search) {
+            where.AND.push({
+                OR: [
+                    { nama: { contains: search, mode: 'insensitive' } },
+                    { nik: { contains: search, mode: 'insensitive' } },
+                    { nuptk: { contains: search, mode: 'insensitive' } },
+                ],
+            });
+        }
+
+        if (status) {
+            where.AND.push({ status });
+        }
+
+        try {
+            const [data, total] = await this.prisma.$transaction([
+                this.prisma.pendingUpdateDosen.findMany({
+                    where,
+                    orderBy: { [safeSortBy]: safeSortOrder },
+                    include: {
+                        dosen: {
+                            select: {
+                                id: true,
+                                nama: true,
+                            },
+                        },
+                        prodi: { select: { id: true, nama: true } },
+                        fakultas: { select: { id: true, nama: true } },
+                        reviewer: { select: { id: true, name: true } },
+                    },
+                    skip: (page - 1) * take,
+                    take: take,
+                }),
+                this.prisma.pendingUpdateDosen.count({ where }),
+            ]);
+
+            return {
+                success: true,
+                message: 'Data pending update dosen berhasil diambil',
+                data,
+                meta: {
+                    page,
+                    limit: take,
+                    total,
+                    totalPages: Math.ceil(total / take),
+                },
+            };
+        } catch (error) {
+            console.error('[ERROR] findAllPendingUpdate:', error);
+            handleFindManyError(error, 'Pending Update');
+        }
     }
 
     async submitPendingUpdate(dosenId: number, dto: CreatePendingUpdateDto) {

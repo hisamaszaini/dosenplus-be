@@ -1,5 +1,5 @@
 import { BadRequestException, Body, Controller, Delete, FileTypeValidator, Get, HttpCode, HttpStatus, MaxFileSizeValidator, Param, ParseEnumPipe, ParseFilePipe, ParseIntPipe, Patch, Post, Put, Query, Req, Request, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
-import { TypeUserRole, UserStatus } from '@prisma/client';
+import { StatusValidasi, TypeUserRole, UserStatus } from '@prisma/client';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ChangePasswordDto, CreateFlexibleUserDto, CreatePendingUpdateDto, UpdateFlexibleUserDto, ValidatePendingUpdateDto } from '@/modules/users/dto/user.dto';
 import { UsersService } from '@/modules/users/users.service';
@@ -175,6 +175,26 @@ export class UsersController {
     @Query('sortOrder') sortOrder: 'asc' | 'desc' = 'asc',
   ) {
     return this.usersService.findAllValidator({ page, limit, search, sortBy, sortOrder });
+  }
+
+  @Get('update-data')
+  @Roles(TypeUserRole.ADMIN, TypeUserRole.VALIDATOR)
+  async findAllPendingUpdate(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+    @Query('status') status?: StatusValidasi | '',
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
+  ) {
+    return this.usersService.findAllPendingUpdate({
+      page: page ? Number(page) : 1,
+      limit: limit ? Number(limit) : 10,
+      search,
+      status,
+      sortBy,
+      sortOrder,
+    });
   }
 
   @Get('dosen/update-data')

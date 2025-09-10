@@ -19,6 +19,14 @@ export class KesimpulanController {
         return this.kesimpulanService.findByIdSimple(dosenId);
     }
 
+    @Get('ringkas')
+    @Roles(TypeUserRole.ADMIN, TypeUserRole.VALIDATOR)
+    async findRingkas(
+        @Req() req: any,
+    ) {
+        return this.kesimpulanService.findAll();
+    }
+
     @Get(':id')
     @Roles(TypeUserRole.ADMIN, TypeUserRole.VALIDATOR)
     async findOne(
