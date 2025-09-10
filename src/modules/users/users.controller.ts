@@ -98,7 +98,7 @@ export class UsersController {
     return this.usersService.submitPendingUpdate(dosenId, dto);
   }
 
-  @Get('update-data')
+  @Get('dosen/update-data')
   @Roles(TypeUserRole.ADMIN, TypeUserRole.VALIDATOR)
   async findAllPendingUpdate(
     @Query('page') page?: string,
@@ -118,7 +118,7 @@ export class UsersController {
     });
   }
 
-  @Get('dosen/update-data')
+  @Get('dosen/update-data/me')
   @Roles(TypeUserRole.DOSEN)
   getPendingUpdate(@Req() req: any) {
     const dosenId = req.user.sub;
